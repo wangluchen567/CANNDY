@@ -1,10 +1,9 @@
 import numpy as np
-import pandas as pd
-
 from MLP import MLP
 from Core.Optimizer import Adam
 from Core.Activation import Softmax
 from Core.Loss import CrossEntropyWithSoftmax
+from Plot_Classifier import plot_classifier
 
 
 def train_epoch(model, optimizer, X, Y, batch_size):
@@ -48,18 +47,19 @@ def train_onebyone(model, optimizer, X, Y, batch_size):
     return model, optimizer, train_loss
 
 
-def train_model(model, train_data, train_label, val_data, val_label):
+def train_model(model, X, Y):
     """训练模型"""
-    batch_size = 10
-    optimizer = Adam(model=model, learning_rate=0.02)
-    for epoch in range(100):
-        model, optimizer, train_loss = train_epoch(model, optimizer, train_data, train_label, batch_size)
-        accuracy = val_model(model, val_data, val_label)
+    batch_size = 16
+    optimizer = Adam(model=model, learning_rate=0.05)
+    for epoch in range(30):
+        model, optimizer, train_loss = train_epoch(model, optimizer, X, Y, batch_size)
+        accuracy = valid_model(model, X, Y)
         print("epoch: {:d}, loss: {:.3f}, accuracy: {:.3f}".format(epoch + 1, train_loss, accuracy))
+        plot_classifier(model, X, Y, accuracy)
     return model
 
 
-def val_model(model, X, Y):
+def valid_model(model, X, Y):
     input = X.T
     truth = Y.T
     output = model.forward(input)
@@ -68,37 +68,40 @@ def val_model(model, X, Y):
     return accuracy
 
 
+def make_circles(n_samples=100, noise=None, factor=.8, shuffle=True):
+    """创建同心圆随机数据"""
+    if factor > 1 or factor < 0:
+        raise ValueError("'factor' has to be between 0 and 1.")
+    linspace = np.linspace(0, 2 * np.pi, n_samples // 2 + 1)[:-1]
+    outer_circ_x = np.cos(linspace)
+    outer_circ_y = np.sin(linspace)
+    inner_circ_x = outer_circ_x * factor
+    inner_circ_y = outer_circ_y * factor
+
+    X = np.vstack((np.append(outer_circ_x, inner_circ_x),
+                   np.append(outer_circ_y, inner_circ_y))).T
+    y = np.hstack([np.zeros(n_samples // 2, dtype=np.intp),
+                   np.ones(n_samples // 2, dtype=np.intp)])
+    Y = y.reshape(-1, 1)
+    if shuffle:
+        random_index = np.arange(n_samples)
+        np.random.shuffle(random_index)
+        X = X[random_index]
+        Y = Y[random_index]
+
+    if noise is not None:
+        X += np.random.normal(scale=noise, size=X.shape)
+
+    return X, Y
+
+
 if __name__ == '__main__':
-    # 读取数据集
-    data = pd.read_csv("../Dataset/Iris.csv")
-    # 将数据集中的每种花换成整数0, 1, 2
-    data.iloc[np.where(data['Species'] == 'Iris-setosa')[0], -1] = 0
-    data.iloc[np.where(data['Species'] == 'Iris-versicolor')[0], -1] = 1
-    data.iloc[np.where(data['Species'] == 'Iris-virginica')[0], -1] = 2
-    # 数据集特征
-    features = data[['SepalLengthCm',
-                     'SepalWidthCm',
-                     'PetalLengthCm',
-                     'PetalWidthCm']].values
-    # 数据集标签
-    labels = data[['Species']].values
-    # 打乱数据集
-    random_index = np.arange(len(features))
-    np.random.shuffle(random_index)
-    features = features[random_index]
-    labels = labels[random_index]
-
-    # 划分训练集和验证集
-    train_size = 100
-    train_dataset = features[:train_size]
-    train_labels = labels[:train_size]
-    val_dataset = features[train_size:]
-    val_labels = labels[train_size:]
-
+    # 获取同心圆状分布数据，X的每行包含两个特征，y是1/0类别标签
+    X, Y = make_circles(600, noise=0.12, factor=0.2)
+    Y = Y.reshape(-1, 1)
     # 创建模型
-    model = MLP(4, 3, [10, 10], out_act=Softmax)
-    model = train_model(model, train_dataset, train_labels, val_dataset, val_labels)
-    accuracy = val_model(model, features, labels)
+    model = MLP(2, 2, [3], out_act=Softmax)
+    model = train_model(model, X, Y)
+    accuracy = valid_model(model, X, Y)
     print("full dataset accuracy: {:.3f} %".format(accuracy * 100))
-    accuracy = val_model(model, val_dataset, val_labels)
-    print("val dataset accuracy: {:.3f} %".format(accuracy * 100))
+    plot_classifier(model, X, Y, accuracy, pause=False)
