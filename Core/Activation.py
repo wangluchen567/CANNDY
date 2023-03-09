@@ -1,0 +1,39 @@
+import numpy as np
+
+
+class ReLU():
+    def forward(self, x):
+        return x * (x > 0)
+
+    def backward(self, x):
+        return (x > 0)
+
+
+class Sigmoid():
+    def forward(self, x):
+        # 防止指数溢出
+        indices_pos = np.nonzero(x >= 0)
+        indices_neg = np.nonzero(x < 0)
+
+        y = np.zeros_like(x)
+        y[indices_pos] = 1 / (1 + np.exp(-x[indices_pos]))
+        y[indices_neg] = np.exp(x[indices_neg]) / (1 + np.exp(x[indices_neg]))
+
+        return y
+
+
+    def backward(self, x):
+        return self.forward(x) * (1 - self.forward(x))
+
+
+class Softmax():
+    def forward(self, x, dim=0):
+        # 因为在求exp时，可能因为指数过大，出现溢出的情况
+        # 而在softmax中，重要的是两个数字之间的差值，只要差值相同，softmax的结果就相同
+        x -= np.max(x, axis=dim, keepdims=True)
+        f_x = np.exp(x) / np.sum(np.exp(x), axis=dim, keepdims=True)
+        return f_x
+
+    def backward(self, x):
+        # Softmax的梯度反向传播集成在CrossEntropyWithSoftmax中了
+        return np.ones(x.shape)
