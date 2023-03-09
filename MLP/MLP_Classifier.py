@@ -75,7 +75,6 @@ if __name__ == '__main__':
     data.iloc[np.where(data['Species'] == 'Iris-setosa')[0], -1] = 0
     data.iloc[np.where(data['Species'] == 'Iris-versicolor')[0], -1] = 1
     data.iloc[np.where(data['Species'] == 'Iris-virginica')[0], -1] = 2
-
     # 数据集特征
     features = data[['SepalLengthCm',
                      'SepalWidthCm',
