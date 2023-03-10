@@ -8,9 +8,18 @@ class Linear():
         self.activation = activation
         self.bias = bias
         # 初始化权重
-        self.weight = np.random.uniform(-1, 1, size=(output_size, input_size))
         if self.bias:
+            # 均匀初始化
             self.weight = np.random.uniform(-1, 1, size=(output_size, input_size + 1))
+            # 何凯明的均匀初始化
+            self.weight[:, :-1] = self.kaiming_uniform()
+            # 偏置初始化
+            self.weight[:, -1] = self.bias_uniform()
+        else:
+            # 均匀初始化
+            self.weight = np.random.uniform(-1, 1, size=(output_size, input_size))
+            # 何凯明的均匀初始化
+            self.weight = self.kaiming_uniform()
         # 初始化激活函数
         if self.activation is not None:
             self.activation = activation()
@@ -54,3 +63,12 @@ class Linear():
         else:
             delta_w = np.matmul(delta, self.weight)
         return delta_w
+
+    def kaiming_uniform(self, a=0):
+        bound = np.sqrt((6 / ((1 + a*a) * self.input_size)))
+        return np.random.uniform(-bound, bound, size=(self.output_size, self.input_size))
+
+    def bias_uniform(self):
+        bound = 1 / np.sqrt(self.input_size)
+        return np.random.uniform(-bound, bound, size=self.output_size)
+

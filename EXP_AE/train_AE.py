@@ -88,26 +88,30 @@ def train_AE(x_train, x_valid):
         epoch_time = time.time() - start
         print("epoch:{:d}  train_loss:{:.5f}  val_loss:{:.5f}  epoch_time:{:.5f} s".format(
             epoch + 1, train_loss, val_loss, epoch_time))
+        AE_test(model, x_valid, index=0, pause=True)
     return model
 
 
-def AE_test(model, x_valid, index=0):
+def AE_test(model, x_valid, index=0, pause=True):
     """输入某个验证集数据, 查看效果"""
     index = index  # 要查看效果的数据下标
     x = x_valid[index].reshape(-1, 1)
     x_hat = model.forward(x)
-    fig = plt.figure()
+    fig = plt.figure(0)
     fig.add_subplot(1, 2, 1)
     plt.imshow(x.reshape((28, 28)), cmap="gray")
     fig.add_subplot(1, 2, 2)
     plt.imshow(x_hat.reshape((28, 28)), cmap="gray")
-    plt.show()
+    if pause:
+        plt.pause(0.1)
+    else:
+        plt.show()
 
 
 def reconstruct_show(model, x_valid):
     """输入多个验证集数据进行重构, 查看效果"""
-    x_sample = x_valid[10:60].T  # 数据范围可自行选择
-    x_reconstruct = model.forward(x_sample)
+    x_sample = x_valid[10:60]  # 数据范围可自行选择
+    x_reconstruct = model.forward(x_sample.T)
     x_reconstruct = x_reconstruct.T
     plt.figure(figsize=(8, 12))
     for i in range(5):
@@ -127,4 +131,5 @@ if __name__ == '__main__':
     data_path = "../Dataset/mnist.pkl.gz"
     x_train, y_train, x_valid, y_valid = load_data(data_path)
     model = train_AE(x_train[:5000], x_valid[:100])
-    AE_test(model, x_valid, index=0)
+    AE_test(model, x_valid, index=0, pause=False)
+    reconstruct_show(model, x_valid)
