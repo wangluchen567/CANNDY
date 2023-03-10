@@ -4,10 +4,10 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from AE import AE
 from tqdm import tqdm
 from Core.Loss import MSELoss
 from Core.Optimizer import Adam
+from AutoEncoder import AutoEncoder
 
 
 def load_data(data_path):
@@ -77,8 +77,8 @@ def val_epoch(model, X, Y, batch_size):
     return val_loss
 
 
-def train_AE(x_train, x_valid):
-    model = AE()
+def train_AutoEncoder(x_train, x_valid):
+    model = AutoEncoder()
     batch_size = 64
     optimizer = Adam(model=model, learning_rate=0.001)
     for epoch in range(10):
@@ -88,11 +88,11 @@ def train_AE(x_train, x_valid):
         epoch_time = time.time() - start
         print("epoch:{:d}  train_loss:{:.5f}  val_loss:{:.5f}  epoch_time:{:.5f} s".format(
             epoch + 1, train_loss, val_loss, epoch_time))
-        AE_test(model, x_valid, index=0, pause=True)
+        AutoEncoder_test(model, x_valid, index=0, pause=True)
     return model
 
 
-def AE_test(model, x_valid, index=0, pause=True):
+def AutoEncoder_test(model, x_valid, index=0, pause=True):
     """输入某个验证集数据, 查看效果"""
     index = index  # 要查看效果的数据下标
     x = x_valid[index].reshape(-1, 1)
@@ -128,8 +128,8 @@ def reconstruct_show(model, x_valid):
 
 
 if __name__ == '__main__':
-    data_path = "../Dataset/mnist.pkl.gz"
+    data_path = "../../Dataset/mnist.pkl.gz"
     x_train, y_train, x_valid, y_valid = load_data(data_path)
-    model = train_AE(x_train[:5000], x_valid[:100])
-    AE_test(model, x_valid, index=0, pause=False)
+    model = train_AutoEncoder(x_train[:5000], x_valid[:100])
+    AutoEncoder_test(model, x_valid, index=0, pause=False)
     reconstruct_show(model, x_valid)

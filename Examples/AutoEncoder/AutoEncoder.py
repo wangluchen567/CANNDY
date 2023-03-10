@@ -2,7 +2,7 @@ from Core.Layer import Linear
 from Core.Activation import Sigmoid, ReLU
 
 
-class AE():
+class AutoEncoder():
     def __init__(self):
         self.Encoder = [
             Linear(784, 256, ReLU),
