@@ -1,8 +1,9 @@
 # CANNDY
 
 ## 介绍
+纯Numpy实现的人工神经网络框架<br>
 Chen's Artificial Neural Network builD by numpY
-纯Numpy实现的人工神经网络框架
+
 
 ## 模型说明
 ### Core: 人工神经网络框架核心
