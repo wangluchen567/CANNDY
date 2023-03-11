@@ -11,7 +11,7 @@ if __name__ == '__main__':
     model = MLP(1, 1, [8, 16, 8])
 
     optimizer = Adam(model=model, learning_rate=0.01)
-    for epoch in range(5000):
+    for epoch in range(1000):
         input = X.T
         truth = Y.T
         optimizer.zero_grad()
@@ -26,6 +26,7 @@ if __name__ == '__main__':
     Y = np.sin(X)
     output = model.forward(X)
     plt.figure()
-    plt.plot(X.flatten(), Y.flatten(), c='red')
-    plt.plot(X.flatten(), output.flatten(), c='blue')
+    plt.plot(X.flatten(), Y.flatten(), c='blue', linewidth=6, label='truth')
+    plt.plot(X.flatten(), output.flatten(), c='red', linewidth=3, label='predict')
+    plt.legend()
     plt.show()
