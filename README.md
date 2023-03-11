@@ -18,7 +18,7 @@ Chen's Artificial Neural Network builD by numpY
 - Iris: 鸢尾花数据集
 - titantic: 泰坦尼克幸存者数据集
 - mnist: 手写数字识别数据集
-- 
+
 ### MLP: 使用该框架实现的多层感知机模型以及实例
 
 - MLP: 多层感知机模型
