@@ -8,7 +8,7 @@ Chen's Artificial Neural Network builD by numpY
 ## 模型说明
 ### Core: 人工神经网络框架核心
 
-- Activation: 实现的各种激活函数，包括`ReLU`、`Sigmoid`、`Softmax`
+- Activation: 实现的各种激活函数，包括`ReLU`、`Sigmoid`、`Tanh`、`Softmax`
 - Layer: 实现的各种基础的神经网络层，暂时只有`Linear`线性层
 - Loss: 实现的各种损失函数，包括`均方差损失`，`交叉熵损失`
 - Optimizer：实现的各种优化器，包括普通梯度下降`GradientDescent`、`Momentum`、`AdaGrad`、`RMSProp`、`Adam`
