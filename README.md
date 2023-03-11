@@ -47,7 +47,7 @@ Chen's Artificial Neural Network builD by numpY
 
 ## 效果展示
 - MLP对sin函数回归拟合<br>
-<img src="Pic/MLP_sin.png" width="480" height="350" alt="回归拟合"/><br/>
+<img src="Pic/MLP_sin.gif" width="480" height="350" alt="回归拟合"/><br/>
 - MLP对同心圆数据集做分类训练
 <img src="Pic/MLP_circle.gif" width="480" height="350" alt="回归拟合"/><br/>
 ## 参与贡献
