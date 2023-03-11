@@ -31,7 +31,7 @@ Chen's Artificial Neural Network builD by numpY
 ### Examples: 使用该框架实现的各种模型实例
 
 - AutoEncoder: 使用该框架实现的自编码器模型
-- PolicyGradient: 使用该框架实现的策略梯度下降，待更新
+- PolicyGradient: 使用该框架实现的强化学习中的策略梯度模型
 
 
 ## 安装教程
