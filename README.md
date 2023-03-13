@@ -47,10 +47,15 @@ Chen's Artificial Neural Network builD by numpY
 - `Copy核心代码时请注明出处`
 
 ## 效果展示
-- MLP对同心圆数据集做分类训练
+- MLP对同心圆数据集做分类训练<br>
 <img src="Pic/MLP_circle.gif" width="480" height="350" alt="分类训练"/><br/>
 - MLP对sin函数回归拟合<br>
 <img src="Pic/MLP_sin.gif" width="480" height="350" alt="回归拟合"/><br/>
+- 策略梯度效果<br>
+开始阶段<br>
+中期阶段<br>
+<img src="Pic/PG_mid.gif" width="480" height="309" alt="回归拟合"/><br/>
+最后效果<br>
 ## 参与贡献
 
 wang567
