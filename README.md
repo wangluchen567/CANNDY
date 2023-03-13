@@ -37,7 +37,8 @@ Chen's Artificial Neural Network builD by numpY
 ## 安装教程
 
 1.  Anaconda `python>=3.7`
-2.  其他相关的包，可自行调试判断  
+2. PolicyGradient是强化学习项目，需要 gym==0.22.0; pygame==2.2.0
+3. 其他相关的包，可自行调试判断
 
 
 ## 使用说明
