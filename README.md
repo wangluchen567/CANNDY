@@ -31,13 +31,14 @@ Chen's Artificial Neural Network builD by numpY
 ### Examples: 使用该框架实现的各种模型实例
 
 - AutoEncoder: 使用该框架实现的自编码器模型
+- DQN: 使用该框架实现的强化学习中DQN(深度Q学习网络)模型
 - PolicyGradient: 使用该框架实现的强化学习中的策略梯度模型
 
 
 ## 安装教程
 
 1.  Anaconda `python>=3.7`
-2. PolicyGradient是强化学习项目，需要 gym==0.22.0; pygame==2.2.0
+2. 强化学习相关项目，需要 gym==0.22.0; pygame==2.2.0
 3. 其他相关的包，可自行调试判断
 
 
