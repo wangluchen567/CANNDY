@@ -72,3 +72,10 @@ class Linear():
         bound = 1 / np.sqrt(self.input_size)
         return np.random.uniform(-bound, bound, size=self.output_size)
 
+    def set_parameters(self, weight):
+        assert self.weight.shape == weight.shape
+        self.weight = weight
+
+    def get_parameters(self):
+        return self.weight
+
