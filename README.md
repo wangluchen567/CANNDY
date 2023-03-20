@@ -54,7 +54,12 @@ Chen's Artificial Neural Network builD by numpY
 <img src="Pic/MLP_sin.gif" width="480" height="350" alt="回归拟合"/><br/>
 - 自编码器模型效果<br>
 <img src="Pic/Res_AE.gif" width="480" height="265" alt="自编码器"/><br/>
+- DQN(深度Q学习网络)模型效果
+奖励变化结果<br>
+<img src="Pic/DQN_reward.png" width="480" height="357" alt="DQN奖励"/><br/>
 - 策略梯度模型效果<br>
+奖励变化结果<br>
+<img src="Pic/PG_reward.png" width="480" height="357" alt="PG奖励"/><br/>
 开始阶段<br>
 <img src="Pic/PG_start.gif" width="480" height="309" alt="开始阶段"/><br/>
 中期阶段<br>
