@@ -43,7 +43,7 @@ Chen's Artificial Neural Network builD by numpY
 
 ## 使用说明
 
-- `本代码仅供参学习和学术研究下载`
+- `本代码仅供参考学习和学术研究下载`
 - `Copy核心代码时请注明出处`
 
 ## 效果展示
