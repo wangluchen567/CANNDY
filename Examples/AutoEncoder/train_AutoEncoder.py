@@ -133,3 +133,4 @@ if __name__ == '__main__':
     model = train_AutoEncoder(x_train[:5000], x_valid[:100])
     AutoEncoder_test(model, x_valid, index=0, pause=False)
     reconstruct_show(model, x_valid)
+
