@@ -65,12 +65,6 @@ class DQN(object):
         # 把 self.model 的模型参数值同步到 self.target_model
         self.target_model.load_params_list(self.model.get_params_list())
 
-    # def to_one_hot(self, var, dim):
-    #     var_dim = var.shape[0]
-    #     one_hot = torch.zeros((var_dim, dim)).to(self.device)
-    #     one_hot.scatter_(1, var.long().unsqueeze(-1), 1)
-    #     return one_hot
-
     @staticmethod
     def to_one_hot(x, num_class):
         """转为OneHot编码"""
