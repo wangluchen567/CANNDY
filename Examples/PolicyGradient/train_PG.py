@@ -1,6 +1,7 @@
 import gym
 import pygame
 import numpy as np
+import matplotlib.pyplot as plt
 
 from agent import Agent
 from model import Model
@@ -75,10 +76,15 @@ def main():
     alg = PolicyGradient(model, lr=1e-3)
     agent = Agent(alg, obs_dim=obs_dim, act_dim=act_dim)
 
+    train_rewards = []
+    eval_reward = 0
+    eval_rewards = []
     for i in range(1000):
         obs_list, action_list, reward_list = run_episode(env, agent)
         if i % 10 == 0:
             print("Episode {}, Reward Sum {}.".format(i, sum(reward_list)))
+            train_rewards.append(sum(reward_list))
+            eval_rewards.append(eval_reward)
 
         batch_obs = np.array(obs_list)
         batch_action = np.array(action_list)
@@ -86,10 +92,20 @@ def main():
 
         agent.learn(batch_obs, batch_action, batch_reward)
         if (i + 1) % 100 == 0:
-            total_reward = evaluate(env, agent, render=True)
-            print('Test reward: {}'.format(total_reward))
+            eval_reward = evaluate(env, agent, render=True)
+            print('Test reward: {}'.format(eval_reward))
 
     env.close()
+
+    # 绘制reward的变化图
+    plt.figure(0)
+    plt.plot(np.arange(len(train_rewards)), train_rewards, c='skyblue', label='train reward')
+    plt.plot(np.arange(len(eval_rewards)), eval_rewards, c='orangered', label='eval reward')
+    plt.title('Reward')
+    plt.xlabel('episode')
+    plt.ylabel('reward')
+    plt.legend()
+    plt.show()
 
 
 if __name__ == '__main__':

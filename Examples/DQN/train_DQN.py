@@ -1,6 +1,8 @@
 import gym
 import pygame
 import numpy as np
+import matplotlib.pyplot as plt
+
 from model import Model
 from agent import Agent
 from algorithm import DQN
@@ -91,21 +93,36 @@ def main():
         run_episode(env, agent, rpm)
 
     max_episode = 2000
-
-    # start train
+    train_rewards = []
+    eval_reward = 0
+    eval_rewards = []
+    # 开始训练
     episode = 0
     while episode < max_episode:  # 训练max_episode个回合，test部分不计算入episode数量
-        # train part
+        # 训练部分
         for i in range(0, 50):
             total_reward = run_episode(env, agent, rpm)
+            train_rewards.append(total_reward)
+            eval_rewards.append(eval_reward)
             episode += 1
 
-        # test part
+        # 测试部分
         eval_reward = evaluate(env, agent, render=True)  # render=True 查看显示效果
         print('episode:{}    e_greed:{}   Test reward:{}'.format(
             episode, agent.e_greed, eval_reward))
 
     env.close()
+
+    # 绘制reward的变化图
+    plt.figure(0)
+    plt.plot(np.arange(len(train_rewards)), train_rewards, c='skyblue', label='train reward')
+    plt.plot(np.arange(len(eval_rewards)), eval_rewards, c='orangered', label='eval reward')
+    plt.title('Reward')
+    plt.xlabel('episode')
+    plt.ylabel('reward')
+    plt.legend()
+    plt.show()
+
 
 if __name__ == '__main__':
     main()
