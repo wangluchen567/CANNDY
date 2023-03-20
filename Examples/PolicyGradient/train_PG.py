@@ -81,10 +81,10 @@ def main():
     eval_rewards = []
     for i in range(1000):
         obs_list, action_list, reward_list = run_episode(env, agent)
+        train_rewards.append(sum(reward_list))
+        eval_rewards.append(eval_reward)
         if i % 10 == 0:
             print("Episode {}, Reward Sum {}.".format(i, sum(reward_list)))
-            train_rewards.append(sum(reward_list))
-            eval_rewards.append(eval_reward)
 
         batch_obs = np.array(obs_list)
         batch_action = np.array(action_list)
