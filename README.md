@@ -33,7 +33,7 @@ Chen's Artificial Neural Network builD by numpY
 - AutoEncoder: 使用该框架实现的自编码器模型
 - DQN: 使用该框架实现的强化学习中DQN(深度Q学习网络)模型
 - PolicyGradient: 使用该框架实现的强化学习中的策略梯度模型
-
+- GCN: 使用该框架实现的图卷积模型
 
 ## 安装教程
 
