@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from GCN import GCN
 from Core.Optimizer import Adam
 from Core.Activation import Softmax
-from Core.Loss import CrossEntropyWithSoftmax
 from Core.Loss import CrossEntropyWithSoftmaxMask
 
 def load_data(data_path):
@@ -47,10 +46,8 @@ def format_data(features, indices, labels, masks, self_loop=True):
 
 def evaluate(model, features, labels, mask):
     """评价函数"""
-    output = model.forward(features.T)  # 将特征输入模型查看结果
-    output = output.T
-    labels = labels.T
-    output = output[mask]  # 获取某类数据的结果（train/val/test）
+    output = model.forward(features)  # 将特征输入模型查看结果
+    output = output.T[mask]  # 获取某类数据的结果（train/val/test）
     labels = labels[mask]  # 获取某类数据的真实值
     indices = np.argmax(output, axis=1)  # 取结果中最大值为预测值
     correct = np.sum(indices == labels.flatten())  # 获取准确的个数
@@ -83,7 +80,6 @@ if __name__ == '__main__':
     features, indices, labels, masks = load_data(data_path)
     features, labels, adj_mat, train_mask, val_mask, test_mask = format_data(features, indices, labels, masks,
                                                                              self_loop=True)
-    labels = labels.T.copy()
     model = GCN(adj_mat=adj_mat,
                 input_size=features.shape[1],
                 output_size=np.max(labels) + 1,
@@ -93,7 +89,7 @@ if __name__ == '__main__':
 
     optimizer = Adam(model=model, learning_rate=0.001)
 
-    num_epochs = 500
+    num_epochs = 200
     # 训练过程
     dur = []  # 记录epoch时间
     train_loss = []  # 记录训练损失变化
@@ -103,7 +99,7 @@ if __name__ == '__main__':
         # 梯度归零
         optimizer.zero_grad()
         # forward前向传播，使用交叉熵损失
-        output = model.forward(features.T)
+        output = model.forward(features)
         Loss = CrossEntropyWithSoftmaxMask(model, labels, output, train_mask)
         # Loss = CrossEntropyWithSoftmax(model, labels, output)
         ces_loss = Loss.forward()
