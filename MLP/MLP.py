@@ -25,7 +25,9 @@ class MLP():
         self.num_params = self.get_num_params()
 
     def forward(self, input):
-        hidden = input.copy()
+        # 必须对输入进行转置
+        # 考虑到实现层的反向传播
+        hidden = input.T
         for fc in self.Layers:
             hidden = fc.forward(hidden)
         output = hidden

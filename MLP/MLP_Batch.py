@@ -11,7 +11,7 @@ def learning_all(model, X, Y):
     optimizer = Adam(model=model, learning_rate=0.01)
     for epoch in range(5000):
         optimizer.zero_grad()
-        input, truth = X.T, Y.T
+        input, truth = X, Y
         output = model.forward(input)
         Loss = MSELoss(model, truth, output)
         mse_loss = Loss.forward()
@@ -27,8 +27,8 @@ def learning_batch(model, X, Y):
     optimizer = Adam(model=model, learning_rate=0.01)
     for epoch in range(5000):
         for i in np.arange(0, len(X), batch_size):
-            input = X[i:i + batch_size, :].T
-            truth = Y[i:i + batch_size, :].T
+            input = X[i:i + batch_size, :]
+            truth = Y[i:i + batch_size, :]
             optimizer.zero_grad()
             output = model.forward(input)
             Loss = MSELoss(model, truth, output)
@@ -49,8 +49,8 @@ def learning_single(model, X, Y):
         # 累计loss置零
         sum_loss = 0
         for i in range(len(X)):
-            input = X[i].reshape(1, -1)
-            truth = Y[i].reshape(1, -1)
+            input = X[i].reshape(-1, 1)
+            truth = Y[i].reshape(-1, 1)
             output = model.forward(input)
             Loss = MSELoss(model, truth, output)
             mse_loss = Loss.forward()
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     model = learning_batch(model, X, Y)
     # model = learning_single(model, X, Y)
 
-    X = np.arange(0, 10, 0.01).reshape(1, -1)
+    X = np.arange(0, 10, 0.01).reshape(-1, 1)
     Y = np.sin(X)
     output = model.forward(X)
     plt.figure()
