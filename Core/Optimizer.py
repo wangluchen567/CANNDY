@@ -1,19 +1,31 @@
 import numpy as np
 
-
-class GradientDescent():
-    def __init__(self, model, learning_rate=0.01):
+class Optimizer():
+    def __init__(self, model, learning_rate):
         self.model = model
         self.learning_rate = learning_rate
+
+    def zero_grad(self):
+        """所有网络层梯度置0"""
+        for i in range(self.model.num_layers):
+            self.model.Layers[i].zero_grad()
+
+    def step(self):
+        """更新一次权重"""
+        raise NotImplementedError
+
+    def update(self, layer):
+        """更新梯度更新速度"""
+        raise NotImplementedError
+
+
+class GradientDescent(Optimizer):
+    def __init__(self, model, learning_rate=0.01):
+        super(GradientDescent, self).__init__(model, learning_rate)
         # 记录梯度更新速度
         self.v = dict()
         for i in range(self.model.num_layers):
             self.zero_v(self.model.Layers[i])
-
-    def zero_grad(self):
-        """所有网络梯度置0"""
-        for i in range(self.model.num_layers):
-            self.model.Layers[i].zero_grad()
 
     def step(self):
         """每层网络更新一次权重"""
@@ -36,20 +48,14 @@ class GradientDescent():
         layer.weight = layer.weight + self.v[layer]
 
 
-class Momentum():
+class Momentum(Optimizer):
     def __init__(self, model, learning_rate=0.01, momentum=0.9):
-        self.model = model
-        self.learning_rate = learning_rate
+        super(Momentum, self).__init__(model, learning_rate)
         self.momentum = momentum
         # 记录梯度更新速度
         self.v = dict()
         for i in range(self.model.num_layers):
             self.zero_v(self.model.Layers[i])
-
-    def zero_grad(self):
-        """所有网络梯度置0"""
-        for i in range(self.model.num_layers):
-            self.model.Layers[i].zero_grad()
 
     def step(self):
         """每层网络更新一次权重"""
@@ -72,19 +78,13 @@ class Momentum():
         layer.weight = layer.weight + self.v[layer]
 
 
-class AdaGrad():
+class AdaGrad(Optimizer):
     def __init__(self, model, learning_rate=0.01):
-        self.model = model
-        self.learning_rate = learning_rate
+        super(AdaGrad, self).__init__(model, learning_rate)
         # 记录梯度各分量的平方
         self.s = dict()
         for i in range(self.model.num_layers):
             self.zero_s(self.model.Layers[i])
-
-    def zero_grad(self):
-        """所有网络梯度置0"""
-        for i in range(self.model.num_layers):
-            self.model.Layers[i].zero_grad()
 
     def step(self):
         """每层网络更新一次权重"""
@@ -107,10 +107,9 @@ class AdaGrad():
         layer.weight = layer.weight - self.learning_rate * layer.grad / np.sqrt(self.s[layer] + 1e-9)
 
 
-class RMSProp():
+class RMSProp(Optimizer):
     def __init__(self, model, learning_rate=0.01, beta=0.9):
-        self.model = model
-        self.learning_rate = learning_rate
+        super(RMSProp, self).__init__(model, learning_rate)
         # 衰减系数
         assert 0.0 < beta < 1.0
         self.beta = beta
@@ -118,11 +117,6 @@ class RMSProp():
         self.s = dict()
         for i in range(self.model.num_layers):
             self.zero_s(self.model.Layers[i])
-
-    def zero_grad(self):
-        """所有网络梯度置0"""
-        for i in range(self.model.num_layers):
-            self.model.Layers[i].zero_grad()
 
     def step(self):
         """每层网络更新一次权重"""
@@ -145,10 +139,9 @@ class RMSProp():
         layer.weight = layer.weight - self.learning_rate * layer.grad / np.sqrt(self.s[layer] + 1e-9)
 
 
-class Adam():
+class Adam(Optimizer):
     def __init__(self, model, learning_rate=0.01, beta_1=0.9, beta_2=0.99):
-        self.model = model
-        self.learning_rate = learning_rate
+        super(Adam, self).__init__(model, learning_rate)
         # 历史梯度衰减系数
         assert 0.0 < beta_1 < 1.0
         self.beta_1 = beta_1
@@ -163,11 +156,6 @@ class Adam():
         self.s = dict()
         for i in range(self.model.num_layers):
             self.zero_s(self.model.Layers[i])
-
-    def zero_grad(self):
-        """所有网络梯度置0"""
-        for i in range(self.model.num_layers):
-            self.model.Layers[i].zero_grad()
 
     def step(self):
         """每层网络更新一次权重"""

@@ -1,7 +1,15 @@
 import numpy as np
 
 
-class ReLU():
+class Activation():
+    def forward(self, x):
+        raise NotImplementedError
+
+    def backward(self, x):
+        raise NotImplementedError
+
+
+class ReLU(Activation):
     def forward(self, x):
         return x * (x > 0)
 
@@ -9,7 +17,7 @@ class ReLU():
         return (x > 0)
 
 
-class Sigmoid():
+class Sigmoid(Activation):
     def forward(self, x):
         # 防止指数溢出
         indices_pos = np.nonzero(x >= 0)
@@ -25,7 +33,7 @@ class Sigmoid():
         return self.forward(x) * (1 - self.forward(x))
 
 
-class Tanh():
+class Tanh(Activation):
     def forward(self, x):
         # 防止指数溢出
         indices_pos = np.nonzero(x >= 0)
@@ -41,7 +49,7 @@ class Tanh():
         return 1 - self.forward(x) * self.forward(x)
 
 
-class Softmax():
+class Softmax(Activation):
     def forward(self, x, dim=0):
         # 因为在求exp时，可能因为指数过大，出现溢出的情况
         # 而在softmax中，重要的是两个数字之间的差值，只要差值相同，softmax的结果就相同
