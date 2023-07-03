@@ -53,7 +53,7 @@ class Linear():
         # # 计算batch大小
         # batch_size = self.output.shape[1]
         # # 计算梯度(累计梯度)
-        # self.grad += np.matmul(self.input_1, delta).T / batch_size
+        # self.grad += np.matmul(self.input_1, delta).T * batch_size
         # 计算梯度(累计梯度) 取平均下降较慢
         self.grad += np.matmul(self.input_1, delta).T
         # 将delta * w传递到上一层网络
