@@ -18,7 +18,7 @@ def plot_classifier(model, X, Y, accuracy, pause=True):
     t2 = np.linspace(x2_min, x2_max, M)
     x1_mesh, x2_mesh = np.meshgrid(t1, t2)  # 生成网格采样点
     x_test = np.stack((x1_mesh.flat, x2_mesh.flat), axis=1)  # 得到测试点
-    y_hat = model.forward(x_test.T)
+    y_hat = model.forward(x_test)
     # 将标签转化为0/1
     y_hat = y_hat.argmax(axis=0)
     y_hat = y_hat.reshape(x1_mesh.shape)  # 使之与输入的形状相同
