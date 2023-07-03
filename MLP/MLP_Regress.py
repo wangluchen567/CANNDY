@@ -10,7 +10,7 @@ from Core.Optimizer import Adam
 def plot_sin(model, pause=True):
     # 深度复制一份模型防止冲突
     Model = copy.deepcopy(model)
-    x = np.arange(0, 10, 0.01).reshape(1, -1)
+    x = np.arange(0, 10, 0.01).reshape(-1, 1)
     y = np.sin(x)
     output = Model.forward(x)
     Loss = MSELoss(Model, y, output)
@@ -42,8 +42,8 @@ if __name__ == '__main__':
 
     optimizer = Adam(model=model, learning_rate=0.01)
     for epoch in range(1000):
-        input = X.T
-        truth = Y.T
+        input = X
+        truth = Y
         optimizer.zero_grad()
         output = model.forward(input)
         Loss = MSELoss(model, truth, output)
