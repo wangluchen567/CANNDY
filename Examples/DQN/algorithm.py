@@ -27,7 +27,7 @@ class DQN(object):
 
     def predict(self, obs):
         # 使用self.model的value网络(forward)来获取 [Q(s,a1),Q(s,a2),...]
-        obs = obs.reshape(-1, 1)
+        obs = obs.reshape(1, -1)
         Q_value = self.model.forward(obs)
         Q_value = Q_value.flatten()
         return Q_value
@@ -36,7 +36,7 @@ class DQN(object):
         # 使用DQN算法更新self.model的value网络
 
         # 从target_model中获取 max Q' 的值，用于计算target_Q
-        next_pred_value = self.target_model.forward(next_obs.T)
+        next_pred_value = self.target_model.forward(next_obs)
         best_v = np.max(next_pred_value, axis=0)
 
         # terminal中True为结束(最后一个记录了)，此时target = reward
@@ -44,7 +44,7 @@ class DQN(object):
         # target = target.detach()  # 变为常量，阻止梯度传递
 
         # 比如 pred_value = [[2.3, 5.7, 1.2, 3.9, 1.4], [...]]
-        pred_value = self.model.forward(obs.T)  # 获取Q预测值
+        pred_value = self.model.forward(obs)  # 获取Q预测值
         # 将action转onehot向量，比如：3 => [0,0,0,1,0]
         action_onehot = self.to_one_hot(action, self.act_dim)
 
