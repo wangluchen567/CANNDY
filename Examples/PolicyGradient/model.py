@@ -22,7 +22,7 @@ class Model():
         self.num_params = self.get_num_params()
 
     def forward(self, input):
-        hidden = input.copy()
+        hidden = input.T
         for fc in self.Layers:
             hidden = fc.forward(hidden)
         output = hidden

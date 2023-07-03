@@ -18,14 +18,14 @@ class PolicyGradient(object):
 
     def predict(self, obs):
         # 使用policy model预测输出的动作概率
-        obs = obs.reshape(-1, 1)
+        obs = obs.reshape(1, -1)
         act_prob = self.model.forward(obs)
         act_prob = act_prob.flatten()
         return act_prob
 
     def learn(self, obs, action, reward):
         # 用policy gradient 算法更新policy model
-        act_prob = self.model.forward(obs.T)  # 获取输出动作概率
+        act_prob = self.model.forward(obs)  # 获取输出动作概率
         self.optimizer.zero_grad()
         Loss = CrossEntropyWithSoftmax(self.model, action, act_prob, reward)
         loss = Loss.forward()
