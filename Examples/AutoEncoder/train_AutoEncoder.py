@@ -26,8 +26,8 @@ def train_epoch(model, optimizer, X, Y, batch_size):
     """训练一个epoch"""
     train_loss = 0
     for i in tqdm(np.arange(0, len(X), batch_size)):
-        input = X[i:i + batch_size, :].T
-        truth = Y[i:i + batch_size, :].T
+        input = X[i:i + batch_size, :]
+        truth = Y[i:i + batch_size, :]
         optimizer.zero_grad()
         output = model.forward(input)
         Loss = MSELoss(model, truth, output)
@@ -45,8 +45,8 @@ def train_onebyone(model, optimizer, X, Y, batch_size):
     # 累计loss置零
     train_loss = 0
     for i in tqdm(range(len(X))):
-        input = X[i, :].reshape(-1, 1)
-        truth = Y[i, :].reshape(-1, 1)
+        input = X[i, :].reshape(1, -1)
+        truth = Y[i, :].reshape(1, -1)
         output = model.forward(input)
         Loss = MSELoss(model, truth, output)
         ces_loss = Loss.forward()
@@ -67,8 +67,8 @@ def val_epoch(model, X, Y, batch_size):
     """验证一个epoch"""
     val_loss = 0
     for i in np.arange(0, len(X), batch_size):
-        input = X[i:i + batch_size, :].T
-        truth = Y[i:i + batch_size, :].T
+        input = X[i:i + batch_size, :]
+        truth = Y[i:i + batch_size, :]
         output = model.forward(input)
         Loss = MSELoss(model, truth, output)
         ces_loss = Loss.forward()
@@ -95,7 +95,7 @@ def train_AutoEncoder(x_train, x_valid):
 def AutoEncoder_test(model, x_valid, index=0, pause=True):
     """输入某个验证集数据, 查看效果"""
     index = index  # 要查看效果的数据下标
-    x = x_valid[index].reshape(-1, 1)
+    x = x_valid[index].reshape(1, -1)
     x_hat = model.forward(x)
     fig = plt.figure(0)
     fig.add_subplot(1, 2, 1)
@@ -111,7 +111,7 @@ def AutoEncoder_test(model, x_valid, index=0, pause=True):
 def reconstruct_show(model, x_valid):
     """输入多个验证集数据进行重构, 查看效果"""
     x_sample = x_valid[10:60]  # 数据范围可自行选择
-    x_reconstruct = model.forward(x_sample.T)
+    x_reconstruct = model.forward(x_sample)
     x_reconstruct = x_reconstruct.T
     plt.figure(figsize=(8, 12))
     for i in range(5):
