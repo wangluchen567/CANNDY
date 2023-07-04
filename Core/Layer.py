@@ -1,25 +1,51 @@
 import numpy as np
 
 
-class Linear():
-    def __init__(self, input_size, output_size, activation=None, bias=True):
+class Layer():
+    def __init__(self, input_size, output_size, activation, bias):
         self.input_size = input_size
         self.output_size = output_size
         self.activation = activation
         self.bias = bias
-        # 初始化权重
-        if self.bias:
-            # 均匀初始化
-            self.weight = np.random.uniform(-1, 1, size=(output_size, input_size + 1))
-            # 何凯明的均匀初始化
-            self.weight[:, :-1] = self.kaiming_uniform()
-            # 偏置初始化
-            self.weight[:, -1] = self.bias_uniform()
+
+    def forward(self, input):
+        raise NotImplementedError
+
+    def backward(self, grad):
+        raise NotImplementedError
+
+    def zero_grad(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def random_uniform(input_size, output_size, have_bias, lower=-1, upper=1):
+        if have_bias:
+            return np.random.uniform(lower, upper, size=(output_size, input_size + 1))
         else:
-            # 均匀初始化
-            self.weight = np.random.uniform(-1, 1, size=(output_size, input_size))
-            # 何凯明的均匀初始化
-            self.weight = self.kaiming_uniform()
+            return np.random.uniform(lower, upper, size=(output_size, input_size))
+
+    @staticmethod
+    def kaiming_uniform(input_size, output_size, have_bias, a=0):
+        weight_bound = np.sqrt((6 / ((1 + a * a) * input_size)))
+        bias_bound = 1 / np.sqrt(input_size)
+        if have_bias:
+            weight = np.zeros((output_size, input_size + 1))
+            weight[:, :-1] = np.random.uniform(-weight_bound, weight_bound, size=(output_size, input_size))
+            weight[:, -1] = np.random.uniform(-bias_bound, bias_bound, size=output_size)
+            return weight
+        else:
+            weight = np.random.uniform(-weight_bound, weight_bound, size=(output_size, input_size))
+            return weight
+
+
+class Linear(Layer):
+    def __init__(self, input_size, output_size, activation=None, bias=True):
+        super(Linear, self).__init__(input_size, output_size, activation, bias)
+        # 初始化权重
+        # 随机初始化权重
+        # self.weight = self.random_uniform(input_size, output_size, bias)
+        # 何凯明的方法初始化权重
+        self.weight = self.kaiming_uniform(input_size, output_size, bias)
         # 初始化激活函数
         if self.activation is not None:
             self.activation = activation()
@@ -64,14 +90,6 @@ class Linear():
             delta_w = delta @ self.weight
         return delta_w
 
-    def kaiming_uniform(self, a=0):
-        bound = np.sqrt((6 / ((1 + a*a) * self.input_size)))
-        return np.random.uniform(-bound, bound, size=(self.output_size, self.input_size))
-
-    def bias_uniform(self):
-        bound = 1 / np.sqrt(self.input_size)
-        return np.random.uniform(-bound, bound, size=self.output_size)
-
     def set_parameters(self, weight):
         assert self.weight.shape == weight.shape
         self.weight = weight
@@ -79,3 +97,13 @@ class Linear():
     def get_parameters(self):
         return self.weight
 
+
+class GraphConv(Linear):
+    def __init__(self, input_size, output_size, adj_norm, activation=None):
+        super(GraphConv, self).__init__(input_size, output_size, activation, False)
+        self.adj_norm = adj_norm
+
+    def forward(self, input):
+        input = input @ self.adj_norm.T
+        output = super().forward(input)
+        return output

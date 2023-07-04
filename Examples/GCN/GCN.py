@@ -1,5 +1,5 @@
 import numpy as np
-from Core.Layer import Linear
+from Core.Layer import GraphConv
 from Core.Activation import ReLU
 
 
@@ -33,16 +33,5 @@ class GCN():
         for gc in self.Layers:
             hidden = gc.forward(hidden)
         output = hidden
-        return output
-
-
-class GraphConv(Linear):
-    def __init__(self, input_size, output_size, adj_norm, activation=None):
-        super(GraphConv, self).__init__(input_size, output_size, activation, False)
-        self.adj_norm = adj_norm
-
-    def forward(self, input):
-        input = input @ self.adj_norm.T
-        output = super().forward(input)
         return output
 
