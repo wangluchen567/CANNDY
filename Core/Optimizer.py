@@ -1,9 +1,10 @@
 import numpy as np
 
 class Optimizer():
-    def __init__(self, model, learning_rate):
+    def __init__(self, model, learning_rate, weight_decay):
         self.model = model
         self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
 
     def zero_grad(self):
         """所有网络层梯度置0"""
@@ -16,12 +17,14 @@ class Optimizer():
 
     def update(self, layer):
         """更新梯度更新速度"""
-        raise NotImplementedError
+        # 先进行weight_decay操作
+        layer.weight = layer.weight - layer.weight * self.weight_decay
+
 
 
 class GradientDescent(Optimizer):
-    def __init__(self, model, learning_rate=0.01):
-        super(GradientDescent, self).__init__(model, learning_rate)
+    def __init__(self, model, learning_rate=0.01, weight_decay=0):
+        super(GradientDescent, self).__init__(model, learning_rate, weight_decay)
         # 记录梯度更新速度
         self.v = dict()
         for i in range(self.model.num_layers):
@@ -45,12 +48,13 @@ class GradientDescent(Optimizer):
 
     def update(self, layer):
         """更新权重"""
+        super().update(layer)
         layer.weight = layer.weight + self.v[layer]
 
 
 class Momentum(Optimizer):
-    def __init__(self, model, learning_rate=0.01, momentum=0.9):
-        super(Momentum, self).__init__(model, learning_rate)
+    def __init__(self, model, learning_rate=0.01, momentum=0.9, weight_decay=0):
+        super(Momentum, self).__init__(model, learning_rate, weight_decay)
         self.momentum = momentum
         # 记录梯度更新速度
         self.v = dict()
@@ -75,12 +79,13 @@ class Momentum(Optimizer):
 
     def update(self, layer):
         """更新权重"""
+        super().update(layer)
         layer.weight = layer.weight + self.v[layer]
 
 
 class AdaGrad(Optimizer):
-    def __init__(self, model, learning_rate=0.01):
-        super(AdaGrad, self).__init__(model, learning_rate)
+    def __init__(self, model, learning_rate=0.01, weight_decay=0):
+        super(AdaGrad, self).__init__(model, learning_rate, weight_decay)
         # 记录梯度各分量的平方
         self.s = dict()
         for i in range(self.model.num_layers):
@@ -104,12 +109,13 @@ class AdaGrad(Optimizer):
 
     def update(self, layer):
         """更新权重"""
+        super().update(layer)
         layer.weight = layer.weight - self.learning_rate * layer.grad / np.sqrt(self.s[layer] + 1e-9)
 
 
 class RMSProp(Optimizer):
-    def __init__(self, model, learning_rate=0.01, beta=0.9):
-        super(RMSProp, self).__init__(model, learning_rate)
+    def __init__(self, model, learning_rate=0.01, beta=0.9, weight_decay=0):
+        super(RMSProp, self).__init__(model, learning_rate, weight_decay)
         # 衰减系数
         assert 0.0 < beta < 1.0
         self.beta = beta
@@ -136,12 +142,13 @@ class RMSProp(Optimizer):
 
     def update(self, layer):
         """更新权重"""
+        super().update(layer)
         layer.weight = layer.weight - self.learning_rate * layer.grad / np.sqrt(self.s[layer] + 1e-9)
 
 
 class Adam(Optimizer):
-    def __init__(self, model, learning_rate=0.01, beta_1=0.9, beta_2=0.99):
-        super(Adam, self).__init__(model, learning_rate)
+    def __init__(self, model, learning_rate=0.01, beta_1=0.9, beta_2=0.99, weight_decay=0):
+        super(Adam, self).__init__(model, learning_rate, weight_decay)
         # 历史梯度衰减系数
         assert 0.0 < beta_1 < 1.0
         self.beta_1 = beta_1
@@ -185,4 +192,5 @@ class Adam(Optimizer):
 
     def update(self, layer):
         """更新权重"""
+        super().update(layer)
         layer.weight = layer.weight - self.learning_rate * self.v[layer] / np.sqrt(self.s[layer] + 1e-9)

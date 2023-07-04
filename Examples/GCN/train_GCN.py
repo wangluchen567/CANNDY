@@ -87,7 +87,7 @@ if __name__ == '__main__':
                 out_act=Softmax)
 
 
-    optimizer = Adam(model=model, learning_rate=0.01)
+    optimizer = Adam(model=model, learning_rate=1e-2, weight_decay=5e-4)
 
     num_epochs = 200
     # 训练过程
