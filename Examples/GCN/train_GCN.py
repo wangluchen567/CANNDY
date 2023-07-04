@@ -8,6 +8,7 @@ from Core.Optimizer import Adam
 from Core.Activation import Softmax
 from Core.Loss import CrossEntropyWithSoftmaxMask
 
+
 def load_data(data_path):
     print("loading data...")
     i = -1
@@ -29,6 +30,7 @@ def load_data(data_path):
     masks = np.array(data[3], dtype=bool)
     return features, indices, labels, masks
 
+
 def format_data(features, indices, labels, masks, self_loop=True):
     # 对特征进行归一化
     features = features / features.sum(1).reshape(-1, 1)
@@ -43,6 +45,7 @@ def format_data(features, indices, labels, masks, self_loop=True):
     if self_loop:
         adj_mat = adj_mat + np.eye(adj_mat.shape[0])
     return features, labels, adj_mat, train_mask, val_mask, test_mask
+
 
 def evaluate(model, features, labels, mask):
     """评价函数"""
@@ -73,7 +76,6 @@ def plot_train(loss, acc):
     plt.show()
 
 
-
 if __name__ == '__main__':
     data_path = "../../Dataset/cora.tar.gz"
 
@@ -85,7 +87,6 @@ if __name__ == '__main__':
                 output_size=np.max(labels) + 1,
                 hidden_sizes=[16],
                 out_act=Softmax)
-
 
     optimizer = Adam(model=model, learning_rate=1e-2, weight_decay=5e-4)
 
@@ -121,4 +122,3 @@ if __name__ == '__main__':
     acc = evaluate(model, features, labels, test_mask)
     print("Test accuracy {:.2%}".format(acc))
     plot_train(train_loss, train_acc)
-
