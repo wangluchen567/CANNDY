@@ -68,6 +68,6 @@ Chen's Artificial Neural Network constructeD with numpY
 <img src="Pic/PG_end.gif" width="480" height="309" alt="后期效果"/><br/>
 ## 参与贡献
 
-wang567
+Luchen Wang
 
 
