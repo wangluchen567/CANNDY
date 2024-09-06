@@ -1,8 +1,8 @@
 # CANNDY
 
 ## 介绍
-纯Numpy实现的人工神经网络框架<br>
-Chen's Artificial Neural Network builD by numpY
+基于NumPy构建的人工神经网络框架<br>
+Chen's Artificial Neural Network constructeD with numpY
 
 
 ## 模型说明
