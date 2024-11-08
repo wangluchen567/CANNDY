@@ -60,12 +60,15 @@ class Linear(Layer):
 
     def forward(self, input):
         """前向传播"""
-        self.input_1 = input.copy()
+        # 形状转置 (n,m) => (m,n)
+        self.input_1 = input.copy().T
         if self.bias:
             self.input_1 = np.vstack((self.input_1, np.ones(shape=(1, self.input_1.shape[1]))))
         # H = W * X or H = [W, b] * [X, 1].T
+        # 形状: (k,n) = (k,m) @ (m,n)
         self.output = self.weight @ self.input_1
-        output_act = self.output.copy()
+        # 形状转置: (k,n) => (n,k)
+        output_act = self.output.copy().T
         # 激活函数激活
         if self.activation is not None:
             output_act = self.activation.forward(output_act)
@@ -76,12 +79,10 @@ class Linear(Layer):
         delta = grad
         if self.activation is not None:
             delta = grad * self.activation.backward(self.output).T
-        # # 计算batch大小
-        # batch_size = self.output.shape[1]
-        # # 计算梯度(累计梯度)
-        # self.grad += (self.input_1 @ delta).T * batch_size
-        # 计算梯度(累计梯度) 取平均下降较慢
-        self.grad += (self.input_1 @ delta).T
+        # 计算batch大小
+        batch_size = self.output.shape[1]
+        # 计算梯度(累计梯度) 取平均
+        self.grad += (self.input_1 @ delta).T / batch_size
         # 将delta * w传递到上一层网络
         if self.bias:
             # 偏置求导被消掉了无法反向传播
@@ -104,6 +105,5 @@ class GraphConv(Linear):
         self.adj_norm = adj_norm
 
     def forward(self, input):
-        input = input @ self.adj_norm.T
-        output = super().forward(input)
+        output = super().forward(self.adj_norm @ input)
         return output

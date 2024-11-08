@@ -37,7 +37,7 @@ class DQN(object):
 
         # 从target_model中获取 max Q' 的值，用于计算target_Q
         next_pred_value = self.target_model.forward(next_obs)
-        best_v = np.max(next_pred_value, axis=0)
+        best_v = np.max(next_pred_value, axis=1)
 
         # terminal中True为结束(最后一个记录了)，此时target = reward
         target = reward + (1.0 - terminal) * self.gamma * best_v
@@ -51,7 +51,7 @@ class DQN(object):
         # 下面一行是逐元素相乘，拿到action对应的 Q(s,a)
         # 比如：pred_value = [[2.3, 5.7, 1.2, 3.9, 1.4]], action_onehot = [[0,0,0,1,0]]
         #  ==> pred_action_value = [[3.9]]
-        pred_action_value = np.sum((action_onehot * pred_value.T), axis=1)
+        pred_action_value = np.sum((action_onehot * pred_value), axis=1)
 
         # 计算 Q(s,a) 与 target_Q的均方差，得到loss
         Loss = MSELoss(self.model, target, pred_action_value, action_onehot)

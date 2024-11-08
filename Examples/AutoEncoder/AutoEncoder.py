@@ -21,7 +21,7 @@ class AutoEncoder():
         self.num_params = self.get_num_params()
 
     def forward(self, input):
-        hidden = input.T
+        hidden = input
         for fc in self.Layers:
             hidden = fc.forward(hidden)
         output = hidden

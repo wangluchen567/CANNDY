@@ -9,7 +9,6 @@ from Core.Loss import MSELoss
 from Core.Optimizer import Adam
 from AutoEncoder import AutoEncoder
 
-
 def load_data(data_path):
     """加载数据集"""
     with gzip.open(data_path, "rb") as f:
@@ -28,38 +27,13 @@ def train_epoch(model, optimizer, X, Y, batch_size):
     for i in tqdm(np.arange(0, len(X), batch_size)):
         input = X[i:i + batch_size, :]
         truth = Y[i:i + batch_size, :]
-        optimizer.zero_grad()
         output = model.forward(input)
         Loss = MSELoss(model, truth, output)
         ces_loss = Loss.forward()
         train_loss += ces_loss
+        optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
-    return model, optimizer, train_loss
-
-
-def train_onebyone(model, optimizer, X, Y, batch_size):
-    """训练一个epoch(一个一个的训练后累加)"""
-    # 批计数清零
-    batch_count = 0
-    # 累计loss置零
-    train_loss = 0
-    for i in tqdm(range(len(X))):
-        input = X[i, :].reshape(1, -1)
-        truth = Y[i, :].reshape(1, -1)
-        output = model.forward(input)
-        Loss = MSELoss(model, truth, output)
-        ces_loss = Loss.forward()
-        train_loss += ces_loss
-        Loss.backward()
-        batch_count += 1
-        if batch_count >= batch_size:
-            # 更新一次梯度
-            optimizer.step()
-            # 梯度置零
-            optimizer.zero_grad()
-            # 批计数清零
-            batch_count = 0
     return model, optimizer, train_loss
 
 
@@ -77,17 +51,17 @@ def val_epoch(model, X, Y, batch_size):
     return val_loss
 
 
-def train_AutoEncoder(x_train, x_valid):
+def train_AutoEncoder(x_train, x_valid, num_epochs=10):
     model = AutoEncoder()
     batch_size = 64
-    optimizer = Adam(model=model, learning_rate=0.001)
-    for epoch in range(10):
+    optimizer = Adam(model=model, learning_rate=1e-3)
+    for epoch in range(num_epochs):
         start = time.time()
         model, optimizer, train_loss = train_epoch(model, optimizer, x_train, x_train, batch_size)
         val_loss = val_epoch(model, x_valid, x_valid, batch_size)
         epoch_time = time.time() - start
-        print("epoch:{:d}  train_loss:{:.5f}  val_loss:{:.5f}  epoch_time:{:.5f} s".format(
-            epoch + 1, train_loss, val_loss, epoch_time))
+        print("epoch:[{:d}/{:d}],  train_loss:{:.5f},  val_loss:{:.5f},  epoch_time:{:.5f} s".format(
+            epoch + 1, num_epochs, train_loss, val_loss, epoch_time))
         AutoEncoder_test(model, x_valid, index=0, pause=True)
     return model
 
@@ -112,7 +86,6 @@ def reconstruct_show(model, x_valid):
     """输入多个验证集数据进行重构, 查看效果"""
     x_sample = x_valid[10:60]  # 数据范围可自行选择
     x_reconstruct = model.forward(x_sample)
-    x_reconstruct = x_reconstruct.T
     plt.figure(figsize=(8, 12))
     for i in range(5):
         plt.subplot(5, 2, 2 * i + 1)
@@ -133,4 +106,3 @@ if __name__ == '__main__':
     model = train_AutoEncoder(x_train[:5000], x_valid[:100])
     AutoEncoder_test(model, x_valid, index=0, pause=False)
     reconstruct_show(model, x_valid)
-

@@ -4,13 +4,13 @@ import numpy as np
 class MSELoss():
     def __init__(self, model, truth, output, action):
         self.model = model
-        self.truth = truth.T
-        self.output = output.T
+        self.truth = truth
+        self.output = output
         self.action = action
 
     def forward(self):
         """前向传播"""
-        loss = 0.5 * np.sum(np.square(self.truth - self.output))
+        loss = np.sum(np.square(self.truth - self.output)) / self.truth.size
         return loss
 
     def backward(self):

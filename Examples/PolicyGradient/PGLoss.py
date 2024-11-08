@@ -4,8 +4,8 @@ import numpy as np
 class CrossEntropyWithSoftmax():
     def __init__(self, model, truth, output, reward):
         self.model = model
-        self.truth = truth.T
-        self.output = output.T
+        self.truth = truth
+        self.output = output
         self.reward = reward
         self.num_class = self.output.shape[1]
         self.truth_one_hot = self.to_one_hot(self.truth, self.num_class)

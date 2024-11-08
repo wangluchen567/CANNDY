@@ -12,17 +12,17 @@ def train_epoch(model, optimizer, X, Y, batch_size):
     for i in np.arange(0, len(X), batch_size):
         input = X[i:i + batch_size, :]
         truth = Y[i:i + batch_size, :]
-        optimizer.zero_grad()
         output = model.forward(input)
         Loss = CrossEntropyWithSoftmax(model, truth, output)
         ces_loss = Loss.forward()
         train_loss += ces_loss
+        optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
     return model, optimizer, train_loss
 
 
-def train_onebyone(model, optimizer, X, Y, batch_size):
+def train_one_by_one(model, optimizer, X, Y, batch_size):
     """训练一个epoch(一个一个的训练后累加)"""
     # 批计数清零
     batch_count = 0
@@ -47,25 +47,26 @@ def train_onebyone(model, optimizer, X, Y, batch_size):
     return model, optimizer, train_loss
 
 
-def train_model(model, X, Y):
+def train_model(model, X, Y, num_epochs=20):
     """训练模型"""
     batch_size = 16
     optimizer = Adam(model=model, learning_rate=0.05)
-    for epoch in range(30):
+    for epoch in range(num_epochs):
         model, optimizer, train_loss = train_epoch(model, optimizer, X, Y, batch_size)
         accuracy = valid_model(model, X, Y)
-        print("epoch: {:d}, loss: {:.3f}, accuracy: {:.3f}".format(epoch + 1, train_loss, accuracy))
+        print("epoch: [{:d}/{:d}], loss: {:.3f}, accuracy: {:.3f}".
+              format(epoch + 1, num_epochs, train_loss, accuracy))
+        # 绘制分类结果(边缘明显)
         plot_classifier(model, X, Y, accuracy)
+        # 绘制分类结果(无边缘，概率结果)
         # plot_classifier_soft(model, X, Y, accuracy)
     return model
 
 
-def valid_model(model, X, Y):
-    input = X
-    truth = Y
+def valid_model(model, input, truth):
     output = model.forward(input)
-    predict = np.argmax(output, axis=0)
-    accuracy = np.array(predict == truth.flatten(), dtype=int).sum() / len(Y)
+    predict = np.argmax(output, axis=1)
+    accuracy = np.array(predict == truth.flatten(), dtype=int).sum() / len(truth)
     return accuracy
 
 

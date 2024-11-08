@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 def plot_classifier(model, X, Y, accuracy, pause=True):
-    # 画图并保存图像
+    """绘制分类结果（边缘明显）"""
     plt.figure(0)
     # 画图中文显示会有问题，需要这两行设置默认字体
     plt.rcParams['font.sans-serif'] = ['SimHei']
@@ -20,7 +20,7 @@ def plot_classifier(model, X, Y, accuracy, pause=True):
     x_test = np.stack((x1_mesh.flat, x2_mesh.flat), axis=1)  # 得到测试点
     y_hat = model.forward(x_test)
     # 将标签转化为0/1
-    y_hat = y_hat.argmax(axis=0)
+    y_hat = y_hat.argmax(axis=1)
     y_hat = y_hat.reshape(x1_mesh.shape)  # 使之与输入的形状相同
     # cm_light = matplotlib.colors.ListedColormap(['#FF8080', '#A0A0FF', '#77E0A0'])  # 三种背景颜色
     # cm_dark = matplotlib.colors.ListedColormap(['r', 'b', 'g'])  # 三种样本显示颜色
@@ -43,6 +43,7 @@ def plot_classifier(model, X, Y, accuracy, pause=True):
         plt.show()
 
 def plot_classifier_soft(model, X, Y, accuracy, pause=True):
+    """绘制分类结果（无边缘，绘制分类概率）"""
     # 画图并保存图像
     plt.figure(0)
     # 画图中文显示会有问题，需要这两行设置默认字体
@@ -59,7 +60,7 @@ def plot_classifier_soft(model, X, Y, accuracy, pause=True):
     x_test = np.stack((x1_mesh.flat, x2_mesh.flat), axis=1)  # 得到测试点
     y_hat = model.forward(x_test)
     # 直接映射为实数
-    y_hat_p = y_hat[0, :] - y_hat[1, :]
+    y_hat_p = y_hat[:, 1] - y_hat[:, 0]
     y_hat_p = y_hat_p.reshape(x1_mesh.shape)  # 使之与输入的形状相同
     cm_dark = matplotlib.colors.ListedColormap(['b', 'r'])  # 两种样本显示颜色
     plt.pcolormesh(x1_mesh, x2_mesh, y_hat_p, shading='auto', cmap=plt.get_cmap("rainbow"))  # 预测值的显示

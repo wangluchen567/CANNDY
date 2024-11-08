@@ -50,7 +50,7 @@ class Tanh(Activation):
 
 
 class Softmax(Activation):
-    def forward(self, x, dim=0):
+    def forward(self, x, dim=1):
         # 因为在求exp时，可能因为指数过大，出现溢出的情况
         # 而在softmax中，重要的是两个数字之间的差值，只要差值相同，softmax的结果就相同
         x -= np.max(x, axis=dim, keepdims=True)

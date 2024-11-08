@@ -26,17 +26,17 @@ def train_epoch(model, optimizer, X, Y, batch_size):
     for i in np.arange(0, len(X), batch_size):
         input = X[i:i + batch_size, :]
         truth = Y[i:i + batch_size, :]
-        optimizer.zero_grad()
         output = model.forward(input)
         Loss = CrossEntropyWithSoftmax(model, truth, output)
         ces_loss = Loss.forward()
         train_loss += ces_loss
+        optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
     return model, optimizer, train_loss
 
 
-def train_onebyone(model, optimizer, X, Y, batch_size):
+def train_one_by_one(model, optimizer, X, Y, batch_size):
     """训练一个epoch(一个一个的训练后累加)"""
     # 批计数清零
     batch_count = 0
@@ -61,23 +61,22 @@ def train_onebyone(model, optimizer, X, Y, batch_size):
     return model, optimizer, train_loss
 
 
-def train_model(model, train_data, train_label, valid_data, valid_label):
+def train_model(model, train_data, train_label, valid_data, valid_label, num_epochs=50):
     """训练模型"""
     batch_size = 64
     optimizer = Adam(model=model, learning_rate=0.001)
-    for epoch in range(30):
+    for epoch in range(num_epochs):
         model, optimizer, train_loss = train_epoch(model, optimizer, train_data, train_label, batch_size)
         accuracy = valid_model(model, valid_data, valid_label)
-        print("epoch: {:d}, loss: {:.3f}, accuracy: {:.3f}".format(epoch + 1, train_loss, accuracy))
+        print("epoch: [{:d}/{:d}], loss: {:.3f}, accuracy: {:.3f}".
+              format(epoch + 1, num_epochs, train_loss, accuracy))
     return model
 
 
-def valid_model(model, X, Y):
-    input = X
-    truth = Y
+def valid_model(model, input, truth):
     output = model.forward(input)
-    predict = np.argmax(output, axis=0)
-    accuracy = np.array(predict == truth.flatten(), dtype=int).sum() / len(Y)
+    predict = np.argmax(output, axis=1)
+    accuracy = np.array(predict == truth.flatten(), dtype=int).sum() / len(truth)
     return accuracy
 
 
@@ -86,8 +85,8 @@ if __name__ == '__main__':
     x_train, y_train, x_valid, y_valid = load_data(data_path)
     y_train = y_train.reshape(-1, 1)
     y_valid = y_valid.reshape(-1, 1)
-    train_size = 5000
-    valid_size = 100
+    train_size = 10000
+    valid_size = 1000
     # 创建模型
     model = MLP(784, 10, [100, 20], out_act=Softmax)
     model = train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size])

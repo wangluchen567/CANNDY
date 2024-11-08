@@ -17,7 +17,8 @@ class Agent(object):
     def predict(self, obs):
         act_prob = self.alg.predict(obs)
         act = np.argmax(act_prob)  # 根据动作概率选择概率最高的动作
-        # 在其他应用中可以考虑使用随机选择的策略（如sample函数）
+        # 在其他应用中可以考虑使用随机选择的策略
+        # act = np.random.choice(np.arange(len(act_prob)), p=act_prob)
         return act
 
     def learn(self, obs, action, reward):

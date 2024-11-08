@@ -27,7 +27,7 @@ class MLP():
     def forward(self, input):
         # 必须对输入进行转置
         # 考虑到实现层的反向传播
-        hidden = input.T
+        hidden = input.copy()
         for fc in self.Layers:
             hidden = fc.forward(hidden)
         output = hidden

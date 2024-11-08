@@ -5,7 +5,9 @@ class Loss():
     def __init__(self, model, truth, output):
         self.model = model
         self.truth = truth
-        self.output = output.T
+        self.output = output
+        if len(self.truth) != len(self.output):
+            raise ValueError("The num of truth does not match the num of output")
 
     def forward(self):
         raise NotImplementedError
@@ -28,7 +30,7 @@ class MSELoss(Loss):
 
     def forward(self):
         """前向传播"""
-        loss = 0.5 * np.sum(np.square(self.truth - self.output))
+        loss = np.sum(np.square(self.truth - self.output)) / self.truth.size
         return loss
 
     def backward(self):
@@ -41,12 +43,12 @@ class MSELoss(Loss):
 class CrossEntropyWithSoftmax(Loss):
     def __init__(self, model, truth, output):
         super(CrossEntropyWithSoftmax, self).__init__(model, truth, output)
-        self.num_class = self.output.shape[1]
+        self.num_samples, self.num_class = self.output.shape
         self.truth_one_hot = self.to_one_hot(self.truth, self.num_class)
 
     def forward(self):
         """前向传播"""
-        loss = -np.sum(self.truth_one_hot * np.log(self.output + 1e-9))
+        loss = -np.sum(self.truth_one_hot * np.log(self.output + 1e-9)) / self.num_samples
         return loss
 
     def backward(self):
@@ -59,15 +61,16 @@ class CrossEntropyWithSoftmax(Loss):
 class CrossEntropyWithSoftmaxMask(Loss):
     def __init__(self, model, truth, output, mask):
         super(CrossEntropyWithSoftmaxMask, self).__init__(model, truth, output)
-        self.reverse_mask = np.array(1 - mask, dtype=bool)
-        self.num_class = self.output.shape[1]
+        self.mask = mask
+        _, self.num_class = self.output.shape
+        self.num_samples = np.sum(self.mask)
         self.truth_one_hot = self.to_one_hot(self.truth, self.num_class)
-        self.output[self.reverse_mask, :] = 0
-        self.truth_one_hot[self.reverse_mask, :] = 0
+        self.output[~self.mask, :] = 0
+        self.truth_one_hot[~self.mask, :] = 0
 
     def forward(self):
         """前向传播"""
-        loss = -np.sum(self.truth_one_hot * np.log(self.output + 1e-9))
+        loss = -np.sum(self.truth_one_hot * np.log(self.output + 1e-9)) / self.num_samples
         return loss
 
     def backward(self):

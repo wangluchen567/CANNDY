@@ -36,19 +36,21 @@ def plot_sin(model, pause=True):
 
 
 if __name__ == '__main__':
+    np.random.seed(0)
     X = np.random.uniform(0, 10, size=(100, 1))
     Y = np.sin(X)
     model = MLP(1, 1, [8, 16, 8])
 
     optimizer = Adam(model=model, learning_rate=0.01)
-    for epoch in range(1000):
+    num_epochs = 1000
+    for epoch in range(num_epochs):
         input = X
         truth = Y
         optimizer.zero_grad()
         output = model.forward(input)
         Loss = MSELoss(model, truth, output)
         mse_loss = Loss.forward()
-        print(epoch + 1, mse_loss)
+        print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {mse_loss.item()}')
         plot_sin(model)
         Loss.backward()
         optimizer.step()
