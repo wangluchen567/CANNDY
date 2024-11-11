@@ -1,7 +1,8 @@
 import numpy as np
 
 
-class Activation():
+class Activation:
+    """激活函数父类"""
     def forward(self, x):
         raise NotImplementedError
 
@@ -14,7 +15,7 @@ class ReLU(Activation):
         return x * (x > 0)
 
     def backward(self, x):
-        return (x > 0)
+        return x > 0
 
 
 class Sigmoid(Activation):

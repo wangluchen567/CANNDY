@@ -2,7 +2,7 @@ from Core.Layer import Linear
 from Core.Activation import ReLU
 
 
-class Model():
+class Model:
     def __init__(self, input_size, output_size, hidden_sizes):
         self.input_size = input_size
         self.output_size = output_size
@@ -21,8 +21,8 @@ class Model():
         # 计算参数数量
         self.num_params = self.get_num_params()
 
-    def forward(self, input):
-        hidden = input
+    def forward(self, input_):
+        hidden = input_
         for fc in self.Layers:
             hidden = fc.forward(hidden)
         output = hidden

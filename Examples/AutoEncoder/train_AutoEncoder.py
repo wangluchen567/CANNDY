@@ -9,6 +9,7 @@ from Core.Loss import MSELoss
 from Core.Optimizer import Adam
 from AutoEncoder import AutoEncoder
 
+
 def load_data(data_path):
     """加载数据集"""
     with gzip.open(data_path, "rb") as f:

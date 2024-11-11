@@ -1,7 +1,8 @@
 import numpy as np
 
 
-class Loss():
+class Loss:
+    """损失函数父类"""
     def __init__(self, model, truth, output):
         self.model = model
         self.truth = truth

@@ -21,8 +21,8 @@ class Model():
         # 计算参数数量
         self.num_params = self.get_num_params()
 
-    def forward(self, input):
-        hidden = input
+    def forward(self, input_):
+        hidden = input_
         for fc in self.Layers:
             hidden = fc.forward(hidden)
         output = hidden

@@ -28,8 +28,8 @@ class GCN():
         else:
             self.Layers.append(GraphConv(hidden_sizes[-1], output_size, self.adj_norm, out_act))
 
-    def forward(self, input):
-        hidden = input
+    def forward(self, input_):
+        hidden = input_
         for gc in self.Layers:
             hidden = gc.forward(hidden)
         output = hidden

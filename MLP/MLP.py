@@ -2,7 +2,7 @@ from Core.Layer import Linear
 from Core.Activation import Sigmoid, ReLU
 
 
-class MLP():
+class MLP:
     def __init__(self, input_size, output_size, hidden_sizes, out_act=None):
         self.input_size = input_size
         self.output_size = output_size
@@ -24,10 +24,8 @@ class MLP():
         # 计算参数数量
         self.num_params = self.get_num_params()
 
-    def forward(self, input):
-        # 必须对输入进行转置
-        # 考虑到实现层的反向传播
-        hidden = input.copy()
+    def forward(self, input_):
+        hidden = input_.copy()
         for fc in self.Layers:
             hidden = fc.forward(hidden)
         output = hidden

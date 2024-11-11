@@ -101,7 +101,7 @@ def main():
             episode += 1
 
         # 测试部分
-        eval_reward = evaluate(env, agent, render=True, episode=episode)
+        eval_reward = evaluate(env, agent, render=False, episode=episode)
         print('episode:{}, e_greed:{}, test reward:{}'.format(
             episode, agent.e_greed, eval_reward))
 

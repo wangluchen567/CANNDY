@@ -1,6 +1,7 @@
 import numpy as np
 
-class Optimizer():
+
+class Optimizer:
     def __init__(self, model, learning_rate, weight_decay):
         self.model = model
         self.learning_rate = learning_rate
@@ -19,7 +20,6 @@ class Optimizer():
         """更新梯度更新速度"""
         # 先进行weight_decay操作
         layer.weight = layer.weight - layer.weight * self.weight_decay
-
 
 
 class GradientDescent(Optimizer):

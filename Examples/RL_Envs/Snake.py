@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 
-class Snake():
+class Snake:
     def __init__(self):
         # 观测维度
         self.observation_dim = None
@@ -32,7 +32,6 @@ class Snake():
         self.score = 0
         # 重置环境
         self.reset()
-
 
     def reset(self):
         """重置环境"""
