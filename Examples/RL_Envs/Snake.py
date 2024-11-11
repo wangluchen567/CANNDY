@@ -104,8 +104,6 @@ class Snake():
         # 创建蛇和苹果
         np.add.at(self.map, (self.snake[:, 0], self.snake[:, 1]), 3)
         np.add.at(self.map, (self.apples[:, 0], self.apples[:, 1]), 2)
-        # self.map[self.snake[:, 0], self.snake[:, 1]] = 3
-        # self.map[self.apples[:, 0], self.apples[:, 1]] = 2
 
     def set_direction(self, action):
         """将动作转换为方向变化情况"""
@@ -184,13 +182,14 @@ class Snake():
         plt.text(1, 0.3, 'Score: ' + str(self.score), ha='center', va='bottom', color='white', fontsize=12)
         plt.tight_layout()
         plt.axis('off')
-        # plt.pause(pause_time)
-        folder_name = "D:/PlotSnake/" + file_name
-        # 检查文件夹是否存在
-        if not os.path.exists(folder_name):
-            # 文件夹不存在，则创建文件夹
-            os.makedirs(folder_name)
-        plt.savefig(folder_name + '/' + str(pic_id) + '.png', dpi=160)
+        plt.pause(pause_time)
+        # 保存文件
+        # folder_name = "D:/PlotSnake/" + file_name
+        # # 检查文件夹是否存在
+        # if not os.path.exists(folder_name):
+        #     # 文件夹不存在，则创建文件夹
+        #     os.makedirs(folder_name)
+        # plt.savefig(folder_name + '/' + str(pic_id) + '.png', dpi=160)
 
 
 if __name__ == '__main__':
