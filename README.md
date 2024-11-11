@@ -38,7 +38,8 @@ Chen's Artificial Neural Network constructeD with numpY
 ## 安装教程
 
 1.  Anaconda `python>=3.7`
-2. 强化学习相关项目，需要 gym==0.22.0; pygame==2.2.0
+2. 强化学习相关项目，gym 需要 gym==0.22.0; pygame==2.2.0
+（贪吃蛇环境不需要，因为是单独实现的）
 3. 其他相关的包，可自行调试判断
 
 
