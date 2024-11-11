@@ -54,9 +54,9 @@ Chen's Artificial Neural Network constructeD with numpY
 - 自编码器模型效果<br>
 <img src="Pic/Res_AE.gif" width="396" height="220" alt="自编码器"/><br/>
 - DQN(深度Q学习网络)模型训练玩贪吃蛇最终效果<br>
-<img src="Pic/Snake.gif" width="396" height="300" alt="自编码器"/><br/>
+<img src="Pic/Snake.gif" width="396" height="360" alt="自编码器"/><br/>
 - PG(策略梯度网络)模型训练玩CartPole最终效果<br>
-<img src="Pic/PG_end.gif" width="420" height="220" alt="后期效果"/><br/>
+<img src="Pic/PG_end.gif" width="396" height="260" alt="后期效果"/><br/>
 
 ## 参与贡献
 
