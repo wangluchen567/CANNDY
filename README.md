@@ -48,24 +48,16 @@ Chen's Artificial Neural Network constructeD with numpY
 - `Copy核心代码时请注明出处`
 
 ## 效果展示
-- MLP模型对同心圆数据集做分类训练<br>
-<img src="Pic/MLP_circle.gif" width="480" height="350" alt="分类训练"/><br/>
-- MLP模型对sin函数回归拟合<br>
-<img src="Pic/MLP_sin.gif" width="480" height="350" alt="回归拟合"/><br/>
+- MLP模型对同心圆数据集分类效果/对sin函数回归拟合效果<br>
+<img src="Pic/MLP_circle.gif" width="288" height="220" alt="分类训练"/>
+<img src="Pic/MLP_sin.gif" width="288" height="220" alt="回归拟合"/><br/>
 - 自编码器模型效果<br>
-<img src="Pic/Res_AE.gif" width="480" height="265" alt="自编码器"/><br/>
-- DQN(深度Q学习网络)模型效果<br>
-奖励变化结果<br>
-<img src="Pic/DQN_reward.png" width="480" height="357" alt="DQN奖励"/><br/>
-- 策略梯度模型效果<br>
-奖励变化结果<br>
-<img src="Pic/PG_reward.png" width="480" height="357" alt="PG奖励"/><br/>
-开始阶段<br>
-<img src="Pic/PG_start.gif" width="480" height="309" alt="开始阶段"/><br/>
-中期阶段<br>
-<img src="Pic/PG_mid.gif" width="480" height="309" alt="中期阶段"/><br/>
-后期效果<br>
-<img src="Pic/PG_end.gif" width="480" height="309" alt="后期效果"/><br/>
+<img src="Pic/Res_AE.gif" width="396" height="220" alt="自编码器"/><br/>
+- DQN(深度Q学习网络)模型训练玩贪吃蛇最终效果<br>
+<img src="Pic/Snake.gif" width="396" height="300" alt="自编码器"/><br/>
+- PG(策略梯度网络)模型训练玩CartPole最终效果<br>
+<img src="Pic/PG_end.gif" width="420" height="220" alt="后期效果"/><br/>
+
 ## 参与贡献
 
 Luchen Wang
