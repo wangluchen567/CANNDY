@@ -2,6 +2,7 @@ import numpy as np
 
 
 class Layer():
+    """层级父类"""
     def __init__(self, input_size, output_size, activation, bias):
         self.input_size = input_size
         self.output_size = output_size
@@ -39,6 +40,7 @@ class Layer():
 
 
 class Linear(Layer):
+    """线性层"""
     def __init__(self, input_size, output_size, activation=None, bias=True):
         super(Linear, self).__init__(input_size, output_size, activation, bias)
         # 初始化权重
@@ -100,6 +102,7 @@ class Linear(Layer):
 
 
 class GraphConv(Linear):
+    """图卷积层"""
     def __init__(self, input_size, output_size, adj_norm, activation=None):
         super(GraphConv, self).__init__(input_size, output_size, activation, False)
         self.adj_norm = adj_norm
