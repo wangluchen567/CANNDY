@@ -1,23 +1,20 @@
 from Core.Layer import Linear
+from Core.Module import Module
 from Core.Activation import ReLU
 
 
-class Model:
-    def __init__(self, input_size, output_size, hidden_sizes):
-        self.input_size = input_size
-        self.output_size = output_size
-        self.hidden_sizes = hidden_sizes
-        self.activation = ReLU
-        self.num_hidden = len(hidden_sizes)
-        self.num_layers = len(hidden_sizes) + 1
-
-        self.Layers = [Linear(input_size, hidden_sizes[0], self.activation)]
+class Model(Module):
+    def __init__(self, input_size, output_size, hidden_sizes, hidden_activation=ReLU, out_activation=None):
+        super().__init__(input_size, output_size, hidden_sizes, hidden_activation, out_activation)
+        self.num_hidden = len(self.hidden_sizes)
+        self.num_layers = len(self.hidden_sizes) + 1
+        # 创建网络层
+        self.Layers = [Linear(self.input_size, self.hidden_sizes[0], self.hidden_activation)]
         if self.num_hidden > 1:
             self.Layers.extend(
-                [Linear(hidden_sizes[i], hidden_sizes[i + 1], self.activation) for i in
+                [Linear(self.hidden_sizes[i], self.hidden_sizes[i + 1], self.hidden_activation) for i in
                  range(self.num_hidden - 1)])
-        # 最后一层加激活函数
-        self.Layers.append(Linear(hidden_sizes[-1], output_size))
+        self.Layers.append(Linear(self.hidden_sizes[-1], self.output_size))
         # 计算参数数量
         self.num_params = self.get_num_params()
 
@@ -27,12 +24,6 @@ class Model:
             hidden = fc.forward(hidden)
         output = hidden
         return output
-
-    def get_num_params(self):
-        num_params = 0
-        for fc in self.Layers:
-            num_params += fc.num_param
-        return num_params
 
     def load_params_list(self, params_list):
         for i in range(self.num_layers):

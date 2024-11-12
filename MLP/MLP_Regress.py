@@ -2,7 +2,7 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 
-from MLP import MLP
+from Core.Module import MLP
 from Core.Loss import MSELoss
 from Core.Optimizer import Adam
 
@@ -37,21 +37,20 @@ def plot_sin(model, pause=True):
 
 if __name__ == '__main__':
     np.random.seed(0)
-    X = np.random.uniform(0, 10, size=(100, 1))
+    num_samples = 100
+    X = np.random.uniform(0, 10, size=(num_samples, 1))
     Y = np.sin(X)
     model = MLP(1, 1, [8, 16, 8])
 
     optimizer = Adam(model=model, learning_rate=0.01)
     num_epochs = 1000
     for epoch in range(num_epochs):
-        input = X
-        truth = Y
-        optimizer.zero_grad()
-        output = model.forward(input)
-        Loss = MSELoss(model, truth, output)
+        output = model.forward(X)
+        Loss = MSELoss(model, Y, output)
         mse_loss = Loss.forward()
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {mse_loss.item()}')
         plot_sin(model)
+        optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
 

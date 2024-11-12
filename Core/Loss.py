@@ -28,6 +28,8 @@ class Loss:
 class MSELoss(Loss):
     def __init__(self, model, truth, output):
         super(MSELoss, self).__init__(model, truth, output)
+        if truth.shape != output.shape:
+            raise ValueError("The shape of truth does not match the shape of output")
 
     def forward(self):
         """前向传播"""

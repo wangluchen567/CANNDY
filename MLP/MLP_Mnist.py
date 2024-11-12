@@ -2,7 +2,7 @@ import gzip
 import pickle
 import numpy as np
 
-from MLP import MLP
+from Core.Module import MLP
 from Core.Optimizer import Adam
 from Core.Activation import Softmax
 from Core.Loss import CrossEntropyWithSoftmax
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     train_size = 10000
     valid_size = 1000
     # 创建模型
-    model = MLP(784, 10, [100, 20], out_act=Softmax)
+    model = MLP(784, 10, [100, 20], out_activation=Softmax)
     model = train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size])
     accuracy = valid_model(model, x_valid, y_valid)
     print("full dataset accuracy: {:.3f} %".format(accuracy * 100))

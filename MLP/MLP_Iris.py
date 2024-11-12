@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from MLP import MLP
+from Core.Module import MLP
 from Core.Optimizer import Adam
 from Core.Activation import Softmax
 from Core.Loss import CrossEntropyWithSoftmax
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     valid_labels = labels[train_size:]
 
     # 创建模型
-    model = MLP(4, 3, [10, 10], out_act=Softmax)
+    model = MLP(4, 3, [10, 10], out_activation=Softmax)
     model = train_model(model, train_dataset, train_labels, valid_dataset, valid_labels)
     accuracy = valid_model(model, features, labels)
     print("full dataset accuracy: {:.3f} %".format(accuracy * 100))

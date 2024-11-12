@@ -1,9 +1,11 @@
 from Core.Layer import Linear
+from Core.Module import Module
 from Core.Activation import Sigmoid, ReLU
 
 
-class AutoEncoder:
+class AutoEncoder(Module):
     def __init__(self):
+        super().__init__()
         self.Encoder = [
             Linear(784, 256, ReLU),
             Linear(256, 64, ReLU),
@@ -23,12 +25,6 @@ class AutoEncoder:
     def forward(self, input_):
         hidden = input_
         for fc in self.Layers:
-            hidden = fc.forward(hidden)
+            hidden = fc(hidden)
         output = hidden
         return output
-
-    def get_num_params(self):
-        num_params = 0
-        for fc in self.Layers:
-            num_params += fc.num_param
-        return num_params

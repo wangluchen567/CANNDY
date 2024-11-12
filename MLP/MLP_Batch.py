@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from MLP import MLP
+from Core.Module import MLP
 from Core.Loss import MSELoss
 from Core.Optimizer import Adam
 

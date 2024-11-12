@@ -1,5 +1,5 @@
 import numpy as np
-from MLP import MLP
+from Core.Module import MLP
 from Core.Optimizer import Adam
 from Core.Activation import Softmax
 from Core.Loss import CrossEntropyWithSoftmax
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     X, Y = make_circles(600, noise=0.12, factor=0.2)
     Y = Y.reshape(-1, 1)
     # 创建模型
-    model = MLP(2, 2, [3], out_act=Softmax)
+    model = MLP(2, 2, [3], out_activation=Softmax)
     model = train_model(model, X, Y)
     accuracy = valid_model(model, X, Y)
     print("full dataset accuracy: {:.3f} %".format(accuracy * 100))

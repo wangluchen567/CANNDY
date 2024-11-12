@@ -3,7 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from GCN import GCN
+from Core.Module import GCN
 from Core.Optimizer import Adam
 from Core.Activation import Softmax
 from Core.Loss import CrossEntropyWithSoftmaxMask
@@ -89,7 +89,7 @@ if __name__ == '__main__':
                 input_size=features.shape[1],
                 output_size=np.max(labels) + 1,
                 hidden_sizes=[16],
-                out_act=Softmax)
+                out_activation=Softmax)
 
     optimizer = Adam(model=model, learning_rate=1e-2, weight_decay=5e-4)
 
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         t0 = time.time()
         # forward前向传播，使用交叉熵损失
-        output = model.forward(features)
+        output = model(features)
         Loss = CrossEntropyWithSoftmaxMask(model, labels, output, train_mask)
         # Loss = CrossEntropyWithSoftmax(model, labels, output)
         ces_loss = Loss.forward()

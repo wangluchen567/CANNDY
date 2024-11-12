@@ -3,10 +3,11 @@ import numpy as np
 
 class Activation:
     """激活函数父类"""
-    def forward(self, x):
+
+    def forward(self, *args, **kwargs):
         raise NotImplementedError
 
-    def backward(self, x):
+    def backward(self, *args, **kwargs):
         raise NotImplementedError
 
 
