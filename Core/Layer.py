@@ -132,7 +132,8 @@ class RNNCell(Layer):
     def __init__(self, input_size, output_size, activation, bias=True):
         super(RNNCell, self).__init__(input_size, output_size, activation, bias)
         # 保存整个过程中的输入与输出
-        self.input_1_list, self.hidden_1_list, self.output_list = [], [], []
+        self.input_1_list, self.hidden_1_list, self.output_list = None, None, None
+        self.init_empty()
         # 初始化权重
         # 何凯明的方法初始化权重
         self.weight_input = self.kaiming_uniform(self.input_size, self.output_size, self.bias)
@@ -148,6 +149,10 @@ class RNNCell(Layer):
         self.grad = np.zeros(self.weight.shape)
         # 计算参数量
         self.num_param = self.weight.size
+
+    def init_empty(self):
+        """初始化置空"""
+        self.input_1_list, self.hidden_1_list, self.output_list = [], [], []
 
     def zero_grad(self):
         """梯度置0"""
@@ -263,6 +268,9 @@ class RNN(Layer):
         self.state = state
         if self.state is None:
             self.state = self.init_state(batch_size)
+        # 为了不累计Cell中的输入输出，需要先初始化置空
+        for i in range(self.num_layers):
+            self.Layers[i].init_empty()
         # 保存模型输出
         for i in range(self.num_steps):
             self.state[0] = self.Layers[0].forward(self.inputs[i], self.state[0])
