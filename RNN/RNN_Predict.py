@@ -7,7 +7,7 @@ from Core.Optimizer import Adam
 from Core.Module import RNNModel
 
 
-def plot_future(model, test_previous, gap, x_range, mse_loss, pause=True, epoch=0):
+def plot_future(model, test_previous, gap, x_range, mse_loss, pause=True):
     Model = copy.deepcopy(model)
     test_previous = test_previous.reshape(1, -1, 1)
     y_plot = test_previous.flatten().copy()
@@ -37,8 +37,7 @@ def plot_future(model, test_previous, gap, x_range, mse_loss, pause=True, epoch=
     plt.grid(True)
     plt.legend(loc='upper right')
     if pause:
-        # plt.pause(0.001)
-        plt.savefig("D:/Plots1/RNN/" + str(epoch) + ".png", dpi=160)
+        plt.pause(0.001)
     else:
         plt.show()
 
@@ -69,14 +68,14 @@ if __name__ == '__main__':
     # 初始化梯度优化器
     optimizer = Adam(model=model, learning_rate=0.01)
     # 对模型进行优化
-    num_epochs = 200
+    num_epochs = 500
     for epoch in range(num_epochs):
         output = model.forward(data_previous)
         Loss = MSELoss(model, data_next, output)
         mse_loss = Loss.forward()
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {mse_loss.item()}')
         # 绘制优化过程中的模型表现
-        plot_future(model, data_previous[0].copy(), gap, x_range, mse_loss, pause=True, epoch=epoch+1)
+        plot_future(model, data_previous[0].copy(), gap, x_range, mse_loss, pause=True)
         optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
