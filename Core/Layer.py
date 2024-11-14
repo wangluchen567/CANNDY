@@ -4,49 +4,98 @@ import numpy as np
 class Layer:
     """层级父类"""
 
-    def __init__(self, input_size, output_size, activation, bias):
+    def __init__(self, input_size=None, output_size=None, activation=None, bias=None):
         self.input_size = input_size
         self.output_size = output_size
         self.activation = activation
         self.bias = bias
 
     def __call__(self, *args, **kwargs):
+        """方便直接使用对象名调用forward函数"""
         return self.forward(*args, **kwargs)
 
     def zero_grad(self):
+        """梯度置为0矩阵"""
         raise NotImplementedError
 
     def get_parameters(self):
+        """获取该层的权重参数"""
         raise NotImplementedError
 
     def set_parameters(self, *args, **kwargs):
+        """设置该层的权重参数"""
         raise NotImplementedError
 
     def forward(self, *args, **kwargs):
+        """该层前向传播"""
         raise NotImplementedError
 
     def backward(self, *args, **kwargs):
+        """该层反向传播"""
         raise NotImplementedError
 
-    @staticmethod
-    def random_uniform(input_size, output_size, have_bias, lower=-1, upper=1):
-        if have_bias:
-            return np.random.uniform(lower, upper, size=(output_size, input_size + 1))
+    def xavier_uniform_(self, matrix: np.ndarray, gain=1.0):
+        """Xavier均匀分布随机初始化(适用于Sigmoid和Tanh函数)"""
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix)
+        bound = gain * np.sqrt(6.0 / float(fan_in + fan_out))
+        return np.random.uniform(-bound, bound, matrix.shape)
+
+    def xavier_normal_(self, matrix: np.ndarray, gain=1.0):
+        """Xavier正态分布随机初始化(适用于Sigmoid和Tanh函数)"""
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix)
+        std = gain * np.sqrt(2.0 / float(fan_in + fan_out))
+        return np.random.normal(0., std, matrix.shape)
+
+    def get_gain(self):
+        """获取gain值"""
+        if self.activation is None:
+            return 1.0
+        elif self.activation.__name__ == 'ReLU':
+            return np.sqrt(2)
+        elif self.activation.__name__ == 'Tanh':
+            return 5 / 3
         else:
-            return np.random.uniform(lower, upper, size=(output_size, input_size))
+            return 1.0
+
+    def kaiming_uniform_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0):
+        """何凯明均匀分布随机初始化
+        linear/sigmoid/conv/identity: gain = :math:`1`
+        relu: gain = :math:`\\sqrt{2}`
+        tanh: gain = :math:`\\frac{5}{3}`
+        leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
+        """
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix)
+        fan = fan_in if mode == 'fan_in' else fan_out
+        bound = gain * np.sqrt(3.0) / np.sqrt((1 + a * a) * fan)
+        return np.random.uniform(-bound, bound, matrix.shape)
+
+    def kaiming_normal_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0):
+        """何凯明正态分布随机初始化
+        linear/sigmoid/conv/identity: gain = :math:`1`
+        relu: gain = :math:`\\sqrt{2}`
+        tanh: gain = :math:`\\frac{5}{3}`
+        leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
+        """
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix)
+        fan = fan_in if mode == 'fan_in' else fan_out
+        std = gain / np.sqrt((1 + a * a) * fan)
+        return np.random.normal(0., std, matrix.shape)
 
     @staticmethod
-    def kaiming_uniform(input_size, output_size, have_bias, a=0):
-        weight_bound = np.sqrt((6 / ((1 + a * a) * input_size)))
-        bias_bound = 1 / np.sqrt(input_size)
-        if have_bias:
-            weight = np.zeros((output_size, input_size + 1))
-            weight[:, :-1] = np.random.uniform(-weight_bound, weight_bound, size=(output_size, input_size))
-            weight[:, -1] = np.random.uniform(-bias_bound, bias_bound, size=output_size)
-            return weight
-        else:
-            weight = np.random.uniform(-weight_bound, weight_bound, size=(output_size, input_size))
-            return weight
+    def cal_fan_in_and_fan_out(matrix: np.ndarray):
+        """计算扇入扇出值"""
+        dimensions = matrix.ndim  # 矩阵维度
+        if dimensions < 2:
+            raise ValueError("Fan in and fan out can not be computed for matrix with fewer than 2 dimensions")
+        input_size = matrix.shape[1]  # 输入大小（或输入通道数）
+        output_size = matrix.shape[0]  # 输出大小（或输出通道数）
+        field_size = 1  # 感受野大小
+        if dimensions > 2:
+            field_size = np.size(matrix[0][0])
+        # 计算扇入扇出值
+        fan_in = input_size * field_size
+        fan_out = output_size * field_size
+        return fan_in, fan_out
 
 
 class Linear(Layer):
@@ -57,21 +106,20 @@ class Linear(Layer):
         # 保存输入与输出
         self.input_1, self.output = None, None
         # 初始化权重
-        # 随机初始化权重
-        # self.weight = self.random_uniform(input_size, output_size, bias)
+        self.weight = np.zeros((self.output_size, self.input_size + self.bias))
         # 何凯明的方法初始化权重
-        self.weight = self.kaiming_uniform(self.input_size, self.output_size, self.bias)
+        self.weight = self.kaiming_uniform_(self.weight, gain=self.get_gain())
         # 初始化激活函数
         if self.activation is not None:
             self.activation = activation()
         # 初始化梯度
-        self.grad = np.zeros(self.weight.shape)
+        self.grad = np.zeros_like(self.weight)
         # 计算参数量
         self.num_param = self.weight.size
 
     def zero_grad(self):
         """梯度置0"""
-        self.grad = np.zeros(self.weight.shape)
+        self.grad = np.zeros_like(self.weight)
 
     def get_parameters(self):
         return self.weight
@@ -129,24 +177,26 @@ class GraphConv(Linear):
 class RNNCell(Layer):
     """RNN模块"""
 
-    def __init__(self, input_size, output_size, activation, bias=True):
+    def __init__(self, input_size, output_size, activation=None, bias=True):
         super(RNNCell, self).__init__(input_size, output_size, activation, bias)
         # 保存整个过程中的输入与输出
         self.input_1_list, self.hidden_1_list, self.output_list = None, None, None
         self.init_empty()
         # 初始化权重
-        # 何凯明的方法初始化权重
-        self.weight_input = self.kaiming_uniform(self.input_size, self.output_size, self.bias)
-        self.weight_hidden = self.kaiming_uniform(self.output_size, self.output_size, self.bias)
+        self.weight_input = np.zeros((self.output_size, self.input_size + self.bias))
+        self.weight_hidden = np.zeros((self.output_size, self.output_size + self.bias))
+        # 使用Glorot Xavier的方法初始化权重
+        self.weight_input = self.xavier_uniform_(self.weight_input)
+        self.weight_hidden = self.xavier_uniform_(self.weight_hidden)
+        # 初始化激活函数
+        if self.activation is not None:
+            self.activation = activation()
         # 对权重进行拼接以方便反向传播更新权重
         self.weight = np.hstack((self.weight_input, self.weight_hidden))
         # 记录拼接位置
         self.splice = self.weight_input.shape[1]
-        # 初始化激活函数
-        if self.activation is not None:
-            self.activation = activation()
         # 初始化梯度
-        self.grad = np.zeros(self.weight.shape)
+        self.grad = np.zeros_like(self.weight)
         # 计算参数量
         self.num_param = self.weight.size
 
@@ -156,7 +206,7 @@ class RNNCell(Layer):
 
     def zero_grad(self):
         """梯度置0"""
-        self.grad = np.zeros(self.weight.shape)
+        self.grad = np.zeros_like(self.weight)
 
     def get_parameters(self):
         return self.weight
@@ -218,7 +268,7 @@ class RNNCell(Layer):
 class RNN(Layer):
     """RNN网络层"""
 
-    def __init__(self, input_size, hidden_size, num_layers, activation, bias=True, batch_first=False):
+    def __init__(self, input_size, hidden_size, num_layers, activation=None, bias=True, batch_first=False):
         super(RNN, self).__init__(input_size, hidden_size, activation, bias)
         self.hidden_size = hidden_size
         self.num_layers = num_layers if num_layers > 1 else 1
