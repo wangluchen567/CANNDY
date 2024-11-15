@@ -4,7 +4,7 @@ import numpy as np
 class Layer:
     """层级父类"""
 
-    def __init__(self, input_size=None, output_size=None, activation=None, bias=None):
+    def __init__(self, input_size=None, output_size=None, activation=None, bias=False):
         self.input_size = input_size
         self.output_size = output_size
         self.activation = activation
@@ -34,15 +34,15 @@ class Layer:
         """该层反向传播"""
         raise NotImplementedError
 
-    def xavier_uniform_(self, matrix: np.ndarray, gain=1.0):
+    def xavier_uniform_(self, matrix: np.ndarray, gain=1.0, bias=True):
         """Xavier均匀分布随机初始化(适用于Sigmoid和Tanh函数)"""
-        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix)
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
         bound = gain * np.sqrt(6.0 / float(fan_in + fan_out))
         return np.random.uniform(-bound, bound, matrix.shape)
 
-    def xavier_normal_(self, matrix: np.ndarray, gain=1.0):
+    def xavier_normal_(self, matrix: np.ndarray, gain=1.0, bias=True):
         """Xavier正态分布随机初始化(适用于Sigmoid和Tanh函数)"""
-        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix)
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
         std = gain * np.sqrt(2.0 / float(fan_in + fan_out))
         return np.random.normal(0., std, matrix.shape)
 
@@ -57,37 +57,37 @@ class Layer:
         else:
             return 1.0
 
-    def kaiming_uniform_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0):
+    def kaiming_uniform_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0, bias=True):
         """何凯明均匀分布随机初始化
         linear/sigmoid/conv/identity: gain = :math:`1`
         relu: gain = :math:`\\sqrt{2}`
         tanh: gain = :math:`\\frac{5}{3}`
         leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
         """
-        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix)
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
         fan = fan_in if mode == 'fan_in' else fan_out
         bound = gain * np.sqrt(3.0) / np.sqrt((1 + a * a) * fan)
         return np.random.uniform(-bound, bound, matrix.shape)
 
-    def kaiming_normal_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0):
+    def kaiming_normal_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0, bias=True):
         """何凯明正态分布随机初始化
         linear/sigmoid/conv/identity: gain = :math:`1`
         relu: gain = :math:`\\sqrt{2}`
         tanh: gain = :math:`\\frac{5}{3}`
         leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
         """
-        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix)
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
         fan = fan_in if mode == 'fan_in' else fan_out
         std = gain / np.sqrt((1 + a * a) * fan)
         return np.random.normal(0., std, matrix.shape)
 
     @staticmethod
-    def cal_fan_in_and_fan_out(matrix: np.ndarray):
+    def cal_fan_in_and_fan_out(matrix: np.ndarray, bias=True):
         """计算扇入扇出值"""
         dimensions = matrix.ndim  # 矩阵维度
         if dimensions < 2:
             raise ValueError("Fan in and fan out can not be computed for matrix with fewer than 2 dimensions")
-        input_size = matrix.shape[1]  # 输入大小（或输入通道数）
+        input_size = matrix.shape[1] - bias  # 输入大小（或输入通道数）
         output_size = matrix.shape[0]  # 输出大小（或输出通道数）
         field_size = 1  # 感受野大小
         if dimensions > 2:
@@ -103,12 +103,12 @@ class Linear(Layer):
 
     def __init__(self, input_size, output_size, activation=None, bias=True):
         super(Linear, self).__init__(input_size, output_size, activation, bias)
-        # 保存输入与输出
-        self.input_1, self.output = None, None
+        # 保存输入与输出以及batch大小
+        self.input_1, self.output, self.batch_size = None, None, 1
         # 初始化权重
         self.weight = np.zeros((self.output_size, self.input_size + self.bias))
         # 何凯明的方法初始化权重
-        self.weight = self.kaiming_uniform_(self.weight, gain=self.get_gain())
+        self.weight = self.kaiming_uniform_(self.weight, gain=self.get_gain(), bias=self.bias)
         # 初始化激活函数
         if self.activation is not None:
             self.activation = activation()
@@ -130,6 +130,8 @@ class Linear(Layer):
 
     def forward(self, input_):
         """前向传播"""
+        # 计算batch大小
+        self.batch_size = input_.shape[0]
         # 形状转置 (n,m) => (m,n)
         self.input_1 = input_.T.copy()
         if self.bias:
@@ -149,10 +151,8 @@ class Linear(Layer):
         delta = grad
         if self.activation is not None:
             delta = grad * self.activation.backward(self.output).T
-        # 计算batch大小
-        batch_size = self.output.shape[1]
         # 计算梯度(累计梯度) 取平均
-        self.grad += (self.input_1 @ delta).T / batch_size
+        self.grad += (self.input_1 @ delta).T / self.batch_size
         # 将delta @ w传递到上一层网络
         if self.bias:
             # 偏置求导被消掉了无需参与反向传播
@@ -180,14 +180,15 @@ class RNNCell(Layer):
     def __init__(self, input_size, output_size, activation=None, bias=True):
         super(RNNCell, self).__init__(input_size, output_size, activation, bias)
         # 保存整个过程中的输入与输出
-        self.input_1_list, self.hidden_1_list, self.output_list = None, None, None
-        self.init_empty()
+        self.input_1_list, self.hidden_1_list, self.output_list = [], [], []
+        # 记录batch大小
+        self.batch_size = 1
         # 初始化权重
         self.weight_input = np.zeros((self.output_size, self.input_size + self.bias))
         self.weight_hidden = np.zeros((self.output_size, self.output_size + self.bias))
         # 使用Glorot Xavier的方法初始化权重
-        self.weight_input = self.xavier_uniform_(self.weight_input)
-        self.weight_hidden = self.xavier_uniform_(self.weight_hidden)
+        self.weight_input = self.xavier_uniform_(self.weight_input, bias=self.bias)
+        self.weight_hidden = self.xavier_uniform_(self.weight_hidden, bias=self.bias)
         # 初始化激活函数
         if self.activation is not None:
             self.activation = activation()
@@ -220,6 +221,8 @@ class RNNCell(Layer):
 
     def forward(self, input_, hidden):
         """前向传播"""
+        # 计算batch大小
+        self.batch_size = input_.shape[0]
         # 形状转置 (n,m) => (m,n)
         input_1 = input_.T.copy()
         hidden_1 = hidden.T.copy()
@@ -249,11 +252,9 @@ class RNNCell(Layer):
         output = self.output_list.pop(-1)
         if self.activation is not None:
             delta = grad * self.activation.backward(output).T
-        # 计算batch大小
-        batch_size = output.shape[1]
         # 计算各个权重的梯度并取平均
-        grad_input = (input_1 @ delta).T / batch_size
-        grad_hidden = (hidden_1 @ delta).T / batch_size
+        grad_input = (input_1 @ delta).T / self.batch_size
+        grad_hidden = (hidden_1 @ delta).T / self.batch_size
         # 计算梯度(累计梯度)
         self.grad += np.hstack((grad_input, grad_hidden))
         # 将delta @ w传递到上一层网络
@@ -344,3 +345,260 @@ class RNN(Layer):
             for j in range(self.num_layers - 2, -1, -1):
                 grads[j] += self.Layers[j].backward(grads[j + 1])
 
+
+class Conv2d(Layer):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, activation=None, bias=False):
+        super().__init__(activation=activation, bias=bias)
+        assert isinstance(in_channels, int)
+        assert isinstance(out_channels, int)
+        self.ci = in_channels
+        self.co = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        # 记录输入输出以及batch大小以方便反向传播
+        self.input, self.output, self.batch_size = None, None, 1
+        # 根据给定参数初始化相关参数
+        self.kh, self.kw = self.init_param_value(self.kernel_size)
+        self.sh, self.sw = self.init_param_value(self.stride)
+        # 初始化权重
+        self.weight = np.zeros((self.co, self.ci + self.bias, self.kh, self.kw))
+        # 何凯明的方法初始化权重
+        self.weight = self.kaiming_uniform_(self.weight, mode='fan_out', gain=self.get_gain(), bias=bias)
+        # 初始化梯度
+        self.grad = np.zeros_like(self.weight)
+        # 记录输出对权重和输出对输入的导数
+        self.out_diff_weight, self.out_diff_input = None, None
+
+    @staticmethod
+    def init_param_value(param):
+        """初始化给定参数值"""
+        if isinstance(param, int):
+            return param, param
+        elif isinstance(param, tuple) or isinstance(param, list):
+            if len(param) != 2:
+                raise ValueError("param must be 2-dim tuples or lists")
+            return param
+        else:
+            raise ValueError("param must be int or 2-dim tuples or lists")
+
+    def zero_grad(self):
+        self.grad = np.zeros_like(self.weight)
+
+    def get_parameters(self):
+        return self.weight
+
+    def set_parameters(self, weight):
+        assert self.weight.shape == weight.shape
+        self.weight = weight
+
+    def forward(self, input_):
+        """前向传播"""
+        # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
+        if input_.ndim != 4:
+            raise ValueError("Conv2d can only handle 2-dim data")
+        input_1 = input_.copy()
+        # 根据给定的padding得到加入padding后的输入
+        self.input = self.padding_matrix(input_1, self.padding)
+        # 调整形状为(height, width, num_data/batch_size, in_channels) (HWNC格式)
+        # numpy多维数组是行优先，尽量使低维度的数据在运算时保持连续，就能减少cache不命中的次数，从而提高性能
+        input_pad = self.input.transpose(2, 3, 0, 1)
+        weight = self.weight.transpose(2, 3, 0, 1)
+        # 得到输入的形状
+        ih, iw, nd, _ = input_pad.shape
+        self.batch_size = nd  # batch_size === num_data
+        # 如果使用偏置则需要加入对应偏置的弥散矩阵
+        if self.bias:
+            bias_diffusion = np.ones((ih, iw, nd, 1))
+            input_pad = np.concatenate((input_pad, bias_diffusion), axis=-1)
+        # 下面正式计算卷积及其导数值
+        # 重新计算形状(可能加入了偏置)
+        ih, iw, nd, ci = input_pad.shape
+        kh, kw, sh, sw, co = self.kh, self.kw, self.sh, self.sw, self.co
+        # 计算输出特征图形状
+        oh = int(np.floor((ih - kh + sh) / sh))
+        ow = int(np.floor((iw - kw + sw) / sw))
+        # 初始化输出的特征图，与输入形状相同(HWNC格式)
+        output = np.zeros((oh, ow, nd, co))
+        # 初始化input和weight的导数(六维矩阵)
+        # 输出对权重的导数形状为: (oh, ow, kh, kw, nd, ci)
+        self.out_diff_weight = np.zeros((oh, ow, kh, kw, nd, ci))
+        # 输出对输入的导数形状为: (oh, ow, ih, iw, co, ci)
+        self.out_diff_input = np.zeros((oh, ow, ih, iw, co, ci))
+        # 进行卷积操作，同时记录导数情况
+        for h in range(oh):
+            i = h * sh
+            for w in range(ow):
+                j = w * sw
+                # 形状: (kh, kw, nd, ci)
+                input_part = input_pad[i:i + kh, j:j + kw, :, :]
+                # (nd, co) <= (kh, kw, ci, nd) dot (kh, kw, ci, co)
+                output[h, w, :, :] = np.tensordot(input_part.transpose(0, 1, 3, 2),
+                                                  weight.transpose(0, 1, 3, 2),
+                                                  axes=([0, 1, 2], [0, 1, 2]))
+                # 记录导数值
+                self.out_diff_weight[h, w, :, :, :, :] = input_part
+                self.out_diff_input[h, w, i:i + kh, j:j + kw, :, :] = weight
+        # 然后将轴转换回(num_data/batch_size, out_channels, height, width)(NCHW格式)
+        self.output = output.transpose(2, 3, 0, 1)
+        return self.output
+
+    def backward(self, grad):
+        """反向传播"""
+        delta = grad
+        if self.activation is not None:
+            delta = grad * self.activation.backward(self.output)
+        # 改变形状为(oh, ow, nd, co)(HWNC格式)
+        delta = delta.transpose(2, 3, 0, 1)
+        # 根据之前记录的导数值计算梯度
+        # 改变形状方便求点积
+        # (oh, ow, nd, ci, kh, kw) <= (oh, ow, kh, kw, nd, ci)
+        self.out_diff_weight = self.out_diff_weight.transpose(0, 1, 4, 5, 2, 3)
+        # (co, ci, kh, kw) <= (oh, ow, nd, co) dot (oh, ow, kh, kw, nd, ci)
+        self.grad = np.tensordot(delta, self.out_diff_weight, axes=([0, 1, 2], [0, 1, 2]))
+        # 传递到上一层网络时偏置不传导梯度
+        if self.bias:
+            # 形状: (oh, ow, ih, iw, co, ci)
+            self.out_diff_input = self.out_diff_input[:, :, :, :, :, :-1]
+        # 将梯度传递到上一层网络
+        # 改变形状方便求点积
+        # (oh, ow, co, nd) <= (oh, ow, nd, co)
+        delta = delta.transpose(0, 1, 3, 2)
+        # (oh, ow, co, ci, ih, iw) <= (oh, ow, ih, iw, co, ci)
+        self.out_diff_input = self.out_diff_input.transpose(0, 1, 4, 5, 2, 3)
+        # (nd, ci, ih, iw) <= (oh, ow, co, nd) dot (oh, ow, co, ci, ih, iw)
+        delta_next = np.tensordot(delta, self.out_diff_input, axes=([0, 1, 2], [0, 1, 2]))
+        return delta_next
+
+    @staticmethod
+    def padding_matrix(matrix: np.ndarray, padding):
+        """对矩阵进行padding填充"""
+        if isinstance(padding, int):  # 整数填充
+            # 在最后两个维度四周均匀填充padding个0
+            return np.pad(matrix, ((0, 0), (0, 0), (padding, padding),
+                                   (padding, padding)), mode='constant')
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 2:  # 元组填充
+            # 在高度两侧各填充padding[0]个0，在宽度两侧各填充padding[1]个0
+            return np.pad(matrix, ((0, 0), (0, 0), (padding[0], padding[0]),
+                                   (padding[1], padding[1])), mode='constant')
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 4:  # 四个方向的元组填充
+            # 分别在上下左右填充padding[0], padding[1], padding[2], padding[3]个0
+            return np.pad(matrix, ((0, 0), (0, 0), (padding[0], padding[1]),
+                                   (padding[2], padding[3])), mode='constant')
+        else:
+            raise ValueError("The padding parameter must be an integer or "
+                             "a tuple or list in the form of (height, width) or (top, bottom, left, right)")
+
+
+class MaxPool2d(Layer):
+    def __init__(self, kernel_size, stride, padding):
+        super().__init__()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        # 记录输入输出以及batch大小以方便反向传播
+        self.input, self.output, self.batch_size = None, None, 1
+        # 根据给定参数初始化相关参数
+        self.kh, self.kw = self.init_param_value(self.kernel_size)
+        self.sh, self.sw = self.init_param_value(self.stride)
+        self.grad = None
+
+    @staticmethod
+    def init_param_value(param):
+        """初始化给定参数值"""
+        if isinstance(param, int):
+            return param, param
+        elif isinstance(param, tuple) or isinstance(param, list):
+            if len(param) != 2:
+                raise ValueError("param must be 2-dim tuples or lists")
+            return param
+        else:
+            raise ValueError("param must be int or 2-dim tuples or lists")
+
+    def zero_grad(self):
+        pass
+
+    def get_parameters(self):
+        pass
+
+    def set_parameters(self, weight):
+        pass
+
+    def forward(self, input_):
+        """前向传播"""
+        # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
+        if input_.ndim != 4:
+            raise ValueError("Conv2d can only handle 2-dim data")
+        input_1 = input_.copy()
+        # 根据给定的padding得到加入padding后的输入
+        self.input = self.padding_matrix(input_1, self.padding)
+        # 调整形状为(height, width, num_data/batch_size, in_channels) (HWNC格式)
+        # numpy多维数组是行优先，尽量使低维度的数据在运算时保持连续，就能减少cache不命中的次数，从而提高性能
+        input_pad = self.input.transpose(2, 3, 0, 1)
+        # 得到输入的形状
+        ih, iw, nd, _ = input_pad.shape
+        self.batch_size = nd  # batch_size === num_data
+        # 下面正式计算最大池化
+        # 重新计算形状(可能加入了偏置)
+        ih, iw, nd, ci = input_pad.shape
+        kh, kw, sh, sw, co = self.kh, self.kw, self.sh, self.sw, ci
+        # 计算输出特征图形状
+        oh = int(np.floor((ih - kh + sh) / sh))
+        ow = int(np.floor((iw - kw + sw) / sw))
+        # 初始化输出的特征图，与输入形状相同(HWNC格式)
+        output = np.zeros((oh, ow, nd, co))
+        # 初始化梯度矩阵，形状与输入相同
+        self.grad = np.zeros((ih, iw, nd, ci))
+        # 进行卷积操作，同时记录导数情况
+        for h in range(oh):
+            i = h * sh
+            for w in range(ow):
+                j = w * sw
+                # 形状: (kh, kw, nd, ci)
+                input_part = input_pad[i:i + kh, j:j + kw, :, :]
+                # 将后两维合并以方便操作 (kh, kw, nd*ci)
+                input_part_ = input_part.reshape(kh, kw, -1)
+                # 进行最大池化
+                part_max = input_part_.max(axis=(0, 1))
+                # 得到最大池化的结果
+                output[h, w, :, :] = part_max.reshape(nd, ci)
+                # 得到所有最大值的位置
+                max_pos = np.where(input_part_ == part_max)
+                # 得到第一个最大值的下标的位置
+                _, unique_index = np.unique(max_pos[-1], return_index=True)
+                # 得到所有最大值的下标
+                max_index = np.vstack(max_pos).T[unique_index, :-1]
+                # 初始化部分梯度 (nd*ci, kh, kw)
+                grad_part = np.zeros_like(input_part_.transpose(2, 0, 1))
+                # 将最大值部分置为True  (nd*ci, kh, kw)
+                grad_part[np.arange(input_part_.shape[-1]), max_index[:, 0], max_index[:, 1]] = True
+                # 然后改变形状给梯度 (kh, kw, nd, ci)
+                self.grad[i:i + kh, j:j + kw, :, :] += grad_part.transpose(1, 2, 0).reshape(kh, kw, nd, ci)
+        # 然后将轴转换回(num_data/batch_size, out_channels, height, width)(NCHW格式)
+        self.output = output.transpose(2, 3, 0, 1)
+        # 因为梯度是求和得到的，所以需要转为 mask (0~1)
+        self.grad = np.array(self.grad, dtype=bool)
+        return self.output
+
+    def backward(self, grad):
+        """反向传播"""
+        return self.grad
+
+    @staticmethod
+    def padding_matrix(matrix: np.ndarray, padding):
+        """对矩阵进行padding填充"""
+        if isinstance(padding, int):  # 整数填充
+            # 在最后两个维度四周均匀填充padding个0
+            return np.pad(matrix, ((0, 0), (0, 0), (padding, padding),
+                                   (padding, padding)), mode='constant')
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 2:  # 元组填充
+            # 在高度两侧各填充padding[0]个0，在宽度两侧各填充padding[1]个0
+            return np.pad(matrix, ((0, 0), (0, 0), (padding[0], padding[0]),
+                                   (padding[1], padding[1])), mode='constant')
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 4:  # 四个方向的元组填充
+            # 分别在上下左右填充padding[0], padding[1], padding[2], padding[3]个0
+            return np.pad(matrix, ((0, 0), (0, 0), (padding[0], padding[1]),
+                                   (padding[2], padding[3])), mode='constant')
+        else:
+            raise ValueError("The padding parameter must be an integer or "
+                             "a tuple or list in the form of (height, width) or (top, bottom, left, right)")

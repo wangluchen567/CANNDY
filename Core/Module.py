@@ -1,6 +1,6 @@
 import numpy as np
-from Core.Activation import Sigmoid, ReLU, Tanh
-from Core.Layer import Linear, GraphConv, RNN
+from Core.Activation import Sigmoid, ReLU, Tanh, Softmax
+from Core.Layer import Linear, GraphConv, RNN, Conv2d, MaxPool2d
 
 
 class Module:
@@ -130,8 +130,8 @@ class RNNModel(Module):
             self.Linear_Layers.append(Linear(self.rnn_hidden_size, self.linear_hidden_sizes[0], self.hidden_activation))
             for i in range(len(self.linear_hidden_sizes) - 1):
                 self.Linear_Layers.append(Linear(self.linear_hidden_sizes[i],
-                                          self.linear_hidden_sizes[i + 1],
-                                          self.hidden_activation))
+                                                 self.linear_hidden_sizes[i + 1],
+                                                 self.hidden_activation))
             # 然后添加最终输出层
             self.Linear_Layers.append(Linear(self.linear_hidden_sizes[-1], self.output_size, self.out_activation))
         # 然后将线性层接入到RNN网络之后
@@ -153,3 +153,22 @@ class RNNModel(Module):
         return output
 
 
+class CNNMnist(Module):
+    def __init__(self):
+        super().__init__()
+        self.Layers = [
+            Conv2d(in_channels=1, out_channels=3, kernel_size=5, stride=2, padding=0, activation=ReLU),
+            MaxPool2d(kernel_size=3, stride=2, padding=0),
+            Conv2d(in_channels=3, out_channels=3, kernel_size=3, stride=1, padding=0, activation=ReLU),
+            MaxPool2d(kernel_size=3, stride=2, padding=0),
+            Linear(input_size=147, output_size=120, activation=ReLU),
+            Linear(input_size=120, output_size=10, activation=Softmax),
+        ]
+        self.num_layers = len(self.Layers)
+
+    def forward(self, input_):
+        hidden = input_.copy()
+        for layer in self.Layers:
+            hidden = layer(hidden)
+        output = hidden
+        return output
