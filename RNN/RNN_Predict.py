@@ -54,7 +54,7 @@ def get_predict_data(num_samples, num_steps, x_range):
 
 
 if __name__ == '__main__':
-    np.random.seed(0)
+    # np.random.seed(0)
     # 获取数据集
     num_samples, num_steps, x_range = 100, 10, [0, 20]
     data_previous, data_next, gap = get_predict_data(num_samples, num_steps, x_range)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     # 初始化梯度优化器
     optimizer = Adam(model=model, learning_rate=0.01)
     # 对模型进行优化
-    num_epochs = 500
+    num_epochs = 100
     for epoch in range(num_epochs):
         output = model.forward(data_previous)
         Loss = MSELoss(model, data_next, output)

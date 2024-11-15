@@ -11,22 +11,25 @@ class Optimizer:
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
         # 获取整个模型中每层的对象(将嵌套展平)
-        self.layer_list = self.flatten(self.model.Layers)
+        self.layer_list = self.get_grad_layers(self.model.Layers)
         # 获取模型的层数以方便优化
         self.num_layers = len(self.layer_list)
         # 记录优化步数
         self.steps = 0
 
-    def flatten(self, layers):
-        """获取整个模型中每层的对象(将嵌套展平)"""
+    def get_grad_layers(self, layers):
+        """获取整个模型中每层带梯度的对象(将嵌套展平)"""
         layer_list = []
-        for item in layers:
-            if hasattr(item, 'Layers') and item.Layers is not None and len(item.Layers):
+        for layer in layers:
+            if hasattr(layer, 'Layers') and layer.Layers is not None and len(layer.Layers):
                 # 如果给定元素中有Layers变量且变量不为空则需要嵌套放置到list中
-                layer_list.extend(self.flatten(item.Layers))
+                layer_list.extend(self.get_grad_layers(layer.Layers))
+            elif hasattr(layer, 'grad') and layer.grad is not None:
+                # 否则检查该层是否有梯度并且梯度不为空，若存在则加入list
+                layer_list.append(layer)
             else:
-                # 否则直接添加到结果列表中
-                layer_list.append(item)
+                # 否则不添加
+                pass
         return layer_list
 
     def zero_grad(self):
