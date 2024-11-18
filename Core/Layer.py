@@ -721,3 +721,123 @@ class MeanPool2d(Layer):
         # 还要考虑padding的梯度，由于是常数填充，所以直接裁剪掉padding
         delta_next = delta_next[:, :, self.padding:ih - self.padding, self.padding:iw - self.padding]
         return delta_next
+
+
+class BatchNorm2d(Layer):
+    """批归一化层"""
+
+    def __init__(self, eps=1.e-8):
+        super().__init__()
+        self.eps = eps
+        self.gamma, self.beta = None, None
+        self.weight = 0
+
+        self.gard = None
+
+    def zero_grad(self):
+        """梯度置为0矩阵"""
+        pass
+
+    def get_parameters(self):
+        """获取该层的权重参数"""
+        pass
+
+    def set_parameters(self, *args, **kwargs):
+        """设置该层的权重参数"""
+        pass
+
+    def forward(self, *args, **kwargs):
+        """该层前向传播"""
+        raise NotImplementedError
+
+    def backward(self, *args, **kwargs):
+        """该层反向传播"""
+        raise NotImplementedError
+
+
+class ReLULayer(Layer):
+    """ReLU激活层"""
+
+    def __init__(self):
+        super().__init__()
+        self.input = None
+        self.output = None
+
+    def forward(self, input_):
+        self.input = input_.copy()
+        self.output = self.input * (self.input > 0)
+        return self.output
+
+    def backward(self, grad):
+        return grad * (self.input > 0)
+
+
+class SigmoidLayer(Layer):
+    """Sigmoid激活层"""
+
+    def __init__(self):
+        super().__init__()
+        self.input = None
+        self.output = None
+
+    def forward(self, input_):
+        self.input = input_.copy()
+        # 防止指数溢出
+        indices_pos = np.nonzero(self.input >= 0)
+        indices_neg = np.nonzero(self.input < 0)
+        self.output = np.zeros_like(self.input)
+        # y = 1 / (1 + exp(-x)), x >= 0
+        # y = exp(x) / (1 + exp(x)), x < 0
+        self.output[indices_pos] = 1 / (1 + np.exp(-self.input[indices_pos]))
+        self.output[indices_neg] = np.exp(self.input[indices_neg]) / (1 + np.exp(self.input[indices_neg]))
+        return self.output
+
+    def backward(self, grad):
+        return grad * (self.output * (1 - self.output))
+
+
+class TanhLayer(Layer):
+    """Tanh激活层"""
+
+    def __init__(self):
+        super().__init__()
+        self.input = None
+        self.output = None
+
+    def forward(self, input_):
+        self.input = input_.copy()
+        # 防止指数溢出
+        indices_pos = np.nonzero(self.input >= 0)
+        indices_neg = np.nonzero(self.input < 0)
+        self.output = np.zeros_like(self.input)
+        # y = (1-exp(-2*x))/(1+exp(-2*x)), x >= 0
+        # y = (exp(2*x)-1)/(1+exp(2*x)), x < 0
+        self.output[indices_pos] = ((1 - np.exp(-2 * self.input[indices_pos]))
+                                    / (1 + np.exp(-2 * self.input[indices_pos])))
+        self.output[indices_neg] = ((np.exp(2 * self.input[indices_neg]) - 1)
+                                    / (1 + np.exp(2 * self.input[indices_neg])))
+        return self.output
+
+    def backward(self, grad):
+        return grad * (1 - self.output * self.output)
+
+
+class SoftmaxLayer(Layer):
+    """Softmax激活层"""
+
+    def __init__(self):
+        super().__init__()
+        self.input = None
+        self.output = None
+
+    def forward(self, input_, dim=1):
+        # 因为在求exp时，可能因为指数过大，出现溢出的情况
+        # 而在softmax中，重要的是两个数字之间的差值，只要差值相同，softmax的结果就相同
+        self.input = input_
+        self.input -= np.max(self.input, axis=dim, keepdims=True)
+        self.output = np.exp(self.input) / np.sum(np.exp(self.input), axis=dim, keepdims=True)
+        return self.output
+
+    def backward(self, grad):
+        # Softmax的梯度反向传播集成在CrossEntropyWithSoftmax中了
+        return grad

@@ -1,6 +1,6 @@
 import numpy as np
 from Core.Activation import Sigmoid, ReLU, Tanh, Softmax
-from Core.Layer import Linear, GraphConv, RNN, Conv2d, MaxPool2d, Flatten
+from Core.Layer import Linear, GraphConv, RNN, Conv2d, MaxPool2d, Flatten, ReLULayer
 
 
 class Module:
@@ -157,9 +157,11 @@ class LeNet5(Module):
     def __init__(self):
         super().__init__()
         self.Layers = [
-            Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1, padding=2, activation=ReLU),
+            Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1, padding=2),
+            ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
-            Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0, activation=ReLU),
+            Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0),
+            ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
             Flatten(),
             Linear(input_size=400, output_size=120, activation=ReLU),

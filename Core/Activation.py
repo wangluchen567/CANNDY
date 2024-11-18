@@ -4,6 +4,10 @@ import numpy as np
 class Activation:
     """激活函数父类"""
 
+    def __call__(self, *args, **kwargs):
+        """方便直接使用对象名调用forward函数"""
+        return self.forward(*args, **kwargs)
+
     def forward(self, *args, **kwargs):
         raise NotImplementedError
 
