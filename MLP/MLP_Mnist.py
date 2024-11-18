@@ -92,5 +92,3 @@ if __name__ == '__main__':
     model = train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size])
     accuracy = valid_model(model, x_valid, y_valid)
     print("full dataset accuracy: {:.3f} %".format(accuracy * 100))
-    accuracy = valid_model(model, x_valid[:valid_size], y_valid[:valid_size])
-    print("val dataset accuracy: {:.3f} %".format(accuracy * 100))

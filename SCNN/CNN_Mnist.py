@@ -39,7 +39,7 @@ def train_epoch(model, optimizer, X, Y, batch_size):
 
 def train_model(model, train_data, train_label, valid_data, valid_label, num_epochs=20):
     """训练模型"""
-    batch_size = 64
+    batch_size = 128
     optimizer = Adam(model=model, learning_rate=1.e-3)
     for epoch in range(num_epochs):
         start = time.time()
@@ -71,5 +71,3 @@ if __name__ == '__main__':
     model = train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size])
     accuracy = valid_model(model, x_valid, y_valid)
     print("full dataset accuracy: {:.3f} %".format(accuracy * 100))
-    accuracy = valid_model(model, x_valid[:valid_size], y_valid[:valid_size])
-    print("val dataset accuracy: {:.3f} %".format(accuracy * 100))
