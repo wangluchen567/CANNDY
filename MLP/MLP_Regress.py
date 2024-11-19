@@ -8,12 +8,11 @@ from Core.Optimizer import Adam
 
 
 def plot_sin(model, pause=True):
-    # 深度复制一份模型防止冲突
-    Model = copy.deepcopy(model)
+    """绘制模型的回归预测表现"""
     x = np.arange(0, 10, 0.01).reshape(-1, 1)
     y = np.sin(x)
-    output = Model.forward(x)
-    Loss = MSELoss(Model, y, output)
+    output = model.forward(x)
+    Loss = MSELoss(model, y, output)
     mse_loss = Loss.forward()
 
     plt.figure(0)
@@ -49,9 +48,9 @@ if __name__ == '__main__':
         Loss = MSELoss(model, Y, output)
         mse_loss = Loss.forward()
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {mse_loss.item()}')
-        plot_sin(model)
         optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
+        plot_sin(model)
 
     plot_sin(model, pause=False)

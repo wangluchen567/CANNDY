@@ -40,7 +40,7 @@ class MSELoss(Loss):
     def backward(self):
         """反向传播"""
         delta = self.output - self.truth
-        for i in range(-1, -self.model.num_layers - 1, -1):
+        for i in range(-1, -len(self.model.Layers) - 1, -1):
             delta = self.model.Layers[i].backward(delta)
 
 
@@ -58,7 +58,7 @@ class CrossEntropyWithSoftmax(Loss):
     def backward(self):
         """反向传播"""
         delta = self.output - self.truth_one_hot
-        for i in range(-1, -self.model.num_layers - 1, -1):
+        for i in range(-1, -len(self.model.Layers) - 1, -1):
             delta = self.model.Layers[i].backward(delta)
 
 
@@ -80,5 +80,5 @@ class CrossEntropyWithSoftmaxMask(Loss):
     def backward(self):
         """反向传播"""
         delta = self.output - self.truth_one_hot
-        for i in range(-1, -self.model.num_layers - 1, -1):
+        for i in range(-1, -len(self.model.Layers) - 1, -1):
             delta = self.model.Layers[i].backward(delta)

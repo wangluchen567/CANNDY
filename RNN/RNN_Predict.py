@@ -8,11 +8,11 @@ from Core.Module import RNNModel
 
 
 def plot_future(model, test_previous, gap, x_range, mse_loss, pause=True):
-    Model = copy.deepcopy(model)
+    """绘制优化过程中的模型表现"""
     test_previous = test_previous.reshape(1, -1, 1)
     y_plot = test_previous.flatten().copy()
     for i in range(200):
-        test_next = Model(test_previous)
+        test_next = model(test_previous)
         y_plot = np.append(y_plot, test_next[0][0])
         # 数据偏移并加入预测元素
         test_previous[:, :-1, :] = test_previous[:, 1:, :]
@@ -54,7 +54,7 @@ def get_predict_data(num_samples, num_steps, x_range):
 
 
 if __name__ == '__main__':
-    # np.random.seed(0)
+    np.random.seed(0)
     # 获取数据集
     num_samples, num_steps, x_range = 100, 10, [0, 20]
     data_previous, data_next, gap = get_predict_data(num_samples, num_steps, x_range)
@@ -74,8 +74,8 @@ if __name__ == '__main__':
         Loss = MSELoss(model, data_next, output)
         mse_loss = Loss.forward()
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {mse_loss.item()}')
-        # 绘制优化过程中的模型表现
-        plot_future(model, data_previous[0].copy(), gap, x_range, mse_loss, pause=True)
         optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
+        # 绘制优化过程中的模型表现
+        plot_future(model, data_previous[0].copy(), gap, x_range, mse_loss, pause=True)
