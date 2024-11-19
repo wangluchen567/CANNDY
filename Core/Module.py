@@ -1,6 +1,6 @@
 import numpy as np
 from Core.Activation import Sigmoid, ReLU, Tanh, Softmax
-from Core.Layer import Linear, GraphConv, RNN, Conv2d, MaxPool2d, Flatten, ReLULayer
+from Core.Layer import Linear, GCNConv, Dropout, RNN, Conv2d, MaxPool2d, Flatten, ReLULayer
 
 
 class Module:
@@ -20,10 +20,20 @@ class Module:
     def forward(self, *args, **kwargs):
         raise NotImplementedError
 
+    def train(self):
+        """设置为训练模式"""
+        for layer in self.Layers:
+            layer.training = True
+
+    def eval(self):
+        """设置为验证模式"""
+        for layer in self.Layers:
+            layer.training = False
+
     def get_num_params(self):
         num_params = 0
         for layer in self.Layers:
-            num_params += layer.num_param
+            num_params += layer.num_params
         return num_params
 
 
@@ -41,7 +51,6 @@ class MLP(Module):
         """
         super().__init__(input_size, output_size, hidden_sizes, hidden_activation, out_activation)
         self.num_hidden = len(self.hidden_sizes)
-        self.num_layers = len(self.hidden_sizes) + 1
         # 初始化第一层
         self.Layers = [Linear(self.input_size, self.hidden_sizes[0], self.hidden_activation)]
         # 加入中间隐层
@@ -65,7 +74,8 @@ class MLP(Module):
 class GCN(Module):
     """图卷积模型"""
 
-    def __init__(self, adj_mat, input_size, output_size, hidden_sizes, hidden_activation=ReLU, out_activation=None):
+    def __init__(self, adj_mat, input_size, output_size, hidden_sizes,
+                 hidden_activation=ReLU, out_activation=None, dropout=False):
         """
         图卷积模型
         :param adj_mat: 图的邻接矩阵
@@ -77,23 +87,26 @@ class GCN(Module):
         """
         super().__init__(input_size, output_size, hidden_sizes, hidden_activation, out_activation)
         self.adj_mat = adj_mat
+        self.dropout = dropout
         self.num_hidden = len(self.hidden_sizes)
-        self.num_layers = len(self.hidden_sizes) + 1
-
+        # 计算度矩阵
         degree_mat = self.adj_mat.sum(axis=1)
         degree_pow_neg_half = np.diag(np.power(degree_mat, -0.5))
         self.adj_norm = degree_pow_neg_half @ self.adj_mat @ degree_pow_neg_half
         # 初始化第一层
-        self.Layers = [GraphConv(input_size, hidden_sizes[0], self.adj_norm, self.hidden_activation)]
+        self.Layers = [GCNConv(self.input_size, self.hidden_sizes[0], self.adj_norm, self.hidden_activation),
+                       Dropout(p=self.dropout)]  # 加入dropout层
         # 加入中间隐层
         if self.num_hidden > 1:
-            self.Layers.extend(
-                [GraphConv(hidden_sizes[i], hidden_sizes[i + 1], self.adj_norm, self.hidden_activation)
-                 for i in range(self.num_hidden - 1)])
+            for i in range(self.num_hidden - 1):
+                self.Layers.append(GCNConv(self.hidden_sizes[i], self.hidden_sizes[i + 1],
+                                             self.adj_norm, self.hidden_activation))
+                self.Layers.append(Dropout(p=self.dropout))  # 加入dropout层
         # 加入最后一层
-        self.Layers.append(GraphConv(hidden_sizes[-1], output_size, self.adj_norm, out_activation))
+        self.Layers.append(GCNConv(self.hidden_sizes[-1], self.output_size, self.adj_norm, self.out_activation))
         # 计算参数数量
         self.num_params = self.get_num_params()
+        self.num_layers = len(self.hidden_sizes) + 1
 
     def forward(self, input_):
         hidden = input_
@@ -123,7 +136,7 @@ class RNNModel(Module):
         self.Layers = [self.Rnn]
         # 初始化线性层(至少有一层)
         self.Linear_Layers = []
-        if linear_hidden_sizes is None or len(linear_hidden_sizes) == 0:
+        if self.linear_hidden_sizes is None or len(self.linear_hidden_sizes) == 0:
             self.Linear_Layers.append(Linear(self.rnn_hidden_size, self.output_size, self.out_activation))
         else:
             # 要添加所有隐藏层
@@ -136,8 +149,6 @@ class RNNModel(Module):
             self.Linear_Layers.append(Linear(self.linear_hidden_sizes[-1], self.output_size, self.out_activation))
         # 然后将线性层接入到RNN网络之后
         self.Layers.extend(self.Linear_Layers)
-        # 并且需要计算层个数
-        self.num_layers = len(self.Layers)
 
     def forward(self, inputs, state=None):
         """前向传播"""
@@ -160,15 +171,16 @@ class LeNet5(Module):
             Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1, padding=2),
             ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
+            Dropout(p=0.5),
             Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0),
             ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
+            Dropout(p=0.5),
             Flatten(),
             Linear(input_size=400, output_size=120, activation=ReLU),
             Linear(input_size=120, output_size=84, activation=ReLU),
             Linear(input_size=84, output_size=10, activation=Softmax),
         ]
-        self.num_layers = len(self.Layers)
 
     def forward(self, input_):
         hidden = input_.copy()

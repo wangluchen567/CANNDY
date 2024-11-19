@@ -9,6 +9,8 @@ class Layer:
         self.output_size = output_size
         self.activation = activation
         self.bias = bias
+        self.training = True
+        self.num_params = 0
 
     def __call__(self, *args, **kwargs):
         """方便直接使用对象名调用forward函数"""
@@ -24,6 +26,10 @@ class Layer:
 
     def set_parameters(self, *args, **kwargs):
         """设置该层的权重参数"""
+        pass
+
+    def get_num_params(self):
+        """获取该层的参数数量"""
         pass
 
     def forward(self, *args, **kwargs):
@@ -134,7 +140,7 @@ class Linear(Layer):
         # 初始化梯度
         self.grad = np.zeros_like(self.weight)
         # 计算参数量
-        self.num_param = self.weight.size
+        self.num_params = self.weight.size
 
     def zero_grad(self):
         """梯度置0"""
@@ -169,7 +175,7 @@ class Linear(Layer):
         """反向传播求梯度"""
         delta = grad
         if self.activation is not None:
-            delta = grad * self.activation.backward(self.output).T
+            delta = grad * self.activation.backward(self.output.T)
         # 计算梯度(累计梯度) 取平均
         self.grad += (self.input_1 @ delta).T / self.batch_size
         # 将delta @ w传递到上一层网络
@@ -181,12 +187,41 @@ class Linear(Layer):
         return delta_next
 
 
-class GraphConv(Linear):
+class Dropout(Layer):
+    """随机失活层"""
+
+    def __init__(self, p=0.5):
+        super().__init__()
+        assert 0.0 <= p <= 1.0
+        self.p = p  # 随机失活概率
+        self.mask = None  # 记录被dropout的部分
+
+    def forward(self, input_):
+        """前向传播"""
+        output = input_.copy()
+        # 若失活概率非0且是训练模式则进行mask
+        if self.p > 0 and self.training:
+            self.mask = np.random.uniform(0, 1, size=output.shape) > self.p
+            # 进行dropout操作
+            output = output * self.mask / (1 - self.p)
+        return output
+
+    def backward(self, grad):
+        """反向传播"""
+        # 若失活概率非0且是训练模式则需要对梯度进行mask
+        if self.p > 0 and self.training:
+            return grad * self.mask / (1 - self.p)
+        else:
+            return grad
+
+
+class GCNConv(Linear):
     """图卷积层"""
 
-    def __init__(self, input_size, output_size, adj_norm, activation=None):
-        super(GraphConv, self).__init__(input_size, output_size, activation, False)
+    def __init__(self, input_size, output_size, adj_norm, activation, bias=True):
+        super(GCNConv, self).__init__(input_size, output_size, activation, bias)
         self.adj_norm = adj_norm
+        self.weight = self.xavier_uniform_(self.weight, bias=self.bias)
 
     def forward(self, input_):
         output = super().forward(self.adj_norm @ input_)
@@ -194,7 +229,7 @@ class GraphConv(Linear):
 
 
 class RNNCell(Layer):
-    """RNN模块"""
+    """循环神经网络模块"""
 
     def __init__(self, input_size, output_size, activation=None, bias=True):
         super(RNNCell, self).__init__(input_size, output_size, activation, bias)
@@ -218,7 +253,7 @@ class RNNCell(Layer):
         # 初始化梯度
         self.grad = np.zeros_like(self.weight)
         # 计算参数量
-        self.num_param = self.weight.size
+        self.num_params = self.weight.size
 
     def init_empty(self):
         """初始化置空"""
@@ -270,7 +305,7 @@ class RNNCell(Layer):
         hidden_1 = self.hidden_1_list.pop(-1)
         output = self.output_list.pop(-1)
         if self.activation is not None:
-            delta = grad * self.activation.backward(output).T
+            delta = grad * self.activation.backward(output.T)
         # 计算各个权重的梯度并取平均
         grad_input = (input_1 @ delta).T / self.batch_size
         grad_hidden = (hidden_1 @ delta).T / self.batch_size
@@ -286,7 +321,7 @@ class RNNCell(Layer):
 
 
 class RNN(Layer):
-    """RNN网络层"""
+    """循环神经网络层"""
 
     def __init__(self, input_size, hidden_size, num_layers, activation=None, bias=True, batch_first=False):
         super(RNN, self).__init__(input_size, hidden_size, activation, bias)
@@ -302,6 +337,7 @@ class RNN(Layer):
             self.Layers.extend(
                 [RNNCell(self.hidden_size, self.hidden_size, self.activation, self.bias)
                  for _ in range(self.num_layers - 1)])
+        self.get_num_params()  # 获取该层参数数量
 
     def zero_grad(self):
         for layer in self.Layers:
@@ -316,6 +352,10 @@ class RNN(Layer):
         assert len(weights) == len(self.Layers)
         for i in range(len(weights)):
             self.Layers[i].set_parameters(weights[i])
+
+    def get_num_params(self):
+        for layer in self.Layers:
+            self.num_params += layer.num_params
 
     def init_state(self, batch_size):
         """初始化第一个隐状态（默认为全0矩阵）"""
@@ -393,6 +433,8 @@ class Conv2d(Layer):
         self.grad = np.zeros_like(self.weight)
         # 记录输出对权重和输出对输入的导数
         self.out_diff_weight, self.out_diff_input = None, None
+        # 计算参数数量
+        self.num_params = self.weight.size
 
     @staticmethod
     def init_param_value(param):
@@ -476,7 +518,7 @@ class Conv2d(Layer):
         # 改变形状方便求点积
         # (oh, ow, nd, ci, kh, kw) <= (oh, ow, kh, kw, nd, ci)
         self.out_diff_weight = self.out_diff_weight.transpose(0, 1, 4, 5, 2, 3)
-        # (co, ci, kh, kw) <= (oh, ow, nd, co) dot (oh, ow, kh, kw, nd, ci)
+        # (co, ci, kh, kw) <= (oh, ow, nd, co) dot (oh, ow, nd, ci, kh, kw)
         self.grad = np.tensordot(delta, self.out_diff_weight, axes=([0, 1, 2], [0, 1, 2]))
         # 传递到上一层网络时偏置不传导梯度
         if self.bias:
@@ -730,6 +772,8 @@ class BatchNorm2d(Layer):
         super().__init__()
         self.eps = eps
         self.gamma, self.beta = None, None
+        # 需要记录全局的均值与方差
+        self.mean, self.var = 0, 0
         self.weight = 0
 
         self.gard = None

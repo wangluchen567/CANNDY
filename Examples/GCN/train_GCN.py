@@ -49,6 +49,7 @@ def format_data(features, indices, labels, masks, self_loop=True):
 
 def evaluate(model, features, labels, mask):
     """评价函数"""
+    model.eval()
     output = model.forward(features)  # 将特征输入模型查看结果
     output = output[mask]  # 获取某类数据的结果（train/val/test）
     labels = labels[mask]  # 获取某类数据的真实值
@@ -89,7 +90,8 @@ if __name__ == '__main__':
                 input_size=features.shape[1],
                 output_size=np.max(labels) + 1,
                 hidden_sizes=[16],
-                out_activation=Softmax)
+                out_activation=Softmax,
+                dropout=0.5)
 
     optimizer = Adam(model=model, learning_rate=1e-2, weight_decay=5e-4)
 
@@ -97,13 +99,13 @@ if __name__ == '__main__':
     # 训练过程
     dur = []  # 记录epoch时间
     train_loss = []  # 记录训练损失变化
-    train_acc = []  # 记录训练准确率变化
+    train_accuracies = []  # 记录训练准确率变化
     for epoch in range(num_epochs):
         t0 = time.time()
         # forward前向传播，使用交叉熵损失
+        model.train()
         output = model(features)
         Loss = CrossEntropyWithSoftmaxMask(model, labels, output, train_mask)
-        # Loss = CrossEntropyWithSoftmax(model, labels, output)
         ces_loss = Loss.forward()
         # 梯度归零
         optimizer.zero_grad()
@@ -111,17 +113,19 @@ if __name__ == '__main__':
         optimizer.step()
         # 保存训练时间
         dur.append(time.time() - t0)
-        # 计算训练过程中验证集的准确率
-        acc = evaluate(model, features, labels, val_mask)
+        # 计算训练过程中训练集、验证集和测试集的准确率
+        train_acc = evaluate(model, features, labels, train_mask)
+        valid_acc = evaluate(model, features, labels, val_mask)
+        test_acc = evaluate(model, features, labels, test_mask)
         # 保存训练损失和准确率
         train_loss.append(ces_loss)
-        train_acc.append(acc)
+        train_accuracies.append(train_acc)
         # 打印相关信息
-        print("Epoch [{:d}/{:d}] | Time(s) {:.4f} | Loss {:.4f} | Accuracy {:.4f}"
-              .format(epoch + 1, num_epochs, np.mean(dur), ces_loss, acc))
+        print("Epoch [{:d}/{:d}] | Time(s) {:.4f} | Loss {:.4f} | Train Acc {:.4f} | Valid Acc {:.4f} | Test Acc {:.4f}"
+              .format(epoch + 1, num_epochs, np.mean(dur), ces_loss, train_acc, valid_acc, test_acc))
 
     print()
-    # 计算测试集准确率
-    acc = evaluate(model, features, labels, test_mask)
-    print("Test accuracy {:.2%}".format(acc))
-    plot_train(train_loss, train_acc)
+    # 计算整个数据集的准确率
+    acc = evaluate(model, features, labels, np.ones(features.shape[0], dtype=bool))
+    print("Full data accuracy {:.2%}".format(acc))
+    plot_train(train_loss, train_accuracies)

@@ -22,6 +22,7 @@ def load_data(data_path):
 
 def train_epoch(model, optimizer, X, Y, batch_size):
     """训练一个epoch"""
+    model.train()
     train_loss = 0
     for i in np.arange(0, len(X), batch_size):
         # 需要将input形状调整为(batch_size, in_channels, height, width)(NCHW格式)
@@ -37,9 +38,9 @@ def train_epoch(model, optimizer, X, Y, batch_size):
     return model, optimizer, train_loss
 
 
-def train_model(model, train_data, train_label, valid_data, valid_label, num_epochs=20):
+def train_model(model, train_data, train_label, valid_data, valid_label, num_epochs=30):
     """训练模型"""
-    batch_size = 128
+    batch_size = 64
     optimizer = Adam(model=model, learning_rate=1.e-3)
     for epoch in range(num_epochs):
         start = time.time()
@@ -51,6 +52,7 @@ def train_model(model, train_data, train_label, valid_data, valid_label, num_epo
 
 
 def valid_model(model, input_, truth):
+    model.eval()
     # 需要将input形状调整为(batch_size, in_channels, height, width)(NCHW格式)
     input_ = input_.reshape(-1, 1, 28, 28).transpose(0, 1, 3, 2)
     output = model.forward(input_)
