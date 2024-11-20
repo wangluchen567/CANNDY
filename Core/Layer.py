@@ -147,9 +147,13 @@ class Linear(Layer):
         self.grad = np.zeros_like(self.weight)
 
     def get_parameters(self):
-        return self.weight
+        """获取该层权重参数"""
+        return self.weight.tolist()
 
-    def set_parameters(self, weight):
+    def set_parameters(self, weight_):
+        """设置该层权重参数"""
+        # 将权重变为array类型
+        weight = weight_ if isinstance(weight_, np.ndarray) else np.array(weight_)
         assert self.weight.shape == weight.shape
         self.weight = weight
 
@@ -264,10 +268,12 @@ class RNNCell(Layer):
         self.grad = np.zeros_like(self.weight)
 
     def get_parameters(self):
-        return self.weight
+        return self.weight.tolist()
 
-    def set_parameters(self, weight):
+    def set_parameters(self, weight_):
         """设置参数值（权重值）"""
+        # 将权重变为array类型
+        weight = weight_ if isinstance(weight_, np.ndarray) else np.array(weight_)
         assert self.weight.shape == weight.shape
         self.weight = weight
         self.weight_input = self.weight[:, :self.splice]
@@ -452,9 +458,11 @@ class Conv2d(Layer):
         self.grad = np.zeros_like(self.weight)
 
     def get_parameters(self):
-        return self.weight
+        return self.weight.tolist()
 
-    def set_parameters(self, weight):
+    def set_parameters(self, weight_):
+        # 将权重变为array类型
+        weight = weight_ if isinstance(weight_, np.ndarray) else np.array(weight_)
         assert self.weight.shape == weight.shape
         self.weight = weight
 
@@ -793,10 +801,12 @@ class BatchNorm(Layer):
 
     def get_parameters(self):
         """获取该层的权重参数"""
-        return self.weight
+        return self.weight.tolist()
 
-    def set_parameters(self, weight):
+    def set_parameters(self, weight_):
         """设置该层的权重参数"""
+        # 将权重变为array类型
+        weight = weight_ if isinstance(weight_, np.ndarray) else np.array(weight_)
         assert self.weight.shape == weight.shape
         self.weight = weight
 

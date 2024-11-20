@@ -36,6 +36,26 @@ class Module:
             num_params += layer.num_params
         return num_params
 
+    def get_parameters(self):
+        """获取模型的参数字典"""
+        depth = 0  # 网络深度
+        params_dict = dict()
+        for layer in self.Layers:
+            if hasattr(layer, 'weight') and layer.weight is not None:
+                key = str(depth) + '_' + layer.__class__.__name__
+                params_dict[key] = layer.get_parameters()
+                depth += 1
+        return params_dict
+
+    def set_parameters(self, params_dict):
+        """根据给定参数字典设置模型的参数"""
+        depth = 0  # 网络深度
+        for layer in self.Layers:
+            if hasattr(layer, 'weight') and layer.weight is not None:
+                key = str(depth) + '_' + layer.__class__.__name__
+                layer.set_parameters(params_dict[key])
+                depth += 1
+
 
 class MLP(Module):
     """全连接模型"""
