@@ -462,7 +462,7 @@ class Conv2d(Layer):
         """前向传播"""
         # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
         if input_.ndim != 4:
-            raise ValueError("Conv2d can only handle 2-dim data")
+            raise ValueError("Conv2d can only handle 4-dim data")
         input_1 = input_.copy()
         # 根据给定的padding得到加入padding后的输入
         self.input = self.padding_matrix(input_1, self.padding)
@@ -592,7 +592,7 @@ class MaxPool2d(Layer):
         """前向传播"""
         # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
         if input_.ndim != 4:
-            raise ValueError("Conv2d can only handle 2-dim data")
+            raise ValueError("MaxPool2d can only handle 4-dim data")
         input_1 = input_.copy()
         # 根据给定的padding得到加入padding后的输入
         self.input = self.padding_matrix(input_1, self.padding)
@@ -700,7 +700,7 @@ class MeanPool2d(Layer):
         """前向传播"""
         # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
         if input_.ndim != 4:
-            raise ValueError("Conv2d can only handle 2-dim data")
+            raise ValueError("MeanPool2d can only handle 4-dim data")
         input_1 = input_.copy()
         # 根据给定的padding得到加入padding后的输入
         self.input = self.padding_matrix(input_1, self.padding)
@@ -765,38 +765,113 @@ class MeanPool2d(Layer):
         return delta_next
 
 
-class BatchNorm2d(Layer):
+class BatchNorm(Layer):
     """批归一化层"""
 
-    def __init__(self, eps=1.e-8):
+    def __init__(self, num_features, eps=1.e-5, momentum=0.1):
         super().__init__()
+        self.num_features = num_features
+        self.momentum = momentum
         self.eps = eps
-        self.gamma, self.beta = None, None
-        # 需要记录全局的均值与方差
-        self.mean, self.var = 0, 0
-        self.weight = 0
-
-        self.gard = None
+        # 当前批次的数据数量、均值与方差
+        self.mean, self.var = None, None
+        # 需要记录全局的均值与方差(使用EMA算法)
+        self.running_mean = np.zeros(self.num_features)
+        self.running_var = np.ones(self.num_features)
+        # 记录输入值和归一化变换后的输入值
+        self.input, self.input_hat = None, None
+        # 初始化权重
+        self.weight = np.zeros((2, self.num_features))
+        self.weight[0] += 1  # gamma值初始化为1
+        self.weight[1] += 0  # beta值初始化为0
+        # 初始化梯度
+        self.grad = np.zeros_like(self.weight)
 
     def zero_grad(self):
         """梯度置为0矩阵"""
-        pass
+        self.grad = np.zeros_like(self.weight)
 
     def get_parameters(self):
         """获取该层的权重参数"""
-        pass
+        return self.weight
 
-    def set_parameters(self, *args, **kwargs):
+    def set_parameters(self, weight):
         """设置该层的权重参数"""
-        pass
+        assert self.weight.shape == weight.shape
+        self.weight = weight
 
-    def forward(self, *args, **kwargs):
-        """该层前向传播"""
-        raise NotImplementedError
+    def forward(self, input_):
+        """前向传播"""
+        self.input = input_.copy()
+        # 在训练阶段需要使用当前的均值和方差
+        if self.training:
+            self.mean = np.mean(input_, axis=0)  # 计算均值
+            self.var = np.var(input_, axis=0)  # 计算有偏方差
+            m = input_.shape[0]  # 给的数据的数量
+            # 使用EMA算法更新运行过程中的均值和无偏方差
+            self.running_mean = self.momentum * self.mean + (1 - self.momentum) * self.running_mean
+            self.running_var = self.momentum * (m / (m - 1)) * self.var + (1 - self.momentum) * self.running_var
+        else:  # 测试阶段使用全局的均值与无偏方差
+            self.mean = self.running_mean
+            self.var = self.running_var
+        # 进行归一化变换
+        self.input_hat = (self.input - self.mean) / np.sqrt(self.var + self.eps)
+        gamma = self.weight[0]
+        beta = self.weight[1]
+        # 进行仿射变换
+        output = self.input_hat * gamma + beta
+        return output
 
-    def backward(self, *args, **kwargs):
-        """该层反向传播"""
-        raise NotImplementedError
+    def backward(self, grad):
+        """反向传播"""
+        delta = grad
+        # 计算梯度(累计梯度)
+        self.grad += np.vstack((np.sum(delta * self.input_hat, axis=0), np.sum(delta, axis=0)))
+        m = delta.shape[0]  # 数据的数量
+        gamma = self.weight[0]
+        # 计算要用到的导数
+        diff_input_hat = delta * gamma
+        diff_var = np.sum(diff_input_hat * (self.input - self.mean) * -0.5 * (self.var + self.eps) ** (-3 / 2), axis=0)
+        diff_mean = np.sum(diff_input_hat * -1 / np.sqrt(self.var + self.eps), axis=0)
+        diff_input = (diff_input_hat / np.sqrt(self.var + self.eps)
+                      + diff_var * 2 * (self.input - self.var) / m
+                      + diff_mean / m)
+        delta_next = diff_input
+        # 将梯度传递到上一层网络
+        return delta_next
+
+
+class BatchNorm2d(BatchNorm):
+    """批归一化层(用于卷积网络中)"""
+
+    def __init__(self, num_features, eps=1.e-5, momentum=0.1):
+        super().__init__(num_features, eps, momentum)
+
+    def forward(self, input_):
+        """前向传播"""
+        # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
+        if input_.ndim != 4:
+            raise ValueError("BatchNorm2d can only handle 4-dim data")
+        # 获取输入矩阵的形状
+        num_data, channel, height, width = input_.shape
+        # 将通道数放在最后面后reshape: (N,H,W,C) => (N*H*W, C)
+        input_reshape = input_.transpose(0, 2, 3, 1).reshape(-1, channel)
+        output = super().forward(input_reshape)
+        # 需要将输出再还原为原来的形状
+        output = output.reshape(num_data, height, width, channel).transpose(0, 3, 1, 2)
+        return output
+
+    def backward(self, grad):
+        """反向传播"""
+        # grad: (num_data/batch_size, in_channels, height, width) (NCHW格式)
+        # 获取输入矩阵的形状
+        num_data, channel, height, width = grad.shape
+        # 将通道数放在最后面后reshape: (N,H,W,C) => (N*H*W, C)
+        grad_reshape = grad.transpose(0, 2, 3, 1).reshape(-1, channel)
+        delta_next = super().backward(grad_reshape)
+        # 需要将输出再还原为原来的形状
+        delta_next = delta_next.reshape(num_data, height, width, channel).transpose(0, 3, 1, 2)
+        return delta_next
 
 
 class ReLULayer(Layer):
