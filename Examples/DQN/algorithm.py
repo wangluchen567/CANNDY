@@ -63,7 +63,7 @@ class DQN(object):
 
     def sync_target(self):
         # 把 self.model 的模型参数值同步到 self.target_model
-        self.target_model.load_params_list(self.model.get_params_list())
+        self.target_model.set_parameters(self.model.get_parameters())
 
     @staticmethod
     def to_one_hot(x, num_class):

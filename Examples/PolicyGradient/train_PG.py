@@ -4,8 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from agent import Agent
-from model import Model
+from Core.Module import MLP
 from algorithm import PolicyGradient
+from Core.Activation import Tanh, Softmax
 
 # 设置帧速率以方便展示
 clock = pygame.time.Clock()
@@ -72,7 +73,8 @@ def main():
     print('obs_dim {}, act_dim {}'.format(obs_dim, act_dim))
 
     # 构建agent
-    model = Model(input_size=obs_dim, output_size=act_dim, hidden_sizes=[act_dim * 10])
+    model = MLP(input_size=obs_dim, output_size=act_dim, hidden_sizes=[act_dim * 10],
+                hidden_activation=Tanh, out_activation=Softmax)
     alg = PolicyGradient(model, lr=1e-3)
     agent = Agent(alg, obs_dim=obs_dim, act_dim=act_dim)
 

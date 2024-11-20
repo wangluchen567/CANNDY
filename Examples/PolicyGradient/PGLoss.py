@@ -20,7 +20,7 @@ class CrossEntropyWithSoftmax():
         """反向传播"""
         reward = self.reward.reshape(-1, 1).repeat(self.output.shape[1], 1)
         delta = reward * (self.output - self.truth_one_hot)
-        for i in range(-1, -self.model.num_layers - 1, -1):
+        for i in range(-1, -len(self.model.Layers) - 1, -1):
             delta = self.model.Layers[i].backward(delta)
 
     @staticmethod

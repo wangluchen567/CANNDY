@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from agent import Agent
-from model import Model
+from Core.Module import MLP
 from algorithm import PolicyGradient
 from replay_memory import ReplayMemory
 from Examples.RL_Envs.Snake import Snake
+from Core.Activation import Tanh, Softmax
 
 # 超参数设置
 LEARN_FREQ = 5  # 训练频率，不需要每一个step都learn，攒一些新增经验后再learn，提高效率
@@ -86,7 +87,8 @@ def main():
     rpm = ReplayMemory(MEMORY_SIZE)  # DQN的经验回放池
 
     # 构建agent
-    model = Model(input_size=obs_dim, output_size=act_dim, hidden_sizes=[128])
+    model = MLP(input_size=obs_dim, output_size=act_dim, hidden_sizes=[128],
+                hidden_activation=Tanh, out_activation=Softmax)
     alg = PolicyGradient(model, lr=1e-3)
     agent = Agent(alg, obs_dim=obs_dim, act_dim=act_dim)
 
@@ -106,7 +108,7 @@ def main():
 
         # 测试部分
         if episode > 5000:
-            eval_reward = evaluate(env, agent, render=True)
+            eval_reward = evaluate(env, agent, render=False)
         else:
             eval_reward = evaluate(env, agent, render=False)
         print('episode:{}, test reward:{}'.format(episode, eval_reward))

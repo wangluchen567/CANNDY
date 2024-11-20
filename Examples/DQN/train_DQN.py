@@ -3,9 +3,10 @@ import pygame
 import numpy as np
 import matplotlib.pyplot as plt
 
-from model import Model
 from agent import Agent
 from algorithm import DQN
+from Core.Module import MLP
+from Core.Activation import ReLU
 from replay_memory import ReplayMemory
 
 # 设置帧速率以方便展示
@@ -78,7 +79,7 @@ def main():
     rpm = ReplayMemory(MEMORY_SIZE)  # DQN的经验回放池
 
     # 构建agent
-    model = Model(input_size=obs_shape[0], output_size=action_dim, hidden_sizes=[128])
+    model = MLP(input_size=obs_shape[0], output_size=action_dim, hidden_sizes=[128], hidden_activation=ReLU)
     algorithm = DQN(model, act_dim=action_dim, gamma=GAMMA, lr=LEARNING_RATE)
     agent = Agent(
         algorithm,

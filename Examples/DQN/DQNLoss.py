@@ -17,5 +17,5 @@ class MSELoss():
         """反向传播"""
         delta = self.output - self.truth
         delta = delta.reshape(-1, 1).repeat(self.action.shape[1], 1) * self.action
-        for i in range(-1, -self.model.num_layers - 1, -1):
+        for i in range(-1, -len(self.model.Layers) - 1, -1):
             delta = self.model.Layers[i].backward(delta)

@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from model import Model
 from agent import Agent
 from algorithm import DQN
+from Core.Module import MLP
+from Core.Activation import ReLU
 from replay_memory import ReplayMemory
 from Examples.RL_Envs.Snake import Snake
 
@@ -72,7 +73,7 @@ def main():
     rpm = ReplayMemory(MEMORY_SIZE)  # DQN的经验回放池
 
     # 构建agent
-    model = Model(input_size=obs_dim, output_size=act_dim, hidden_sizes=[64])
+    model = MLP(input_size=obs_dim, output_size=act_dim, hidden_sizes=[64], hidden_activation=ReLU)
     algorithm = DQN(model, act_dim=act_dim, gamma=GAMMA, lr=LEARNING_RATE)
     agent = Agent(
         algorithm,
@@ -101,7 +102,7 @@ def main():
             episode += 1
 
         # 测试部分
-        eval_reward = evaluate(env, agent, render=True, episode=episode)
+        eval_reward = evaluate(env, agent, render=False, episode=episode)
         print('episode:{}, e_greed:{}, test reward:{}'.format(
             episode, agent.e_greed, eval_reward))
 
