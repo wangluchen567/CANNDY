@@ -120,7 +120,7 @@ class GCN(Module):
         if self.num_hidden > 1:
             for i in range(self.num_hidden - 1):
                 self.Layers.append(GCNConv(self.hidden_sizes[i], self.hidden_sizes[i + 1],
-                                             self.adj_norm, self.hidden_activation))
+                                           self.adj_norm, self.hidden_activation))
                 self.Layers.append(Dropout(p=self.dropout))  # 加入dropout层
         # 加入最后一层
         self.Layers.append(GCNConv(self.hidden_sizes[-1], self.output_size, self.adj_norm, self.out_activation))
@@ -192,12 +192,12 @@ class LeNet5(Module):
             BatchNorm2d(num_features=6),
             ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
-            Dropout(p=0.5),
+            Dropout(p=0.2),
             Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0),
             BatchNorm2d(num_features=16),
             ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
-            Dropout(p=0.5),
+            Dropout(p=0.2),
             Flatten(),
             Linear(input_size=400, output_size=120, activation=ReLU),
             Linear(input_size=120, output_size=84, activation=ReLU),

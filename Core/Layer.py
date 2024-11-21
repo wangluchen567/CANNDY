@@ -197,7 +197,7 @@ class Dropout(Layer):
     def __init__(self, p=0.5):
         super().__init__()
         assert 0.0 <= p <= 1.0
-        self.p = p  # 随机失活概率
+        self.p = p  # 随机失活概率(丢弃神经元比例)
         self.mask = None  # 记录被dropout的部分
 
     def forward(self, input_):
@@ -205,7 +205,8 @@ class Dropout(Layer):
         output = input_.copy()
         # 若失活概率非0且是训练模式则进行mask
         if self.p > 0 and self.training:
-            self.mask = np.random.uniform(0, 1, size=output.shape) > self.p
+            # self.mask = np.random.uniform(0, 1, size=output.shape) > self.p
+            self.mask = np.random.binomial(1, 1 - self.p, size=output.shape)
             # 进行dropout操作
             output = output * self.mask / (1 - self.p)
         return output
@@ -800,15 +801,28 @@ class BatchNorm(Layer):
         self.grad = np.zeros_like(self.weight)
 
     def get_parameters(self):
-        """获取该层的权重参数"""
-        return self.weight.tolist()
+        """获取该层的参数"""
+        params = [self.weight.tolist(), self.running_mean.tolist(), self.running_var.tolist()]
+        return params
 
-    def set_parameters(self, weight_):
-        """设置该层的权重参数"""
-        # 将权重变为array类型
-        weight = weight_ if isinstance(weight_, np.ndarray) else np.array(weight_)
-        assert self.weight.shape == weight.shape
-        self.weight = weight
+    def set_parameters(self, params):
+        """设置该层的参数"""
+        if isinstance(params, np.ndarray):
+            # 若输入是array类型则说明是weight
+            assert self.weight.shape == params.shape
+            self.weight = params
+        elif isinstance(params, list):
+            weight = params[0] if isinstance(params[0], np.ndarray) else np.array(params[0])
+            mean = params[1] if isinstance(params[1], np.ndarray) else np.array(params[1])
+            var = params[2] if isinstance(params[2], np.ndarray) else np.array(params[2])
+            assert self.weight.shape == weight.shape
+            assert self.running_mean.shape == mean.shape
+            assert self.running_var.shape == var.shape
+            self.weight = weight
+            self.running_mean = mean
+            self.running_var = var
+        else:
+            raise ValueError("This parameter type is not supported")
 
     def forward(self, input_):
         """前向传播"""
