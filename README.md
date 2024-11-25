@@ -66,6 +66,9 @@ Chen's Artificial Neural Network constructeD with numpY
 - 循环神经网络模型对sin函数未来趋势预测效果<br>
 <img src="Pic/RNN_predict.gif" width="288" height="220" alt="RNN预测"/>
 - 卷积神经网络LeNet-5模型手写数字的识别效果(测试集准确率高达99%)<br>
+0. 训练损失与测试准确率表现及不同trick下的模型表现<br>
+<img src="Pic/CNN_train.png" width="288" height="230"/>
+<img src="Pic/Trick_contrast.png" width="288" height="230"/>
 1. 输入图像与输出预测结果及概率<br>
 <img src="Pic/Input.png" width="288" height="250"/>
 <img src="Pic/Result.png" width="288" height="250"/>
