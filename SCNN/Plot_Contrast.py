@@ -21,6 +21,7 @@ ax.plot(x, batch_norm, label='BatchNorm')
 ax.plot(x, dropout, label='Dropout(0.2)')
 ax.plot(x, bn_dropout, label='BN+Dropout')
 ax.legend()
+ax.grid()
 ax.set_xlim(0, 50000)
 ax.set_ylim(0, 1)
 ax.set_title('Trick Contrast')
@@ -43,4 +44,30 @@ axins.set_ylim(0.94, 0.98)
 # 1 (右上) 2 (左上) 3(左下) 4(右下)
 mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec='k', lw=1)
 plt.grid()
+plt.show()
+
+
+loss_list = [253.115, 99.657, 75.562, 62.030, 56.641, 51.624, 44.183, 42.161, 39.588, 36.699,
+             34.822, 33.514, 30.111, 28.812, 28.532, 25.962, 26.589, 25.694, 24.292, 21.632,
+             23.488, 22.066, 20.458, 21.208, 19.786, 18.829, 18.744, 19.769, 17.494, 18.298]
+acc_list = [0.9781, 0.984, 0.9849, 0.9882, 0.9857, 0.9877, 0.9884, 0.9897, 0.9883, 0.9907,
+            0.9902, 0.9906, 0.9903, 0.9893, 0.9911, 0.991, 0.9911, 0.992, 0.9913, 0.9907,
+            0.9907, 0.9911, 0.9923, 0.9922, 0.9909, 0.9911, 0.992, 0.9902, 0.9923, 0.9913]
+
+fig1, ax1 = plt.subplots(dpi=160)
+plt.subplots_adjust(top=0.90, bottom=0.10, right=0.88, left=0.10, hspace=0, wspace=0)
+x = np.arange(1, len(acc_list)+1)
+ax1.plot(x, loss_list, c='blue', marker='.', label='loss')
+ax2 = ax1.twinx()
+ax2.plot(x, acc_list, c='red', marker='.', label='accuracy')
+ax1.set_xlabel('Epoch')
+ax1.set_ylabel('Loss')
+ax2.set_ylabel('Accuracy')
+ax1.set_xlim(0, 31)
+ax1.set_ylim(0, 280.0)
+ax2.set_ylim(0.977, 1.0)
+ax1.legend(loc='upper left')
+ax2.legend(loc='upper right')
+ax1.grid()
+plt.title('Training Loss and Accuracy')
 plt.show()
