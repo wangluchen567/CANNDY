@@ -1,6 +1,6 @@
 import numpy as np
 from Core.Activation import Sigmoid, ReLU, Tanh, Softmax
-from Core.Layer import Linear, GCNConv, Dropout, RNN, Conv2d, MaxPool2d, Flatten, ReLULayer, BatchNorm2d
+from Core.Layer import Linear, GCNConv, Dropout, RNN, Conv2d, MaxPool2d, Flatten, ReLULayer, BatchNorm, BatchNorm2d
 
 
 class Module:
@@ -202,6 +202,54 @@ class LeNet5(Module):
             Linear(input_size=400, output_size=120, activation=ReLU),
             Linear(input_size=120, output_size=84, activation=ReLU),
             Linear(input_size=84, output_size=10, activation=Softmax),
+        ]
+
+    def forward(self, input_):
+        hidden = input_.copy()
+        for layer in self.Layers:
+            hidden = layer(hidden)
+        output = hidden
+        return output
+
+
+class DoubleConv(Module):
+    """双层卷积模块"""
+
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+        self.Layers = [
+            Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            BatchNorm2d(out_channels),
+            ReLULayer(),
+            Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            BatchNorm2d(out_channels),
+            ReLULayer(),
+            MaxPool2d(kernel_size=2, stride=2, padding=0),
+        ]
+
+    def forward(self, input_):
+        hidden = input_.copy()
+        for layer in self.Layers:
+            hidden = layer(hidden)
+        output = hidden
+        return output
+
+    def backward(self, delta):
+        for i in range(-1, -len(self.Layers) - 1, -1):
+            delta = self.Layers[i].backward(delta)
+        return delta
+
+
+class MiniVGG(Module):
+    def __init__(self):
+        super().__init__()
+        self.Layers = [
+            DoubleConv(3, 32),
+            DoubleConv(32, 64),
+            Flatten(),
+            Linear(4096, 512, activation=ReLU),
+            BatchNorm(512),
+            Linear(512, 10, activation=Softmax),
         ]
 
     def forward(self, input_):

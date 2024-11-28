@@ -415,7 +415,7 @@ class RNN(Layer):
 class Conv2d(Layer):
     """卷积层"""
 
-    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, activation=None, bias=False):
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, activation=None, bias=True):
         super().__init__(activation=activation, bias=bias)
         assert isinstance(in_channels, int)
         assert isinstance(out_channels, int)
@@ -469,51 +469,36 @@ class Conv2d(Layer):
 
     def forward(self, input_):
         """前向传播"""
-        # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
+        # input_shape (NCHW格式):
+        # (num_data/batch_size, in_channels, height, width)
         if input_.ndim != 4:
             raise ValueError("Conv2d can only handle 4-dim data")
-        input_1 = input_.copy()
         # 根据给定的padding得到加入padding后的输入
-        self.input = self.padding_matrix(input_1, self.padding)
-        # 调整形状为(height, width, num_data/batch_size, in_channels) (HWNC格式)
-        # numpy多维数组是行优先，尽量使低维度的数据在运算时保持连续，就能减少cache不命中的次数，从而提高性能
-        input_pad = self.input.transpose(2, 3, 0, 1)
-        weight = self.weight.transpose(2, 3, 0, 1)
+        input_pad = self.padding_matrix(input_, self.padding)
         # 得到输入的形状
-        ih, iw, nd, _ = input_pad.shape
+        nd, ci, ih, iw = input_pad.shape
         self.batch_size = nd  # batch_size === num_data
         # 如果使用偏置则需要加入对应偏置的弥散矩阵
         if self.bias:
-            bias_diffusion = np.ones((ih, iw, nd, 1))
-            input_pad = np.concatenate((input_pad, bias_diffusion), axis=-1)
-        # 下面正式计算卷积及其导数值
-        # 重新计算形状(可能加入了偏置)
-        ih, iw, nd, ci = input_pad.shape
+            bias_diffusion = np.ones((nd, 1, ih, iw))
+            self.input = np.concatenate((input_pad, bias_diffusion), axis=1)
+        # 下面正式对卷积进行计算
+        # 获取核函数形状值及步长大小
         kh, kw, sh, sw, co = self.kh, self.kw, self.sh, self.sw, self.co
         # 计算输出特征图形状
         oh = int(np.floor((ih - kh + sh) / sh))
         ow = int(np.floor((iw - kw + sw) / sw))
-        # 初始化输出的特征图，与输入形状相同(HWNC格式)
-        output = np.zeros((oh, ow, nd, co))
-        # 初始化input和weight的导数(六维矩阵)
-        # 输出对权重的导数形状为: (oh, ow, kh, kw, nd, ci)
-        self.out_diff_weight = np.zeros((oh, ow, kh, kw, nd, ci))
-        # 输出对输入的导数形状为: (oh, ow, ih, iw, co, ci)
-        self.out_diff_input = np.zeros((oh, ow, ih, iw, co, ci))
-        # 进行卷积操作，同时记录导数情况
+        # 初始化输出的特征图 (NCHW格式)
+        self.output = np.zeros((nd, co, oh, ow))
+        # 进行卷积操作，计算输出
         for h in range(oh):
             i = h * sh
             for w in range(ow):
                 j = w * sw
-                # 形状: (kh, kw, nd, ci)
-                input_part = input_pad[i:i + kh, j:j + kw, :, :]
-                # (nd, co) <= (kh, kw, ci, nd) dot (kh, kw, ci, co)
-                output[h, w, :, :] = np.tensordot(input_part, weight, axes=([0, 1, 3], [0, 1, 3]))
-                # 记录导数值
-                self.out_diff_weight[h, w, :, :, :, :] = input_part
-                self.out_diff_input[h, w, i:i + kh, j:j + kw, :, :] = weight
-        # 然后将轴转换回(num_data/batch_size, out_channels, height, width)(NCHW格式)
-        self.output = output.transpose(2, 3, 0, 1)
+                # 形状: (nd, cip, kh, kw)
+                input_part = self.input[:, :, i:i + kh, j:j + kw]
+                # (nd, co) <= (nd, cip, kh, kw) dot (co, cip, kh, kw)
+                self.output[:, :, h, w] = np.tensordot(input_part, self.weight, axes=([1, 2, 3], [1, 2, 3]))
         return self.output
 
     def backward(self, grad):
@@ -521,26 +506,29 @@ class Conv2d(Layer):
         delta = grad
         if self.activation is not None:
             delta = grad * self.activation.backward(self.output)
-        # 改变形状为(oh, ow, nd, co)(HWNC格式)
-        delta = delta.transpose(2, 3, 0, 1)
-        # 根据之前记录的导数值计算梯度
-        # 改变形状方便求点积
-        # (oh, ow, nd, ci, kh, kw) <= (oh, ow, kh, kw, nd, ci)
-        self.out_diff_weight = self.out_diff_weight.transpose(0, 1, 4, 5, 2, 3)
-        # (co, ci, kh, kw) <= (oh, ow, nd, co) dot (oh, ow, nd, ci, kh, kw)
-        self.grad = np.tensordot(delta, self.out_diff_weight, axes=([0, 1, 2], [0, 1, 2]))
-        # 传递到上一层网络时偏置不传导梯度
+        # 获取梯度的形状(与输出的形状相同)
+        nd, co, oh, ow = delta.shape
+        # 核函数大小和步长大小
+        kh, kw, sh, sw = self.kh, self.kw, self.sh, self.sw
+        # 初始化传播到上一层梯度的形状
+        delta_next = np.zeros_like(self.input)
+        weight_ = self.weight
+        # 如果存在偏置需要去掉额外通道
+        # 偏置不参与反向传播
         if self.bias:
-            # 形状: (oh, ow, ih, iw, co, ci)
-            self.out_diff_input = self.out_diff_input[:, :, :, :, :, :-1]
-        # 将梯度传递到上一层网络
-        # 改变形状方便求点积
-        # (oh, ow, co, nd) <= (oh, ow, nd, co)
-        delta = delta.transpose(0, 1, 3, 2)
-        # (oh, ow, co, ci, ih, iw) <= (oh, ow, ih, iw, co, ci)
-        self.out_diff_input = self.out_diff_input.transpose(0, 1, 4, 5, 2, 3)
-        # (nd, ci, ih, iw) <= (oh, ow, co, nd) dot (oh, ow, co, ci, ih, iw)
-        delta_next = np.tensordot(delta, self.out_diff_input, axes=([0, 1, 2], [0, 1, 2]))
+            delta_next = delta_next[:, :-1, :, :]
+            weight_ = weight_[:, :-1, :, :]
+        # 进行卷积操作求梯度
+        for h in range(oh):
+            i = h * sh
+            for w in range(ow):
+                j = w * sw
+                # 形状: (nd, cip, kh, kw)
+                input_part = self.input[:, :, i:i + kh, j:j + kw]
+                # (co, cip, kh, kw) <= (nd, co) dot (nd, cip, kh, kw)
+                self.grad += np.tensordot(delta[:, :, h, w], input_part, axes=([0], [0]))
+                # (nd, ci, kh, kw) <= (nd, co) dot (co, ci, kh, kw)
+                delta_next[:, :, i:i + kh, j:j + kw] += np.tensordot(delta[:, :, h, w], weight_, axes=([1], [0]))
         # 得到反向传播到上一层的形状(输入的形状)
         _, _, ih, iw = delta_next.shape
         # 还要考虑padding的梯度，由于是常数填充，所以直接裁剪掉padding
@@ -578,8 +566,8 @@ class MaxPool2d(Layer):
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
-        # 记录输入输出以及batch大小以方便反向传播
-        self.input, self.output, self.batch_size = None, None, 1
+        # 记录输入输出以方便反向传播
+        self.input, self.output = None, None
         # 根据给定参数初始化相关参数
         self.kh, self.kw = self.init_param_value(self.kernel_size)
         self.sh, self.sw = self.init_param_value(self.stride)
@@ -599,42 +587,38 @@ class MaxPool2d(Layer):
 
     def forward(self, input_):
         """前向传播"""
-        # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
+        # input_shape (NCHW格式):
+        # (num_data/batch_size, in_channels, height, width)
         if input_.ndim != 4:
             raise ValueError("MaxPool2d can only handle 4-dim data")
-        input_1 = input_.copy()
         # 根据给定的padding得到加入padding后的输入
-        self.input = self.padding_matrix(input_1, self.padding)
-        # 调整形状为(height, width, num_data/batch_size, in_channels) (HWNC格式)
-        # numpy多维数组是行优先，尽量使低维度的数据在运算时保持连续，就能减少cache不命中的次数，从而提高性能
-        input_pad = self.input.transpose(2, 3, 0, 1)
-        # 得到输入的形状
-        ih, iw, nd, _ = input_pad.shape
-        self.batch_size = nd  # batch_size === num_data
+        self.input = self.padding_matrix(input_, self.padding)
+        # 获取形状为HWNC格式的输入数据
+        input_t = self.input.transpose(2, 3, 0, 1)
         # 下面正式计算最大池化
-        # 重新计算形状(可能加入了偏置)
-        ih, iw, nd, ci = input_pad.shape
+        # 获取各种形状以步长
+        nd, ci, ih, iw = self.input.shape
         kh, kw, sh, sw, co = self.kh, self.kw, self.sh, self.sw, ci
         # 计算输出特征图形状
         oh = int(np.floor((ih - kh + sh) / sh))
         ow = int(np.floor((iw - kw + sw) / sw))
-        # 初始化输出的特征图，与输入形状相同(HWNC格式)
-        output = np.zeros((oh, ow, nd, co))
+        # 初始化输出的特征图
+        self.output = np.zeros((nd, co, oh, ow))
         # 初始化梯度mask下标
         self.max_index = np.zeros((oh, ow, nd * ci, 2), dtype=int)
-        # 进行卷积操作，同时记录导数情况
+        # 进行卷积操作，同时记录mask下标
         for h in range(oh):
             i = h * sh
             for w in range(ow):
                 j = w * sw
                 # 形状: (kh, kw, nd, ci)
-                input_part = input_pad[i:i + kh, j:j + kw, :, :]
+                input_part = input_t[i:i + kh, j:j + kw, :, :]
                 # 将后两维合并以方便操作 (kh, kw, nd*ci)
                 input_part_ = input_part.reshape(kh, kw, -1)
                 # 进行最大池化
                 part_max = input_part_.max(axis=(0, 1))
                 # 得到该区域最大池化的结果
-                output[h, w, :, :] = part_max.reshape(nd, ci)
+                self.output[:, :, h, w] = part_max.reshape(nd, ci)
                 # 得到该区域所有最大值的位置
                 part_max_pos = np.where(input_part_ == part_max)
                 # 得到该区域第一个最大值的下标的位置
@@ -643,35 +627,30 @@ class MaxPool2d(Layer):
                 part_max_index = np.vstack(part_max_pos).T[unique_index, :-1]
                 # 保存这些最大值下标
                 self.max_index[h][w] = part_max_index
-        # 然后将轴转换回(num_data/batch_size, out_channels, height, width)(NCHW格式)
-        self.output = output.transpose(2, 3, 0, 1)
         return self.output
 
     def backward(self, grad):
         """反向传播"""
-        # 调整形状为(height, width, num_data/batch_size, in_channels) (HWNC格式)
-        delta = grad.transpose(2, 3, 0, 1).copy()
+        delta = grad
         # 获取梯度的形状(与输出的形状相同)
-        oh, ow, nd, co = delta.shape
-        # 初始化反向传播到上一层的梯度，并转换为HWNC格式
-        delta_next = np.zeros_like(self.input).transpose(2, 3, 0, 1)
+        nd, co, oh, ow = delta.shape
+        # 初始化反向传播到上一层的梯度
+        delta_next = np.zeros_like(self.input)
         # 核函数大小和步长大小
         kh, kw, sh, sw = self.kh, self.kw, self.sh, self.sw
         for h in range(oh):
             i = h * sh
             for w in range(ow):
                 j = w * sw
-                # 形状: (kh, kw, nd, ci)
-                delta_next_part = delta_next[i:i + kh, j:j + kw, :, :]
-                # 将后两维合并并调整轴以方便操作 (kh, kw, nd*ci)
-                delta_next_part = delta_next_part.reshape(kh, kw, -1).transpose(2, 0, 1)
+                # 形状: (nd, ci, kh, kw)
+                delta_next_part = delta_next[:, :, i:i + kh, j:j + kw]
+                # 将后两维合并并调整轴以方便操作
+                delta_next_part = delta_next_part.reshape(-1, kh, kw)
                 # 获取该部分的最大值下标
                 part_max_index = self.max_index[h][w]
                 # 将前面的梯度利用mask传递到上一层
                 delta_next_part[np.arange(len(part_max_index)), part_max_index[:, 0], part_max_index[:, 1]] \
-                    += delta[h][w].flatten()
-        # 将传播到上一层的梯度转换为NCHW格式
-        delta_next = delta_next.transpose(2, 3, 0, 1)
+                    += delta[:, :, h, w].flatten()
         # 得到反向传播到上一层的形状(输入的形状)
         _, _, ih, iw = delta_next.shape
         # 还要考虑padding的梯度，由于是常数填充，所以直接裁剪掉padding
@@ -687,8 +666,8 @@ class MeanPool2d(Layer):
         self.kernel_size = kernel_size
         self.stride = stride
         self.padding = padding
-        # 记录输入输出以及batch大小以方便反向传播
-        self.input, self.output, self.batch_size = None, None, 1
+        # 记录输入输出以方便反向传播
+        self.input, self.output = None, None
         # 根据给定参数初始化相关参数
         self.kh, self.kw = self.init_param_value(self.kernel_size)
         self.sh, self.sw = self.init_param_value(self.stride)
@@ -707,66 +686,54 @@ class MeanPool2d(Layer):
 
     def forward(self, input_):
         """前向传播"""
-        # input_size: (num_data/batch_size, in_channels, height, width) (NCHW格式)
+        # input_shape (NCHW格式):
+        # (num_data/batch_size, in_channels, height, width)
         if input_.ndim != 4:
             raise ValueError("MeanPool2d can only handle 4-dim data")
         input_1 = input_.copy()
         # 根据给定的padding得到加入padding后的输入
         self.input = self.padding_matrix(input_1, self.padding)
-        # 调整形状为(height, width, num_data/batch_size, in_channels) (HWNC格式)
-        # numpy多维数组是行优先，尽量使低维度的数据在运算时保持连续，就能减少cache不命中的次数，从而提高性能
-        input_pad = self.input.transpose(2, 3, 0, 1)
-        # 得到输入的形状
-        ih, iw, nd, _ = input_pad.shape
-        self.batch_size = nd  # batch_size === num_data
-        # 下面正式计算最大池化
-        # 重新计算形状(可能加入了偏置)
-        ih, iw, nd, ci = input_pad.shape
+        # 下面正式计算平均池化
+        # 获取各种形状以步长
+        nd, ci, ih, iw = self.input.shape
         kh, kw, sh, sw, co = self.kh, self.kw, self.sh, self.sw, ci
         # 计算输出特征图形状
         oh = int(np.floor((ih - kh + sh) / sh))
         ow = int(np.floor((iw - kw + sw) / sw))
-        # 初始化输出的特征图，与输入形状相同(HWNC格式)
-        output = np.zeros((oh, ow, nd, co))
-        # 进行卷积操作，同时记录导数情况
+        # 初始化输出的特征图
+        self.output = np.zeros((nd, co, oh, ow))
+        # 进行卷积操作
         for h in range(oh):
             i = h * sh
             for w in range(ow):
                 j = w * sw
-                # 形状: (kh, kw, nd, ci)
-                input_part = input_pad[i:i + kh, j:j + kw, :, :]
-                # 调整形状以便操作
-                input_part = input_part.transpose(2, 3, 0, 1)
+                # 形状: (nd, ci, kh, kw)
+                input_part = self.input[:, :, i:i + kh, j:j + kw]
                 # 取这部分的平均值作为平均池化的输出结果
-                output[h, w, :, :] = input_part.mean(axis=(2, 3))
-        # 然后将轴转换回(num_data/batch_size, out_channels, height, width)(NCHW格式)
-        self.output = output.transpose(2, 3, 0, 1)
+                self.output[:, :, h, w] = input_part.mean(axis=(2, 3))
         return self.output
 
     def backward(self, grad):
         """反向传播"""
-        # 调整形状为(height, width, num_data/batch_size, in_channels) (HWNC格式)
-        delta = grad.transpose(2, 3, 0, 1).copy()
+        delta = grad
         # 获取梯度的形状(与输出的形状相同)
-        oh, ow, nd, co = delta.shape
-        # 初始化反向传播到上一层的梯度，并转换为HWNC格式
-        delta_next = np.zeros_like(self.input).transpose(2, 3, 0, 1)
+        nd, co, oh, ow = delta.shape
+        # 初始化反向传播到上一层的梯度
+        delta_next = np.zeros_like(self.input)
         # 核函数大小和步长大小
         kh, kw, sh, sw = self.kh, self.kw, self.sh, self.sw
         for h in range(oh):
             i = h * sh
             for w in range(ow):
                 j = w * sw
-                # 形状: (kh, kw, nd, ci)
-                delta_next_part = delta_next[i:i + kh, j:j + kw, :, :]
+                # 形状: (nd, ci, kh, kw)
+                delta_next_part = delta_next[:, :, i:i + kh, j:j + kw]
                 # 调整形状以便操作
-                delta_next_part = delta_next_part.transpose(2, 3, 0, 1).reshape(nd, -1, (kh * kw))
+                delta_next_part = delta_next_part.reshape(nd, -1, (kh * kw))
                 # 计算对应元素的平均梯度值
-                delta_mean = delta[h][w] / (kh * kw)
+                delta_mean = delta[:, :, h, w] / (kh * kw)
                 # 将前面的梯度传递到上一层
                 delta_next_part += np.repeat(delta_mean[:, :, np.newaxis], (kh * kw), axis=-1)
-        # 将传播到上一层的梯度转换为NCHW格式
-        delta_next = delta_next.transpose(2, 3, 0, 1)
         # 得到反向传播到上一层的形状(输入的形状)
         _, _, ih, iw = delta_next.shape
         # 还要考虑padding的梯度，由于是常数填充，所以直接裁剪掉padding

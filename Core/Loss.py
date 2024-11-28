@@ -20,6 +20,7 @@ class Loss:
     @staticmethod
     def to_one_hot(x, num_class):
         """转为OneHot编码"""
+        x = np.array(x, dtype=int)
         batch_size = x.shape[0]
         one_hot = np.zeros((batch_size, num_class))
         one_hot[np.arange(batch_size), x.flatten()] = 1

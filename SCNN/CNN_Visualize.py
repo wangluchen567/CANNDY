@@ -19,11 +19,17 @@ def load_data(data_path):
 
     return x_train, y_train, x_valid, y_valid
 
+def standardize_data(data, mean=None, std=None):
+    """对数据进行标准化"""
+    if mean is None or std is None:
+        mean = np.mean(data)
+        std = np.std(data)
+    return (data - mean) / std, mean, std
+
 
 def valid_model(model, input_, truth):
     model.eval()
-    # 需要将input形状调整为(batch_size, in_channels, height, width)(NCHW格式)
-    input_ = input_.reshape(-1, 1, 28, 28).transpose(0, 1, 3, 2)
+    input_ = input_.reshape(-1, 1, 28, 28)
     output = model.forward(input_)
     predict = np.argmax(output, axis=1)
     accuracy = np.array(predict == truth.flatten(), dtype=int).sum() / len(truth)
@@ -57,7 +63,7 @@ def plot_feature_maps(feature_map, title):
     fig, axs = plt.subplots(rows, cols, figsize=(cols * 2, rows * 2))
     axs = axs.flatten()
     for i in range(N):
-        axs[i].imshow(feature_map[i].T)
+        axs[i].imshow(feature_map[i])
         axs[i].axis('off')  # 不显示坐标轴
     fig.suptitle(title)
     plt.tight_layout()
@@ -67,6 +73,8 @@ def plot_feature_maps(feature_map, title):
 if __name__ == '__main__':
     data_path = "../Dataset/mnist.pkl.gz"
     x_train, y_train, x_valid, y_valid = load_data(data_path)
+    x_train = x_train.reshape(-1, 1, 28, 28)
+    x_valid = x_valid.reshape(-1, 1, 28, 28)
     y_train = y_train.reshape(-1, 1)
     y_valid = y_valid.reshape(-1, 1)
     # 创建模型
@@ -75,6 +83,11 @@ if __name__ == '__main__':
     with open('LeNet-5_Params.json', 'r') as f:
         params_dict = json.load(f)
     model.set_parameters(params_dict)
+    # 对数据进行标准化
+    print('standardize dataset...')
+    x_train, mean, std = standardize_data(x_train)
+    x_valid, _, _ = standardize_data(x_valid, mean, std)
+    print(f'mean: {mean}, std: {std}')
     # train_acc = valid_model(model, x_train, y_train)
     # print("train acc: {:.3f}".format(train_acc * 100))
     valid_acc = valid_model(model, x_valid, y_valid)
@@ -88,16 +101,18 @@ if __name__ == '__main__':
     data_path = '../Dataset/Mnist_Test/6.png'
     test_data = load_image(data_path)
 
-    # 绘制输出图像
+    # 绘制输入图像
     plt.figure()
-    plt.imshow(test_data.reshape(28, 28))
+    plt.imshow(test_data)
     plt.title('Input')
     plt.tight_layout()
     plt.show()
 
     # 前向传播
     model.eval()
-    input_ = test_data.reshape(1, 1, 28, 28).transpose(0, 1, 3, 2)
+    # 对数据进行标准化
+    test_data, _, _ = standardize_data(test_data, mean, std)
+    input_ = test_data.reshape(-1, 1, 28, 28)
 
     # 前向传播得到每步的结果
     hidden = input_.copy()
@@ -115,7 +130,7 @@ if __name__ == '__main__':
     # 画图中文显示会有问题，需要这两行设置默认字体
     plt.rcParams['font.sans-serif'] = ['SimHei']
     plt.rcParams['axes.unicode_minus'] = False
-    plt.imshow(test_data.reshape(28, 28))
+    plt.imshow(test_data)
     plt.title('Result')
     plt.xlabel('识别结果：{:d}, 识别概率: {:.3f} %'.format(predict, output[0, predict] * 100))
     plt.show()
