@@ -490,16 +490,6 @@ class Conv2d(Layer):
         ow = int(np.floor((iw - kw + sw) / sw))
         # 初始化输出的特征图 (NCHW格式)
         self.output = np.zeros((nd, co, oh, ow))
-
-        # 初始化input和weight的导数(六维矩阵)
-        # 输出对权重的导数形状为: (oh, ow, kh, kw, nd, ci)
-        self.out_diff_weight = np.zeros((oh, ow, kh, kw, nd, ci+self.bias))
-        # 输出对输入的导数形状为: (oh, ow, ih, iw, co, ci)
-        self.out_diff_input = np.zeros((oh, ow, ih, iw, co, ci+self.bias))
-        input_pad = self.input.transpose(2, 3, 0, 1)
-        weight = self.weight.transpose(2, 3, 0, 1)
-        output = np.zeros((oh, ow, nd, co))
-
         # 进行卷积操作，计算输出
         for h in range(oh):
             i = h * sh
@@ -509,17 +499,6 @@ class Conv2d(Layer):
                 input_part = self.input[:, :, i:i + kh, j:j + kw]
                 # (nd, co) <= (nd, cip, kh, kw) dot (co, cip, kh, kw)
                 self.output[:, :, h, w] = np.tensordot(input_part, self.weight, axes=([1, 2, 3], [1, 2, 3]))
-
-
-                # 形状: (kh, kw, nd, ci)
-                input_part = input_pad[i:i + kh, j:j + kw, :, :]
-                # (nd, co) <= (kh, kw, ci, nd) dot (kh, kw, ci, co)
-                output[h, w, :, :] = np.tensordot(input_part, weight, axes=([0, 1, 3], [0, 1, 3]))
-                # 记录导数值
-                self.out_diff_weight[h, w, :, :, :, :] = input_part
-                self.out_diff_input[h, w, i:i + kh, j:j + kw, :, :] = weight
-        output = output.transpose(2, 3, 0, 1)
-        print('output:', np.sum(np.abs(self.output - output)))
         return self.output
 
     def backward(self, grad):
@@ -550,30 +529,6 @@ class Conv2d(Layer):
                 self.grad += np.tensordot(delta[:, :, h, w], input_part, axes=([0], [0]))
                 # (nd, ci, kh, kw) <= (nd, co) dot (co, ci, kh, kw)
                 delta_next[:, :, i:i + kh, j:j + kw] += np.tensordot(delta[:, :, h, w], weight_, axes=([1], [0]))
-
-        # 改变形状为(oh, ow, nd, co)(HWNC格式)
-        delta = delta.transpose(2, 3, 0, 1)
-        # 根据之前记录的导数值计算梯度
-        # 改变形状方便求点积
-        # (oh, ow, nd, ci, kh, kw) <= (oh, ow, kh, kw, nd, ci)
-        self.out_diff_weight = self.out_diff_weight.transpose(0, 1, 4, 5, 2, 3)
-        # (co, ci, kh, kw) <= (oh, ow, nd, co) dot (oh, ow, nd, ci, kh, kw)
-        grad_ = np.tensordot(delta, self.out_diff_weight, axes=([0, 1, 2], [0, 1, 2]))
-        # 传递到上一层网络时偏置不传导梯度
-        if self.bias:
-            # 形状: (oh, ow, ih, iw, co, ci)
-            self.out_diff_input = self.out_diff_input[:, :, :, :, :, :-1]
-            # 将梯度传递到上一层网络
-            # 改变形状方便求点积
-            # (oh, ow, co, nd) <= (oh, ow, nd, co)
-        delta = delta.transpose(0, 1, 3, 2)
-        # (oh, ow, co, ci, ih, iw) <= (oh, ow, ih, iw, co, ci)
-        self.out_diff_input = self.out_diff_input.transpose(0, 1, 4, 5, 2, 3)
-        # (nd, ci, ih, iw) <= (oh, ow, co, nd) dot (oh, ow, co, ci, ih, iw)
-        delta_next_ = np.tensordot(delta, self.out_diff_input, axes=([0, 1, 2], [0, 1, 2]))
-
-        print('grad:', np.sum(np.abs(self.grad - grad_)))
-        print('delta_next:', np.sum(np.abs(delta_next - delta_next_)))
         # 得到反向传播到上一层的形状(输入的形状)
         _, _, ih, iw = delta_next.shape
         # 还要考虑padding的梯度，由于是常数填充，所以直接裁剪掉padding
