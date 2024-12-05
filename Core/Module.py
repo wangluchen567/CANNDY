@@ -188,12 +188,12 @@ class LeNet5(Module):
     def __init__(self):
         super().__init__()
         self.Layers = [
-            Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1, padding=2),
+            Conv2d(in_channels=1, out_channels=6, kernel_size=5, stride=1, padding=2, bias=False),
             BatchNorm2d(num_features=6),
             ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
             Dropout(p=0.2),
-            Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0),
+            Conv2d(in_channels=6, out_channels=16, kernel_size=5, stride=1, padding=0, bias=False),
             BatchNorm2d(num_features=16),
             ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
@@ -218,10 +218,10 @@ class DoubleConv(Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.Layers = [
-            Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False),
             BatchNorm2d(out_channels),
             ReLULayer(),
-            Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False),
             BatchNorm2d(out_channels),
             ReLULayer(),
             MaxPool2d(kernel_size=2, stride=2, padding=0),
