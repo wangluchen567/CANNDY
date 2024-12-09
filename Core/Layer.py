@@ -159,27 +159,25 @@ class Linear(Layer):
 
     def forward(self, input_):
         """前向传播"""
-        # 计算batch大小
+        # 记录batch大小
         self.batch_size = input_.shape[0]
         # 形状转置 (n,m) => (m,n)
         self.input_1 = input_.T.copy()
         if self.bias:
             self.input_1 = np.vstack((self.input_1, np.ones(shape=(1, self.input_1.shape[1]))))
-        # H.T = W @ X.T or [W, b] @ [X, 1].T
-        # 形状: (k,n) = (k,m) @ (m,n)
-        self.output = self.weight @ self.input_1
-        # 形状转置: (k,n) => (n,k)
-        output_act = self.output.T.copy()
+        # O = [X 1] @ [W b]^T = X @ W + b
+        # 形状: (n,k) = ((k,m) @ (m,n)).T
+        self.output = (self.weight @ self.input_1).T
         # 激活函数激活
+        output_ = self.output.copy()
         if self.activation is not None:
-            output_act = self.activation.forward(output_act)
-        return output_act
+            output_ = self.activation.forward(output_)
+        return output_
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播求梯度"""
-        delta = grad
         if self.activation is not None:
-            delta = grad * self.activation.backward(self.output.T)
+            delta = delta * self.activation.backward(self.output)
         # 计算梯度(累计梯度) 取平均
         self.grad += (self.input_1 @ delta).T / self.batch_size
         # 将delta @ w传递到上一层网络
@@ -205,19 +203,18 @@ class Dropout(Layer):
         output = input_.copy()
         # 若失活概率非0且是训练模式则进行mask
         if self.p > 0 and self.training:
-            # self.mask = np.random.uniform(0, 1, size=output.shape) > self.p
             self.mask = np.random.binomial(1, 1 - self.p, size=output.shape)
             # 进行dropout操作
             output = output * self.mask / (1 - self.p)
         return output
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播"""
         # 若失活概率非0且是训练模式则需要对梯度进行mask
         if self.p > 0 and self.training:
-            return grad * self.mask / (1 - self.p)
+            return delta * self.mask / (1 - self.p)
         else:
-            return grad
+            return delta
 
 
 class GCNConv(Linear):
@@ -282,7 +279,7 @@ class RNNCell(Layer):
 
     def forward(self, input_, hidden):
         """前向传播"""
-        # 计算batch大小
+        # 记录batch大小
         self.batch_size = input_.shape[0]
         # 形状转置 (n,m) => (m,n)
         input_1 = input_.T.copy()
@@ -290,29 +287,26 @@ class RNNCell(Layer):
         if self.bias:
             input_1 = np.vstack((input_1, np.ones(shape=(1, input_1.shape[1]))))
             hidden_1 = np.vstack((hidden_1, np.ones(shape=(1, hidden_1.shape[1]))))
-        # H.T = W @ X.T or [W, b] @ [X, 1].T
-        # 形状: (k,n) = (k,m) @ (m,n)
-        output = self.weight_input @ input_1 + self.weight_hidden @ hidden_1
+        # 形状: (n,k) = ((k,m) @ (m,n) +  (k,k) @ (k,n)).T
+        output = (self.weight_input @ input_1 + self.weight_hidden @ hidden_1).T
         # 保存所有的输入与输出
         self.input_1_list.append(input_1)
         self.hidden_1_list.append(hidden_1)
         self.output_list.append(output)
-        # 形状转置: (k,n) => (n,k)
-        output_act = output.T.copy()
         # 激活函数激活
+        output_ = output.copy()
         if self.activation is not None:
-            output_act = self.activation.forward(output_act)
-        return output_act
+            output_ = self.activation.forward(output_)
+        return output_
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播求梯度"""
-        delta = grad
         # 求梯度时需要从最后一个弹出一个元素求梯度
         input_1 = self.input_1_list.pop(-1)
         hidden_1 = self.hidden_1_list.pop(-1)
         output = self.output_list.pop(-1)
         if self.activation is not None:
-            delta = grad * self.activation.backward(output.T)
+            delta = delta * self.activation.backward(output)
         # 计算各个权重的梯度并取平均
         grad_input = (input_1 @ delta).T / self.batch_size
         grad_hidden = (hidden_1 @ delta).T / self.batch_size
@@ -399,17 +393,17 @@ class RNN(Layer):
         # state size : (num_layers, batch_size, hidden_size)
         return self.outputs, self.state
 
-    def backward(self, grad):
+    def backward(self, delta):
         """梯度反向传播"""
         # 初始化每层返回的delta梯度
-        grads = [np.zeros_like(grad) for _ in range(self.num_layers)]
-        grads[-1] = grad
+        deltas = [np.zeros_like(delta) for _ in range(self.num_layers)]
+        deltas[-1] = delta
         for i in range(self.num_steps):
             # 先反向传播最后一层
-            grads[-1] = self.Layers[-1].backward(grads[-1])
+            deltas[-1] = self.Layers[-1].backward(deltas[-1])
             # 再逐层传播并对上一个时间片的梯度累加
             for j in range(self.num_layers - 2, -1, -1):
-                grads[j] += self.Layers[j].backward(grads[j + 1])
+                deltas[j] += self.Layers[j].backward(deltas[j + 1])
 
 
 class Conv2d(Layer):
@@ -501,17 +495,16 @@ class Conv2d(Layer):
                 self.output[:, :, h, w] = np.tensordot(input_part, self.weight, axes=([1, 2, 3], [1, 2, 3]))
         return self.output
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播"""
-        delta = grad
         if self.activation is not None:
-            delta = grad * self.activation.backward(self.output)
+            delta = delta * self.activation.backward(self.output)
         # 获取梯度的形状(与输出的形状相同)
         nd, co, oh, ow = delta.shape
         # 核函数大小和步长大小
         kh, kw, sh, sw = self.kh, self.kw, self.sh, self.sw
         # 初始化传播到上一层梯度的形状
-        delta_next = np.zeros_like(self.input, dtype=self.weight.dtype)
+        delta_next = np.zeros_like(self.input, dtype=delta.dtype)
         weight_ = self.weight
         # 如果存在偏置需要去掉额外通道
         # 偏置不参与反向传播
@@ -552,10 +545,10 @@ class Flatten(Layer):
         output = input_.reshape(batch_size, -1)
         return output
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播"""
         # 将梯度变为输入的形状反向传播到上一层
-        return grad.reshape(self.input_shape)
+        return delta.reshape(self.input_shape)
 
 
 class MaxPool2d(Layer):
@@ -629,13 +622,12 @@ class MaxPool2d(Layer):
                 self.max_index[h][w] = part_max_index
         return self.output
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播"""
-        delta = grad
         # 获取梯度的形状(与输出的形状相同)
         nd, co, oh, ow = delta.shape
         # 初始化反向传播到上一层的梯度
-        delta_next = np.zeros_like(self.input)
+        delta_next = np.zeros_like(self.input, dtype=delta.dtype)
         # 核函数大小和步长大小
         kh, kw, sh, sw = self.kh, self.kw, self.sh, self.sw
         for h in range(oh):
@@ -690,9 +682,8 @@ class MeanPool2d(Layer):
         # (num_data/batch_size, in_channels, height, width)
         if input_.ndim != 4:
             raise ValueError("MeanPool2d can only handle 4-dim data")
-        input_1 = input_.copy()
         # 根据给定的padding得到加入padding后的输入
-        self.input = self.padding_matrix(input_1, self.padding)
+        self.input = self.padding_matrix(input_, self.padding)
         # 下面正式计算平均池化
         # 获取各种形状以步长
         nd, ci, ih, iw = self.input.shape
@@ -713,9 +704,8 @@ class MeanPool2d(Layer):
                 self.output[:, :, h, w] = input_part.mean(axis=(2, 3))
         return self.output
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播"""
-        delta = grad
         # 获取梯度的形状(与输出的形状相同)
         nd, co, oh, ow = delta.shape
         # 初始化反向传播到上一层的梯度
@@ -796,9 +786,9 @@ class BatchNorm(Layer):
         self.input = input_.copy()
         # 在训练阶段需要使用当前的均值和方差
         if self.training:
-            self.mean = np.mean(input_, axis=0)  # 计算均值
-            self.var = np.var(input_, axis=0)  # 计算有偏方差
-            m = input_.shape[0]  # 给的数据的数量
+            self.mean = np.mean(self.input, axis=0)  # 计算均值
+            self.var = np.var(self.input, axis=0)  # 计算有偏方差
+            m = self.input.shape[0]  # 给的数据的数量
             # 使用EMA算法更新运行过程中的均值和无偏方差
             self.running_mean = self.momentum * self.mean + (1 - self.momentum) * self.running_mean
             self.running_var = self.momentum * (m / (m - 1)) * self.var + (1 - self.momentum) * self.running_var
@@ -813,9 +803,8 @@ class BatchNorm(Layer):
         output = self.input_hat * gamma + beta
         return output
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播"""
-        delta = grad
         # 计算梯度(累计梯度)
         self.grad += np.vstack((np.sum(delta * self.input_hat, axis=0), np.sum(delta, axis=0)))
         m = delta.shape[0]  # 数据的数量
@@ -852,14 +841,14 @@ class BatchNorm2d(BatchNorm):
         output = output.reshape(num_data, height, width, channel).transpose(0, 3, 1, 2)
         return output
 
-    def backward(self, grad):
+    def backward(self, delta):
         """反向传播"""
-        # grad: (num_data/batch_size, in_channels, height, width) (NCHW格式)
+        # delta: (num_data/batch_size, in_channels, height, width) (NCHW格式)
         # 获取输入矩阵的形状
-        num_data, channel, height, width = grad.shape
+        num_data, channel, height, width = delta.shape
         # 将通道数放在最后面后reshape: (N,H,W,C) => (N*H*W, C)
-        grad_reshape = grad.transpose(0, 2, 3, 1).reshape(-1, channel)
-        delta_next = super().backward(grad_reshape)
+        delta_reshape = delta.transpose(0, 2, 3, 1).reshape(-1, channel)
+        delta_next = super().backward(delta_reshape)
         # 需要将输出再还原为原来的形状
         delta_next = delta_next.reshape(num_data, height, width, channel).transpose(0, 3, 1, 2)
         return delta_next
@@ -878,8 +867,8 @@ class ReLULayer(Layer):
         self.output = self.input * (self.input > 0)
         return self.output
 
-    def backward(self, grad):
-        return grad * (self.input > 0)
+    def backward(self, delta):
+        return delta * (self.input > 0)
 
 
 class SigmoidLayer(Layer):
@@ -902,8 +891,8 @@ class SigmoidLayer(Layer):
         self.output[indices_neg] = np.exp(self.input[indices_neg]) / (1 + np.exp(self.input[indices_neg]))
         return self.output
 
-    def backward(self, grad):
-        return grad * (self.output * (1 - self.output))
+    def backward(self, delta):
+        return delta * (self.output * (1 - self.output))
 
 
 class TanhLayer(Layer):
@@ -928,8 +917,8 @@ class TanhLayer(Layer):
                                     / (1 + np.exp(2 * self.input[indices_neg])))
         return self.output
 
-    def backward(self, grad):
-        return grad * (1 - self.output * self.output)
+    def backward(self, delta):
+        return delta * (1 - self.output * self.output)
 
 
 class SoftmaxLayer(Layer):
@@ -948,6 +937,6 @@ class SoftmaxLayer(Layer):
         self.output = np.exp(self.input) / np.sum(np.exp(self.input), axis=dim, keepdims=True)
         return self.output
 
-    def backward(self, grad):
+    def backward(self, delta):
         # Softmax的梯度反向传播集成在CrossEntropyWithSoftmax中了
-        return grad
+        return delta
