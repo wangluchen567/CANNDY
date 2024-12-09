@@ -11,7 +11,7 @@ Chen's Artificial Neural Network constructeD with numpY
 - Activation: 实现各种激活函数，包括`ReLU`、`Sigmoid`、`Tanh`、`Softmax`
 - Layer: 实现各种神经网络层，包括`Linear`、`Dropout`、`GCNConv`、`RNN`、`Conv2d`、`MaxPool2d`、`BatchNorm`等
 - Loss: 实现各种损失函数，包括`均方差损失`，`交叉熵损失`
-- Module: 实现各种神经网络模型，包括`MLP`、`GCN`、`RNNModel`、`LeNet5`、`MiniVGG`
+- Module: 实现各种神经网络模型，包括`MLP`、`GCN`、`RNNModel`、`LeNet5`
 - Optimizer：实现各种优化器，包括`GradientDescent`、`Momentum`、`AdaGrad`、`RMSProp`、`Adam`
 
 ### Dataset: 数据集
