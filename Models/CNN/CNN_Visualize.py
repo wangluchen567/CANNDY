@@ -71,7 +71,7 @@ def plot_feature_maps(feature_map, title):
 
 
 if __name__ == '__main__':
-    data_path = "../Dataset/mnist.pkl.gz"
+    data_path = "../../Dataset/mnist.pkl.gz"
     x_train, y_train, x_valid, y_valid = load_data(data_path)
     x_train = x_train.reshape(-1, 1, 28, 28)
     x_valid = x_valid.reshape(-1, 1, 28, 28)
@@ -83,11 +83,14 @@ if __name__ == '__main__':
     with open('LeNet-5_Params.json', 'r') as f:
         params_dict = json.load(f)
     model.set_parameters(params_dict)
-    # 对数据进行标准化
-    print('standardize dataset...')
-    x_train, mean, std = standardize_data(x_train)
-    x_valid, _, _ = standardize_data(x_valid, mean, std)
-    print(f'mean: {mean}, std: {std}')
+
+    # 对数据集进行标准化
+    # print('standardize dataset...')
+    # x_train, mean, std = standardize_data(x_train)
+    # x_valid, _, _ = standardize_data(x_valid, mean, std)
+    # print(f'mean: {mean}, std: {std}')
+
+    # 得到训练集与测试集的准确率
     # train_acc = valid_model(model, x_train, y_train)
     # print("train acc: {:.3f}".format(train_acc * 100))
     valid_acc = valid_model(model, x_valid, y_valid)
@@ -98,7 +101,8 @@ if __name__ == '__main__':
     # test_data = x_valid[index]
 
     # 使用自己手写的测试数据
-    data_path = '../Dataset/Mnist_Test/6.png'
+
+    data_path = '../../Dataset/Mnist_Test/1.png'
     test_data = load_image(data_path)
 
     # 绘制输入图像
@@ -108,10 +112,10 @@ if __name__ == '__main__':
     plt.tight_layout()
     plt.show()
 
-    # 前向传播
+    # 调整为评估模式
     model.eval()
     # 对数据进行标准化
-    test_data, _, _ = standardize_data(test_data, mean, std)
+    # test_data, _, _ = standardize_data(test_data, mean, std)
     input_ = test_data.reshape(-1, 1, 28, 28)
 
     # 前向传播得到每步的结果

@@ -81,7 +81,7 @@ def valid_model(model, input, truth):
 
 
 if __name__ == '__main__':
-    data_path = "../Dataset/mnist.pkl.gz"
+    data_path = "../../Dataset/mnist.pkl.gz"
     x_train, y_train, x_valid, y_valid = load_data(data_path)
     y_train = y_train.reshape(-1, 1)
     y_valid = y_valid.reshape(-1, 1)

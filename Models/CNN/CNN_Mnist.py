@@ -33,6 +33,7 @@ def standardize_data(data, mean=None, std=None):
 
 def train_epoch(model, optimizer, X, Y, batch_size):
     """训练一个epoch"""
+    # 设置为训练模式
     model.train()
     train_loss = 0
     for i in tqdm(np.arange(0, len(X), batch_size)):
@@ -51,7 +52,7 @@ def train_epoch(model, optimizer, X, Y, batch_size):
 def train_model(model, train_data, train_label, valid_data, valid_label,
                 num_epochs=20, batch_size=64, save_checkpoint=True):
     """训练模型"""
-    optimizer = Adam(model=model, learning_rate=1.e-3, weight_decay=1.e-4)
+    optimizer = Adam(model=model, learning_rate=1.e-3)
     for epoch in range(num_epochs):
         start = time.time()
         model, optimizer, train_loss = train_epoch(model, optimizer, train_data, train_label, batch_size)
@@ -67,6 +68,7 @@ def train_model(model, train_data, train_label, valid_data, valid_label,
 
 
 def valid_model(model, input_, truth):
+    # 设置为评估模式
     model.eval()
     output = model.forward(input_)
     predict = np.argmax(output, axis=1)
@@ -81,28 +83,33 @@ def show_image(image, label):
 
 
 if __name__ == '__main__':
-    data_path = "../Dataset/mnist.pkl.gz"
+    np.random.seed(6)
+    data_path = "../../Dataset/mnist.pkl.gz"
     x_train, y_train, x_valid, y_valid = load_data(data_path)
     x_train = x_train.reshape(-1, 1, 28, 28)
     x_valid = x_valid.reshape(-1, 1, 28, 28)
     y_train = y_train.reshape(-1, 1)
     y_valid = y_valid.reshape(-1, 1)
-    # # 只训练一部分设置
+    # 只训练一部分的设置
     # train_size = 10000
     # valid_size = 1000
     # 数据集全部训练的设置
     train_size = 50000
     valid_size = 10000
+
     # 展示前几个数据
     for i in range(3):
         show_image(x_train[i], y_train[i][0])
+
     # 对数据进行标准化以提升效果
-    print('standardize dataset...')
-    x_train, mean, std = standardize_data(x_train)
-    x_valid, _, _ = standardize_data(x_valid, mean, std)
-    print(f'mean: {mean}, std: {std}')
+    # print('standardize dataset...')
+    # x_train, mean, std = standardize_data(x_train)
+    # x_valid, _, _ = standardize_data(x_valid, mean, std)
+    # print(f'mean: {mean}, std: {std}')
+
     # 创建模型
     model = LeNet5()
+    # 开始训练
     start = time.time()
     model = train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size],
                         num_epochs=30, batch_size=64, save_checkpoint=True)

@@ -69,7 +69,7 @@ def valid_model(model, input, truth):
 
 if __name__ == '__main__':
     # 读取数据集
-    data = pd.read_csv("../Dataset/Iris.csv")
+    data = pd.read_csv("../../Dataset/Iris.csv")
     # 将数据集中的每种花换成整数0, 1, 2
     data.iloc[np.where(data['Species'] == 'Iris-setosa')[0], -1] = 0
     data.iloc[np.where(data['Species'] == 'Iris-versicolor')[0], -1] = 1
