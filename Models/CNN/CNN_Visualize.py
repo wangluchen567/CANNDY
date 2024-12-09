@@ -100,11 +100,10 @@ if __name__ == '__main__':
     # index = 0
     # test_data = x_valid[index]
 
-    # 使用自己手写的测试数据
-
-    data_path = '../../Dataset/Mnist_Test/1.png'
+    # 使用自己手写的测试数据测试
+    data_path = '../../Dataset/Mnist_Test/6.png'
     test_data = load_image(data_path)
-
+    
     # 绘制输入图像
     plt.figure()
     plt.imshow(test_data)
