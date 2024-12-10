@@ -161,12 +161,12 @@ class Linear(Layer):
         """前向传播"""
         # 记录batch大小
         self.batch_size = input_.shape[0]
-        # 形状转置 (n,m) => (m,n)
+        # 形状转置 (n,d) => (d,n)
         self.input_1 = input_.T.copy()
         if self.bias:
             self.input_1 = np.vstack((self.input_1, np.ones(shape=(1, self.input_1.shape[1]))))
         # O = [X 1] @ [W b]^T = X @ W + b
-        # 形状: (n,k) = ((k,m) @ (m,n)).T
+        # 形状: (n,c) = ((c,d) @ (d,n)).T
         self.output = (self.weight @ self.input_1).T
         # 激活函数激活
         output_ = self.output.copy()
@@ -178,11 +178,12 @@ class Linear(Layer):
         """反向传播求梯度"""
         if self.activation is not None:
             delta = delta * self.activation.backward(self.output)
-        # 计算梯度(累计梯度) 取平均
+        # 计算梯度(累积梯度) 取平均
+        # 形状: (c,d) = ((d,n) @ (n,c)).T
         self.grad += (self.input_1 @ delta).T / self.batch_size
         # 将delta @ w传递到上一层网络
         if self.bias:
-            # 偏置求导被消掉了无需参与反向传播
+            # 偏置与上一层无关，无需参与反向传播
             delta_next = delta @ self.weight[:, :-1]
         else:
             delta_next = delta @ self.weight
@@ -281,13 +282,13 @@ class RNNCell(Layer):
         """前向传播"""
         # 记录batch大小
         self.batch_size = input_.shape[0]
-        # 形状转置 (n,m) => (m,n)
+        # 形状转置 (n,d) => (d,n)
         input_1 = input_.T.copy()
         hidden_1 = hidden.T.copy()
         if self.bias:
             input_1 = np.vstack((input_1, np.ones(shape=(1, input_1.shape[1]))))
             hidden_1 = np.vstack((hidden_1, np.ones(shape=(1, hidden_1.shape[1]))))
-        # 形状: (n,k) = ((k,m) @ (m,n) +  (k,k) @ (k,n)).T
+        # 形状: (n,c) = ((c,d) @ (d,n) +  (c,c) @ (c,n)).T
         output = (self.weight_input @ input_1 + self.weight_hidden @ hidden_1).T
         # 保存所有的输入与输出
         self.input_1_list.append(input_1)
@@ -308,13 +309,15 @@ class RNNCell(Layer):
         if self.activation is not None:
             delta = delta * self.activation.backward(output)
         # 计算各个权重的梯度并取平均
+        # 形状: (c,d) = ((d,n) @ (n,c)).T
         grad_input = (input_1 @ delta).T / self.batch_size
+        # 形状: (c,c) = ((c,n) @ (n,c)).T
         grad_hidden = (hidden_1 @ delta).T / self.batch_size
-        # 计算梯度(累计梯度)
+        # 计算梯度(累积梯度)
         self.grad += np.hstack((grad_input, grad_hidden))
         # 将delta @ w传递到上一层网络
         if self.bias:
-            # 偏置求导被消掉了无需参与反向传播
+            # 偏置与上一层无关，无需参与反向传播
             delta_next = delta @ self.weight_hidden[:, :-1]
         else:
             delta_next = delta @ self.weight_hidden
@@ -379,7 +382,7 @@ class RNN(Layer):
         self.state = state
         if self.state is None:
             self.state = self.init_state(batch_size)
-        # 为了不累计Cell中的输入输出，需要先初始化置空
+        # 为了不累积Cell中的输入输出，需要先初始化置空
         for i in range(self.num_layers):
             self.Layers[i].init_empty()
         # 保存模型输出
@@ -769,6 +772,7 @@ class BatchNorm(Layer):
             assert self.weight.shape == params.shape
             self.weight = params
         elif isinstance(params, list):
+            # 若输入是list类型则说明是为多个参数赋值
             weight = params[0] if isinstance(params[0], np.ndarray) else np.array(params[0])
             mean = params[1] if isinstance(params[1], np.ndarray) else np.array(params[1])
             var = params[2] if isinstance(params[2], np.ndarray) else np.array(params[2])
@@ -805,7 +809,7 @@ class BatchNorm(Layer):
 
     def backward(self, delta):
         """反向传播"""
-        # 计算梯度(累计梯度)
+        # 计算梯度(累积梯度)
         self.grad += np.vstack((np.sum(delta * self.input_hat, axis=0), np.sum(delta, axis=0)))
         m = delta.shape[0]  # 数据的数量
         gamma = self.weight[0]
