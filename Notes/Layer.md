@@ -403,8 +403,8 @@ $$
 \Delta_{k-1} = \Delta_k \cdot A_k \cdot W_k^T = 
 \begin{cases}
 
-\hat{\Delta_k} \cdot \hat{W_k}[:, 1:n-1], \quad \text{若有偏置}\\
-\hat{\Delta_k} \cdot \hat{W_k} , \quad \text{若无偏置}
+\hat{\Delta_k} \cdot \hat{W_k}[:, 1:n-1], \quad \text{if have bias}\\
+\hat{\Delta_k} \cdot \hat{W_k} , \quad \text{if not have bias}
 \end{cases}
 $$
 这里要注意，偏置参数得到的梯度是无需参与反向传播的，因为本层偏置与上层参数无关，所以传播梯度时要去掉该参数：
