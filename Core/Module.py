@@ -1,6 +1,6 @@
 import numpy as np
 from Core.Activation import Sigmoid, ReLU, Tanh, Softmax
-from Core.Layer import Linear, GCNConv, Dropout, RNN, Conv2d, MaxPool2d, Flatten, ReLULayer, BatchNorm, BatchNorm2d
+from Core.Layer import Linear, GCNConv, Dropout, RNN, Conv2d, MaxPool2d, Flatten, ReLULayer, BatchNorm2d
 
 
 class Module:
