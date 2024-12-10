@@ -9,6 +9,7 @@ class Layer:
         self.output_size = output_size
         self.activation = activation
         self.bias = bias
+        # 当前是否是训练模式
         self.training = True
         self.num_params = 0
 

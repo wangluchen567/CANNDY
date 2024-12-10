@@ -93,8 +93,8 @@ if __name__ == '__main__':
     # 得到训练集与测试集的准确率
     # train_acc = valid_model(model, x_train, y_train)
     # print("train acc: {:.3f}".format(train_acc * 100))
-    valid_acc = valid_model(model, x_valid, y_valid)
-    print("Test Accuracy: {:.3f} %".format(valid_acc * 100))
+    # valid_acc = valid_model(model, x_valid, y_valid)
+    # print("Test Accuracy: {:.3f} %".format(valid_acc * 100))
 
     # 使用数据集中的数据
     # index = 0
@@ -136,4 +136,5 @@ if __name__ == '__main__':
     plt.imshow(test_data)
     plt.title('Result')
     plt.xlabel('识别结果：{:d}, 识别概率: {:.3f} %'.format(predict, output[0, predict] * 100))
+    plt.tight_layout()
     plt.show()
