@@ -418,7 +418,30 @@ else:
 
 如此一来，只要保存一个$\Delta$值，然后连续调用每层的反向传播函数，并不断更新这个$\Delta$值，就可以使梯度在神经网络中实现反向传播了。
 
+## Layer-层级父类
 
+前面详细介绍了Linear线性层的实现，为规范之后所有实现的层级结构，并且方便各个层级调用通用的函数，所以先实现了Layer层级父类，首先是对父类进行初始化：
+
+```python
+    def __init__(self, input_size=None, output_size=None, activation=None, bias=False):
+        self.input_size = input_size
+        self.output_size = output_size
+        self.activation = activation
+        self.bias = bias
+        # 当前是否是训练模式
+        self.training = True
+        self.num_params = 0
+```
+
+在初始化时，默认初始化输入输出大小，激活函数类型以及是否使用偏置等参数，考虑到有些层可能并不需要这些参数，所以默认设置为空。而“当前是否是训练模式”的设置，主要用于Dropout层和Batch Norm层，因为这两个层在训练模式和评估模式下表现不同。最后初始化该层的参数量，方便计算构建得到的模型参数量。
+
+之后，为了模型调用方便，定义了层的调用函数，与PyTorch类似，可以直接使用对象名调用forward(前向传播)函数：
+
+```python
+    def __call__(self, *args, **kwargs):
+        """方便直接使用对象名调用forward函数"""
+        return self.forward(*args, **kwargs)
+```
 
 
 
