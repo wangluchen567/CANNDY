@@ -8,7 +8,7 @@
 
 常见的几种激活函数有：Sigmoid、Tanh、Relu、Softmax等，几种函数图像如下：
 
-<img src="D:\PythonProjects\CANNDY\Notes\Activations.png" style="zoom:45%;" />
+<img src="Activations.png" style="zoom:45%;" />
 
 ## ReLU
 
