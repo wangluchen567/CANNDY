@@ -105,13 +105,52 @@ class Layer:
         return fan_in, fan_out
 
     @staticmethod
-    def padding_matrix(matrix: np.ndarray, padding):
-        """对矩阵进行padding填充"""
+    def init_param2d(param):
+        """初始化给定二维参数(用于二维卷积与池化)"""
+        if isinstance(param, int):
+            return param, param
+        elif isinstance(param, tuple) or isinstance(param, list):
+            if len(param) != 2:
+                raise ValueError("param must be 2-dim tuples or lists")
+            return param
+        else:
+            raise ValueError("param must be int or 2-dim tuples or lists")
+
+    @staticmethod
+    def padding_mat1d(matrix: np.ndarray, padding):
+        """对一维矩阵进行padding填充(填充0)"""
+        assert matrix.ndim == 3
+        if isinstance(padding, int):  # 整数填充
+            # 在最后一个维度两侧均匀填充padding个0
+            return np.pad(matrix, ((0, 0), (0, 0), (padding, padding)), mode='constant')
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 2:  # 两个方向的元组填充
+            # 在最后一个维度两侧各填充padding[0]个0和padding[1]个0
+            return np.pad(matrix, ((0, 0), (0, 0), (padding[0], padding[1])), mode='constant')
+        else:
+            raise ValueError("The padding parameter must be an integer or "
+                             "a tuple or list in the form of (left, right)")
+
+    @staticmethod
+    def padding_cut1d(matrix: np.ndarray, padding):
+        """剪裁一维矩阵的padding部分"""
+        assert matrix.ndim == 3
+        if isinstance(padding, int):
+            return matrix[:, :, padding:matrix.shape[2] - padding]
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 2:
+            return matrix[:, :, padding[0]:matrix.shape[2] - padding[1]]
+        else:
+            raise ValueError("The padding parameter must be an integer or "
+                             "a tuple or list in the form of (left, right)")
+
+    @staticmethod
+    def padding_mat2d(matrix: np.ndarray, padding):
+        """对二维矩阵进行padding填充(填充0)"""
+        assert matrix.ndim == 4
         if isinstance(padding, int):  # 整数填充
             # 在最后两个维度四周均匀填充padding个0
             return np.pad(matrix, ((0, 0), (0, 0), (padding, padding),
                                    (padding, padding)), mode='constant')
-        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 2:  # 元组填充
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 2:  # 两个方向的元组填充
             # 在高度两侧各填充padding[0]个0，在宽度两侧各填充padding[1]个0
             return np.pad(matrix, ((0, 0), (0, 0), (padding[0], padding[0]),
                                    (padding[1], padding[1])), mode='constant')
@@ -119,6 +158,21 @@ class Layer:
             # 分别在上下左右填充padding[0], padding[1], padding[2], padding[3]个0
             return np.pad(matrix, ((0, 0), (0, 0), (padding[0], padding[1]),
                                    (padding[2], padding[3])), mode='constant')
+        else:
+            raise ValueError("The padding parameter must be an integer or "
+                             "a tuple or list in the form of (height, width) or (top, bottom, left, right)")
+
+    @staticmethod
+    def padding_cut2d(matrix: np.ndarray, padding):
+        """剪裁二维矩阵的padding部分"""
+        assert matrix.ndim == 4
+        _, _, s2, s3 = matrix.shape
+        if isinstance(padding, int):
+            return matrix[:, :, padding:s2 - padding, padding:s3 - padding]
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 2:
+            return matrix[:, :, padding[0]:s2 - padding[0], padding[1]:s3 - padding[1]]
+        elif (isinstance(padding, tuple) or isinstance(padding, list)) and len(padding) == 4:
+            return matrix[:, :, padding[0]:s2 - padding[1], padding[2]:s3 - padding[3]]
         else:
             raise ValueError("The padding parameter must be an integer or "
                              "a tuple or list in the form of (height, width) or (top, bottom, left, right)")
@@ -410,8 +464,30 @@ class RNN(Layer):
                 deltas[j] += self.Layers[j].backward(deltas[j + 1])
 
 
+class Flatten(Layer):
+    """展平层:用于连接全连接层的模块"""
+
+    def __init__(self):
+        super().__init__()
+        self.input_shape = None
+
+    def forward(self, input_):
+        """前向传播"""
+        # 记录输入的形状
+        self.input_shape = input_.shape
+        # 注意要按照batch_size进行flatten
+        batch_size = input_.shape[0]
+        output = input_.reshape(batch_size, -1)
+        return output
+
+    def backward(self, delta):
+        """反向传播"""
+        # 将梯度变为输入的形状反向传播到上一层
+        return delta.reshape(self.input_shape)
+
+
 class Conv2d(Layer):
-    """卷积层"""
+    """二维卷积层"""
 
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, activation=None, bias=True):
         super().__init__(activation=activation, bias=bias)
@@ -425,8 +501,8 @@ class Conv2d(Layer):
         # 记录输入输出以及batch大小以方便反向传播
         self.input, self.output, self.batch_size = None, None, 1
         # 根据给定参数初始化相关参数
-        self.kh, self.kw = self.init_param_value(self.kernel_size)
-        self.sh, self.sw = self.init_param_value(self.stride)
+        self.kh, self.kw = self.init_param2d(self.kernel_size)
+        self.sh, self.sw = self.init_param2d(self.stride)
         # 初始化权重
         self.weight = np.zeros((self.co, self.ci + self.bias, self.kh, self.kw))
         # 何凯明的方法初始化权重
@@ -436,22 +512,8 @@ class Conv2d(Layer):
             self.activation = self.activation()
         # 初始化梯度
         self.grad = np.zeros_like(self.weight)
-        # 记录输出对权重和输出对输入的导数
-        self.out_diff_weight, self.out_diff_input = None, None
         # 计算参数数量
         self.num_params = self.weight.size
-
-    @staticmethod
-    def init_param_value(param):
-        """初始化给定参数值"""
-        if isinstance(param, int):
-            return param, param
-        elif isinstance(param, tuple) or isinstance(param, list):
-            if len(param) != 2:
-                raise ValueError("param must be 2-dim tuples or lists")
-            return param
-        else:
-            raise ValueError("param must be int or 2-dim tuples or lists")
 
     def zero_grad(self):
         self.grad = np.zeros_like(self.weight)
@@ -472,14 +534,14 @@ class Conv2d(Layer):
         if input_.ndim != 4:
             raise ValueError("Conv2d can only handle 4-dim data")
         # 根据给定的padding得到加入padding后的输入
-        self.input = self.padding_matrix(input_, self.padding)
+        self.input = self.padding_mat2d(input_, self.padding)
         # 得到输入的形状
         nd, ci, ih, iw = self.input.shape
         self.batch_size = nd  # batch_size === num_data
-        # 如果使用偏置则需要加入对应偏置的弥散矩阵
+        # 如果使用偏置则需要加入对应偏置
         if self.bias:
-            bias_diffusion = np.ones((nd, 1, ih, iw))
-            self.input = np.concatenate((self.input, bias_diffusion), axis=1)
+            bias_ = np.ones((nd, 1, ih, iw))
+            self.input = np.concatenate((self.input, bias_), axis=1)
         # 下面正式对卷积进行计算
         # 获取核函数形状值及步长大小
         kh, kw, sh, sw, co = self.kh, self.kw, self.sh, self.sw, self.co
@@ -526,33 +588,9 @@ class Conv2d(Layer):
                 self.grad += np.tensordot(delta[:, :, h, w], input_part, axes=([0], [0]))
                 # (nd, ci, kh, kw) <= (nd, co) dot (co, ci, kh, kw)
                 delta_next[:, :, i:i + kh, j:j + kw] += np.tensordot(delta[:, :, h, w], weight_, axes=([1], [0]))
-        # 得到反向传播到上一层的形状(输入的形状)
-        _, _, ih, iw = delta_next.shape
-        # 还要考虑padding的梯度，由于是常数填充，所以直接裁剪掉padding
-        delta_next = delta_next[:, :, self.padding:ih - self.padding, self.padding:iw - self.padding]
+        # 还要考虑padding的梯度，由于是常数0填充，所以这里直接裁剪掉padding
+        delta_next = self.padding_cut2d(delta_next, self.padding)
         return delta_next
-
-
-class Flatten(Layer):
-    """展平层:用于连接全连接层的模块"""
-
-    def __init__(self):
-        super().__init__()
-        self.input_shape = None
-
-    def forward(self, input_):
-        """前向传播"""
-        # 记录输入的形状
-        self.input_shape = input_.shape
-        # 注意要按照batch_size进行flatten
-        batch_size = input_.shape[0]
-        output = input_.reshape(batch_size, -1)
-        return output
-
-    def backward(self, delta):
-        """反向传播"""
-        # 将梯度变为输入的形状反向传播到上一层
-        return delta.reshape(self.input_shape)
 
 
 class MaxPool2d(Layer):
@@ -566,21 +604,9 @@ class MaxPool2d(Layer):
         # 记录输入输出以方便反向传播
         self.input, self.output = None, None
         # 根据给定参数初始化相关参数
-        self.kh, self.kw = self.init_param_value(self.kernel_size)
-        self.sh, self.sw = self.init_param_value(self.stride)
+        self.kh, self.kw = self.init_param2d(self.kernel_size)
+        self.sh, self.sw = self.init_param2d(self.stride)
         self.max_index = None  # 记录最大池化时的位置
-
-    @staticmethod
-    def init_param_value(param):
-        """初始化给定参数值"""
-        if isinstance(param, int):
-            return param, param
-        elif isinstance(param, tuple) or isinstance(param, list):
-            if len(param) != 2:
-                raise ValueError("param must be 2-dim tuples or lists")
-            return param
-        else:
-            raise ValueError("param must be int or 2-dim tuples or lists")
 
     def forward(self, input_):
         """前向传播"""
@@ -589,7 +615,7 @@ class MaxPool2d(Layer):
         if input_.ndim != 4:
             raise ValueError("MaxPool2d can only handle 4-dim data")
         # 根据给定的padding得到加入padding后的输入
-        self.input = self.padding_matrix(input_, self.padding)
+        self.input = self.padding_mat2d(input_, self.padding)
         # 获取形状为HWNC格式的输入数据
         input_t = self.input.transpose(2, 3, 0, 1)
         # 下面正式计算最大池化
@@ -647,10 +673,8 @@ class MaxPool2d(Layer):
                 # 将前面的梯度利用mask传递到上一层
                 delta_next_part[np.arange(len(part_max_index)), part_max_index[:, 0], part_max_index[:, 1]] \
                     += delta[:, :, h, w].flatten()
-        # 得到反向传播到上一层的形状(输入的形状)
-        _, _, ih, iw = delta_next.shape
-        # 还要考虑padding的梯度，由于是常数填充，所以直接裁剪掉padding
-        delta_next = delta_next[:, :, self.padding:ih - self.padding, self.padding:iw - self.padding]
+        # 还要考虑padding的梯度，由于是常数0填充，所以这里直接裁剪掉padding
+        delta_next = self.padding_cut2d(delta_next, self.padding)
         return delta_next
 
 
@@ -665,20 +689,8 @@ class MeanPool2d(Layer):
         # 记录输入输出以方便反向传播
         self.input, self.output = None, None
         # 根据给定参数初始化相关参数
-        self.kh, self.kw = self.init_param_value(self.kernel_size)
-        self.sh, self.sw = self.init_param_value(self.stride)
-
-    @staticmethod
-    def init_param_value(param):
-        """初始化给定参数值"""
-        if isinstance(param, int):
-            return param, param
-        elif isinstance(param, tuple) or isinstance(param, list):
-            if len(param) != 2:
-                raise ValueError("param must be 2-dim tuples or lists")
-            return param
-        else:
-            raise ValueError("param must be int or 2-dim tuples or lists")
+        self.kh, self.kw = self.init_param2d(self.kernel_size)
+        self.sh, self.sw = self.init_param2d(self.stride)
 
     def forward(self, input_):
         """前向传播"""
@@ -687,7 +699,7 @@ class MeanPool2d(Layer):
         if input_.ndim != 4:
             raise ValueError("MeanPool2d can only handle 4-dim data")
         # 根据给定的padding得到加入padding后的输入
-        self.input = self.padding_matrix(input_, self.padding)
+        self.input = self.padding_mat2d(input_, self.padding)
         # 下面正式计算平均池化
         # 获取各种形状以步长
         nd, ci, ih, iw = self.input.shape
@@ -728,10 +740,8 @@ class MeanPool2d(Layer):
                 delta_mean = delta[:, :, h, w] / (kh * kw)
                 # 将前面的梯度传递到上一层
                 delta_next_part += np.repeat(delta_mean[:, :, np.newaxis], (kh * kw), axis=-1)
-        # 得到反向传播到上一层的形状(输入的形状)
-        _, _, ih, iw = delta_next.shape
-        # 还要考虑padding的梯度，由于是常数填充，所以直接裁剪掉padding
-        delta_next = delta_next[:, :, self.padding:ih - self.padding, self.padding:iw - self.padding]
+        # 还要考虑padding的梯度，由于是常数0填充，所以这里直接裁剪掉padding
+        delta_next = self.padding_cut2d(delta_next, self.padding)
         return delta_next
 
 
