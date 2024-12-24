@@ -1,9 +1,12 @@
 import numpy as np
 from Core.Activation import Sigmoid, ReLU, Tanh, Softmax
-from Core.Layer import Linear, GCNConv, Dropout, RNN, Conv2d, MaxPool2d, Flatten, ReLULayer, BatchNorm2d
+from Core.Layer import Linear, GCNConv, Dropout, RNN, Conv1d, MaxPool1d, MeanPool1d
+from Core.Layer import Conv2d, MaxPool2d, Flatten, ReLULayer, BatchNorm2d
 
 
 class Module:
+    """模型模块父类"""
+
     def __init__(self, input_size=None, output_size=None, hidden_sizes=None,
                  hidden_activation=None, out_activation=None):
         self.input_size = input_size
@@ -184,7 +187,30 @@ class RNNModel(Module):
         return output
 
 
+class CNNTimeSeries(Module):
+    """卷积网络处理时间序列模型"""
+
+    def __init__(self, input_size):
+        super().__init__()
+        self.Layers = [
+            Conv1d(in_channels=1, out_channels=10, kernel_size=3, stride=1, padding=0),
+            ReLULayer(),
+            MaxPool1d(kernel_size=2, stride=1, padding=0),
+            Flatten(),
+            Linear(input_size=10 * ((input_size - 3 + 1) - 2 + 1), output_size=1)
+        ]
+
+    def forward(self, input_):
+        hidden = input_.copy()
+        for layer in self.Layers:
+            hidden = layer(hidden)
+        output = hidden
+        return output
+
+
 class LeNet5(Module):
+    """LeNet-5卷积网络模型"""
+
     def __init__(self):
         super().__init__()
         self.Layers = [
