@@ -220,7 +220,7 @@ class Linear(Layer):
         self.input_1 = input_.T.copy()
         if self.bias:
             self.input_1 = np.vstack((self.input_1, np.ones(shape=(1, self.input_1.shape[1]))))
-        # O = [X 1] @ [W b]^T = X @ W + b
+        # Y = [X 1] @ [W b]^T = X @ W + b
         # 形状: (n,c) = ((c,d) @ (d,n)).T
         self.output = (self.weight @ self.input_1).T
         # 激活函数激活
@@ -486,6 +486,105 @@ class Flatten(Layer):
         return delta.reshape(self.input_shape)
 
 
+class Conv1d(Layer):
+    """一维卷积层"""
+
+    def __init__(self, in_channels, out_channels, kernel_size, stride, padding, activation=None, bias=True):
+        super().__init__(activation=activation, bias=bias)
+        assert isinstance(in_channels, int)
+        assert isinstance(out_channels, int)
+        self.ci = in_channels
+        self.co = out_channels
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        # 记录输入输出以及batch大小以方便反向传播
+        self.input, self.output, self.batch_size = None, None, 1
+        # 初始化权重
+        self.weight = np.zeros((self.co, self.ci + self.bias, self.kernel_size))
+        # 何凯明的方法初始化权重
+        self.weight = self.kaiming_uniform_(self.weight, mode='fan_out', gain=self.get_gain(), bias=bias)
+        # 实例化激活函数
+        if self.activation is not None:
+            self.activation = self.activation()
+        # 初始化梯度
+        self.grad = np.zeros_like(self.weight)
+        # 计算参数数量
+        self.num_params = self.weight.size
+
+    def zero_grad(self):
+        self.grad = np.zeros_like(self.weight)
+
+    def get_parameters(self):
+        return self.weight.tolist()
+
+    def set_parameters(self, weight_):
+        # 将权重变为array类型
+        weight = weight_ if isinstance(weight_, np.ndarray) else np.array(weight_)
+        assert self.weight.shape == weight.shape
+        self.weight = weight
+
+    def forward(self, input_):
+        """前向传播"""
+        # input_shape (NCZ格式):
+        # (num_data/batch_size, in_channels, size)
+        if input_.ndim != 3:
+            raise ValueError("Conv1d can only handle 3-dim data")
+        # 根据给定的padding得到加入padding后的输入
+        self.input = self.padding_mat1d(input_, self.padding)
+        # 得到输入的形状
+        nd, ci, iz = self.input.shape
+        self.batch_size = nd  # batch_size === num_data
+        # 如果使用偏置则需要加入对应偏置
+        if self.bias:
+            bias_ = np.ones((nd, 1, iz))
+            self.input = np.concatenate((self.input, bias_), axis=1)
+        # 下面正式对卷积进行计算
+        # 获取核函数形状值及步长大小
+        kz, sz, co = self.kernel_size, self.stride, self.co
+        # 计算输出特征图形状
+        oz = int(np.floor((iz - kz + sz) / sz))
+        # 初始化输出的特征图 (NCZ格式)
+        self.output = np.zeros((nd, co, oz))
+        # 进行卷积操作，计算输出
+        for z in range(oz):
+            i = z * sz
+            # 形状: (nd, cip, kz)
+            input_part = self.input[:, :, i:i + kz]
+            # (nd, co) <= (nd, cip, kz) dot (co, cip, kz)
+            self.output[:, :, z] = np.tensordot(input_part, self.weight, axes=([1, 2], [1, 2]))
+        return self.output
+
+    def backward(self, delta):
+        """反向传播"""
+        if self.activation is not None:
+            delta = delta * self.activation.backward(self.output)
+        # 获取梯度的形状(与输出的形状相同)
+        nd, co, oz = delta.shape
+        # 核函数大小和步长大小
+        kz, sz = self.kernel_size, self.stride
+        # 初始化传播到上一层梯度的形状
+        delta_next = np.zeros_like(self.input, dtype=delta.dtype)
+        weight_ = self.weight
+        # 如果存在偏置需要去掉额外通道
+        # 偏置不参与反向传播
+        if self.bias:
+            delta_next = delta_next[:, :-1, :]
+            weight_ = weight_[:, :-1, :]
+        # 进行卷积操作求梯度
+        for z in range(oz):
+            i = z * sz
+            # 形状: (nd, cip, kz)
+            input_part = self.input[:, :, i:i + kz]
+            # (co, cip, kz) <= (nd, co) dot (nd, cip, kz)
+            self.grad += np.tensordot(delta[:, :, z], input_part, axes=([0], [0]))
+            # (nd, ci, kz) <= (nd, co) dot (co, ci, kz)
+            delta_next[:, :, i:i + kz] += np.tensordot(delta[:, :, z], weight_, axes=([1], [0]))
+        # 还要考虑padding的梯度，由于是常数0填充，所以这里直接裁剪掉padding
+        delta_next = self.padding_cut1d(delta_next, self.padding)
+        return delta_next
+
+
 class Conv2d(Layer):
     """二维卷积层"""
 
@@ -593,8 +692,84 @@ class Conv2d(Layer):
         return delta_next
 
 
+class MaxPool1d(Layer):
+    """一维最大池化层"""
+
+    def __init__(self, kernel_size, stride, padding):
+        super().__init__()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        # 记录输入输出以方便反向传播
+        self.input, self.output = None, None
+        self.max_index = None  # 记录最大池化时的位置
+
+    def forward(self, input_):
+        """前向传播"""
+        # input_shape (NCZ格式):
+        # (num_data/batch_size, in_channels, size)
+        if input_.ndim != 3:
+            raise ValueError("MaxPool1d can only handle 3-dim data")
+        # 根据给定的padding得到加入padding后的输入
+        self.input = self.padding_mat1d(input_, self.padding)
+        # 获取形状为ZNC格式的输入数据
+        input_t = self.input.transpose(2, 0, 1)
+        # 下面正式计算最大池化
+        # 获取各种形状与步长
+        nd, ci, iz = self.input.shape
+        kz, sz, co = self.kernel_size, self.stride, ci
+        # 计算输出特征图形状
+        oz = int(np.floor((iz - kz + sz) / sz))
+        # 初始化输出的特征图 (NCZ格式)
+        self.output = np.zeros((nd, co, oz))
+        # 初始化梯度mask下标
+        self.max_index = np.zeros((oz, nd * ci, 1), dtype=int)
+        # 进行卷积操作，同时记录mask下标
+        for z in range(oz):
+            i = z * sz
+            # 形状: (kz, nd, ci)
+            input_part = input_t[i:i + kz, :, :]
+            # 将后两维合并以方便操作 (kz, nd*ci)
+            input_part_ = input_part.reshape(kz, -1)
+            # 进行最大池化
+            part_max = input_part_.max(axis=0)
+            # 得到该区域最大池化的结果
+            self.output[:, :, z] = part_max.reshape(nd, ci)
+            # 得到该区域所有最大值的位置
+            part_max_pos = np.where(input_part_ == part_max)
+            # 得到该区域第一个最大值的下标的位置
+            _, unique_index = np.unique(part_max_pos[-1], return_index=True)
+            # 得到该区域所有最大值的下标
+            part_max_index = np.vstack(part_max_pos).T[unique_index, :-1]
+            # 保存这些最大值下标
+            self.max_index[z] = part_max_index
+        return self.output
+
+    def backward(self, delta):
+        """反向传播"""
+        # 获取梯度的形状(与输出的形状相同)
+        nd, co, oz = delta.shape
+        # 初始化反向传播到上一层的梯度
+        delta_next = np.zeros_like(self.input, dtype=delta.dtype)
+        # 核函数大小和步长大小
+        kz, sz = self.kernel_size, self.stride
+        for z in range(oz):
+            i = z * sz
+            # 形状: (nd, ci, kz)
+            delta_next_part = delta_next[:, :, i:i + kz]
+            # 调整轴以方便操作
+            delta_next_part = delta_next_part.reshape(-1, kz)
+            # 获取该部分的最大值下标
+            part_max_index = self.max_index[z]
+            # 将前面的梯度利用mask传递到上一层
+            delta_next_part[np.arange(len(part_max_index)), part_max_index[:, 0]] += delta[:, :, z].flatten()
+        # 还要考虑padding的梯度，由于是常数0填充，所以这里直接裁剪掉padding
+        delta_next = self.padding_cut1d(delta_next, self.padding)
+        return delta_next
+
+
 class MaxPool2d(Layer):
-    """最大池化层"""
+    """二维最大池化层"""
 
     def __init__(self, kernel_size, stride, padding):
         super().__init__()
@@ -619,7 +794,7 @@ class MaxPool2d(Layer):
         # 获取形状为HWNC格式的输入数据
         input_t = self.input.transpose(2, 3, 0, 1)
         # 下面正式计算最大池化
-        # 获取各种形状以步长
+        # 获取各种形状与步长
         nd, ci, ih, iw = self.input.shape
         kh, kw, sh, sw, co = self.kh, self.kw, self.sh, self.sw, ci
         # 计算输出特征图形状
@@ -678,8 +853,67 @@ class MaxPool2d(Layer):
         return delta_next
 
 
+class MeanPool1d(Layer):
+    """一维平均池化层"""
+
+    def __init__(self, kernel_size, stride, padding):
+        super().__init__()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        # 记录输入输出以方便反向传播
+        self.input, self.output = None, None
+
+    def forward(self, input_):
+        """前向传播"""
+        # input_shape (NCZ格式):
+        # (num_data/batch_size, in_channels, size)
+        if input_.ndim != 3:
+            raise ValueError("MeanPool1d can only handle 3-dim data")
+        # 根据给定的padding得到加入padding后的输入
+        self.input = self.padding_mat1d(input_, self.padding)
+        # 下面正式计算平均池化
+        # 获取各种形状与步长
+        nd, ci, iz = self.input.shape
+        kz, sz, co = self.kernel_size, self.stride, ci
+        # 计算输出特征图形状
+        oz = int(np.floor((iz - kz + sz) / sz))
+        # 初始化输出的特征图
+        self.output = np.zeros((nd, co, oz))
+        # 进行卷积操作
+        for z in range(oz):
+            i = z * sz
+            # 形状: (nd, ci, kz)
+            input_part = self.input[:, :, i:i + kz]
+            # 取这部分的平均值作为平均池化的输出结果
+            self.output[:, :, z] = input_part.mean(axis=-1)
+        return self.output
+
+    def backward(self, delta):
+        """反向传播"""
+        # 获取梯度的形状(与输出的形状相同)
+        nd, co, oz = delta.shape
+        # 初始化反向传播到上一层的梯度
+        delta_next = np.zeros_like(self.input)
+        # 核函数大小和步长大小
+        kz, sz = self.kernel_size, self.stride
+        for z in range(oz):
+            i = z * sz
+            # 形状: (nd, ci, kz)
+            delta_next_part = delta_next[:, :, i:i + kz]
+            # 调整形状以便操作
+            delta_next_part = delta_next_part.reshape(nd, -1, kz)
+            # 计算对应元素的平均梯度值
+            delta_mean = delta[:, :, z] / kz
+            # 将前面的梯度传递到上一层
+            delta_next_part += np.repeat(delta_mean[:, :, np.newaxis], kz, axis=-1)
+        # 还要考虑padding的梯度，由于是常数0填充，所以这里直接裁剪掉padding
+        delta_next = self.padding_cut1d(delta_next, self.padding)
+        return delta_next
+
+
 class MeanPool2d(Layer):
-    """平均池化层"""
+    """二维平均池化层"""
 
     def __init__(self, kernel_size, stride, padding):
         super().__init__()
@@ -701,7 +935,7 @@ class MeanPool2d(Layer):
         # 根据给定的padding得到加入padding后的输入
         self.input = self.padding_mat2d(input_, self.padding)
         # 下面正式计算平均池化
-        # 获取各种形状以步长
+        # 获取各种形状与步长
         nd, ci, ih, iw = self.input.shape
         kh, kw, sh, sw, co = self.kh, self.kw, self.sh, self.sw, ci
         # 计算输出特征图形状
