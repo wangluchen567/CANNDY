@@ -73,8 +73,9 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 - MLP模型对同心圆数据集分类效果/对sin函数回归拟合效果<br>
 <img src="Pics/MLP_circle.gif" width="288" height="220" alt="分类训练"/>
 <img src="Pics/MLP_sin.gif" width="288" height="220" alt="回归拟合"/><br/>
-- 循环神经网络模型对sin函数未来趋势预测效果<br>
+- 循环神经网络模型与一维卷积时间序列模型对sin函数未来趋势预测效果<br>
 <img src="Pics/RNN_predict.gif" width="288" height="220" alt="RNN预测"/>
+<img src="Pics/CNN_Series.gif" width="288" height="220" alt="CNNT预测"/>
 - 卷积神经网络LeNet-5模型手写数字的识别效果(测试集准确率高达99%)<br>
 0. 训练损失与测试准确率表现及不同trick下的模型表现<br>
 <img src="Pics/CNN_train.png" width="288" height="230"/>
