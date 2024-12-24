@@ -351,14 +351,14 @@ self.batch_size = input_.shape[0]
 self.input_1 = input_.T.copy()
 if self.bias:
     self.input_1 = np.vstack((self.input_1, np.ones(shape=(1, self.input_1.shape[1]))))
-# O = [X 1] @ [W b]^T = X @ W + b
+# Y = [X 1] @ [W b]^T = X @ W + b
 # 形状: (n,k) = ((k,m) @ (m,n)).T
 self.output = (self.weight @ self.input_1).T
 ```
 
 在输入末尾追加全1向量可以将偏置直接整合到权重参数上，方便使用梯度下降一起进行优化，带偏置得到输出矩阵的具体公式为：
 $$
-O = (\hat{W} \cdot \hat{X})^T = \hat{X}^T \cdot \hat{W}^T = \begin{bmatrix}X\\1\end{bmatrix}^T\begin{bmatrix}W&b\end{bmatrix}^T=
+Y = (\hat{W} \cdot \hat{X})^T = \hat{X}^T \cdot \hat{W}^T = \begin{bmatrix}X\\1\end{bmatrix}^T\begin{bmatrix}W&b\end{bmatrix}^T=
 \begin{bmatrix}X&1\end{bmatrix}\begin{bmatrix}W\\b\end{bmatrix}= X \cdot W + b
 $$
 然后如果设置了激活函数则需要使用激活函数对输出进行激活并返回输出值：
@@ -445,11 +445,101 @@ else:
 
 
 
+## Conv2d——二维卷积层
+
+卷积，作为一种数学运算，最开始是在信号处理领域中提出的概念，卷积运算在信号处理中用于模拟线性时不变系统的输出，其中一个信号通过另一个信号（如滤波器）的影响。这个概念后来被引入到图像处理和深度学习中，诞生了卷积神经网络（Convolutional Neural Networks, CNNs）这一经典的神经网络，在卷积神经网络中，卷积被用来提取图像数据的局部特征，通过在输入图像上滑动卷积核（滤波器），并计算其与图像的局部区域的点积，生成特征图。这些特征图捕捉了图像的局部模式，如边缘、纹理等，并且由于权重共享和稀疏连接，使得网络能够高效地学习到具有平移不变性的特征。
+
+二维卷积的过程可见下面的示例：
 
 
 
+为简单起见，下面使用单通道矩阵、步长为1、填充为0的条件下对卷积及其梯度进行推导：
 
+定义输入为$X$，卷积核为$V$，输出为$Y$，那么有：
+$$
+Y = V \circledast X \\
+\begin{bmatrix}
+y_{1,1} & y_{2,1} &\cdots &y_{ow,1}\\
+y_{1,2} & y_{2,2} &\cdots &y_{ow,2}\\
+\vdots & \vdots & \ddots & \vdots \\
+y_{1,oh} & y_{2,oh} &\cdots &y_{ow,oh}\\
+\end{bmatrix}=
+\begin{bmatrix}
+v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
+v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
+\vdots & \vdots & \ddots & \vdots \\
+v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
+\end{bmatrix}\circledast
+\begin{bmatrix}
+x_{1,1} & x_{2,1} &\cdots &x_{iw,1}\\
+x_{1,2} & x_{2,2} &\cdots &x_{iw,2}\\
+\vdots & \vdots & \ddots & \vdots \\
+x_{1,ih} & x_{2,ih} &\cdots &x_{iw,ih}\\
+\end{bmatrix}
+$$
+其中$\circledast$为卷积符号，代表卷积操作，$iw,ih,ow,oh$分别代表输入和输出特征图的宽度和高度，$kw,kh$分别是卷积核的宽与高，将公式具体展开得：
+$$
+\begin{align}
+y_{i,j} &= \sum_{w=1}^{kw}\sum_{h=1}^{kh}v_{w,h}v_{i+w,j+h}\\
+&= 
+\begin{bmatrix}
+v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
+v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
+\vdots & \vdots & \ddots & \vdots \\
+v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
+\end{bmatrix} \odot
+\begin{bmatrix}
+x_{i+1,j+1} & x_{i+2,j+1} &\cdots &x_{i+kw,j+1}\\
+x_{i+1,j+2} & x_{i+2,j+2} &\cdots &x_{i+kw,j+2}\\
+\vdots & \vdots & \ddots & \vdots \\
+x_{i+1,j+kh} & x_{i+2,j+kh} &\cdots &x_{i+kw,j+kh}\\
+\end{bmatrix}
+\end{align}
+$$
+其中$\odot$表示哈马达积，即两个矩阵对应元素相乘后求和。所以说图像二维卷积的本质就是将给定的卷积核作为一个“窗口”，每次卷积都是窗口上的元素与输入对应元素相乘后求和，进行下次卷积时就是在原图像上进行“滑动”操作再卷积。而对于多通道输入矩阵，多个卷积核求卷积的情况，无非就是多个矩阵之间的操作了，而对于步长大于1的情况，其实就是求和时按照倍数步长求和，对于有填充的情况则是将输入进行一定调整即可。
 
+接下来对卷积的梯度进行推导，假定从下一层反向传播到该层的梯度(损失)为：
+$$
+\frac{\partial L}{\partial Y}=
+\begin{bmatrix}
+\frac{\partial L}{\partial y_{1,1}} & \frac{\partial L}{\partial y_{2,1}} &\cdots & \frac{\partial L}{\partial y_{ow,1}}\\
+\frac{\partial L}{\partial y_{1,2}} & \frac{\partial L}{\partial y_{2,2}} &\cdots & \frac{\partial L}{\partial y_{ow,2}}\\
+\vdots & \vdots & \ddots & \vdots \\
+\frac{\partial L}{\partial y_{1,oh}} & \frac{\partial L}{\partial y_{2,oh}} &\cdots &\frac{\partial L}{\partial y_{ow,oh}}\\
+\end{bmatrix}
+$$
+根据之前推导的卷积公式，我们可以得到单个输出对任意一个参数$v_{w^*,h^*}$的偏导：
+$$
+\begin{align}
+\frac{\partial y_{i,j}}{\partial v_{w^*,h^*}}&=
+\frac{\partial}{\partial v_{w^*,h^*}}\sum_{w=1}^{kw}\sum_{h=1}^{kh}v_{w,h}x_{i+w,j+h}\\
+&= \frac{\partial (v_{w^*,h^*}x_{i+w^*,j+h^*})}{v_{w^*,h^*}} \\
+&= x_{i+w^*,j+h^*}
+\end{align}
+$$
+
+那么将梯度(损失)传递到该参数上，得到该参数的损失为：
+$$
+\begin{align}
+\frac{\partial L}{\partial v_{w^*,h^*}}&=
+\sum_{i=1}^{iw}\sum_{j=1}^{ih}\frac{\partial L}{\partial y_{i,j}}\frac{\partial y_{i,j}}{\partial v_{w^*,h^*}}\\
+&= \sum_{i=1}^{iw}\sum_{j=1}^{ih}\frac{\partial L}{\partial y_{i,j}} x_{i+w^*,j+h^*}\\
+&= 
+\begin{bmatrix}
+\frac{\partial L}{\partial y_{1,1}} & \frac{\partial L}{\partial y_{2,1}} &\cdots & \frac{\partial L}{\partial y_{ow,1}}\\
+\frac{\partial L}{\partial y_{1,2}} & \frac{\partial L}{\partial y_{2,2}} &\cdots & \frac{\partial L}{\partial y_{ow,2}}\\
+\vdots & \vdots & \ddots & \vdots \\
+\frac{\partial L}{\partial y_{1,oh}} & \frac{\partial L}{\partial y_{2,oh}} &\cdots &\frac{\partial L}{\partial y_{ow,oh}}\\
+\end{bmatrix} \odot
+\begin{bmatrix}
+x_{1+w^*,1+h^*} & x_{2+w^*,1+h^*} &\cdots &x_{ow+w^*,1+h^*}\\
+x_{1+w^*,2+h^*} & x_{2+w^*,2+h^*} &\cdots &x_{ow+w^*,2+h^*}\\
+\vdots & \vdots & \ddots & \vdots \\
+x_{1+w^*,oh+h^*} & x_{2+w^*,oh+h^*} &\cdots &x_{ow+w^*,oh+h^*}\\
+\end{bmatrix}
+\end{align}
+$$
+可以观察到，卷积核的损失可以通过下一层传递来的梯度(损失)与输入进行卷积得到，为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，同样的，我们先得到单个输出对任意一个输入$x$的偏导为：
 
 
 
