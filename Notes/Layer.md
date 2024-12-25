@@ -443,6 +443,136 @@ else:
         return self.forward(*args, **kwargs)
 ```
 
+然后定义了子类可以重写的函数，包括梯度置0、获取权重参数、设置权重参数和获取权重参数数量。还定义了子类必须重新的函数，即前向传播与反向传播函数：
+
+```python
+    def zero_grad(self):
+        """梯度置为0矩阵"""
+        pass
+
+    def get_parameters(self):
+        """获取该层的权重参数"""
+        pass
+
+    def set_parameters(self, *args, **kwargs):
+        """设置该层的权重参数"""
+        pass
+
+    def get_num_params(self):
+        """获取该层的参数数量"""
+        pass
+
+    def forward(self, *args, **kwargs):
+        """该层前向传播"""
+        raise NotImplementedError
+
+    def backward(self, *args, **kwargs):
+        """该层反向传播"""
+        raise NotImplementedError
+```
+
+之后就是创建权重参数初始化的函数了，首先需要先计算"扇入"（fan_in）和"扇出"（fan_out）大小。在神经网络中，"扇入"（fan_in）和"扇出"（fan_out）是描述神经元连接数量的术语。这些术语来源于电路设计，其中"扇入"指的是一个门（或神经元）的输入数量，而"扇出"指的是一个门（或神经元）的输出数量。
+
+在全连接网络中，扇入和扇出的大小就是权重参数的形状，但在卷积网络中，扇入和扇出的大小还需要在原形状的基础上再乘以感受野的大小。另外由于参数矩阵可能包含偏置，但输入大小是不包含偏置的，所以存在偏置时需要去掉偏置：
+
+```python
+    @staticmethod
+    def cal_fan_in_and_fan_out(matrix: np.ndarray, bias=True):
+        """计算扇入扇出值"""
+        dimensions = matrix.ndim  # 矩阵维度
+        if dimensions < 2:
+            raise ValueError("Fan in and fan out can not be computed for matrix with fewer than 2 dimensions")
+        input_size = matrix.shape[1] - bias  # 输入大小（或输入通道数）
+        output_size = matrix.shape[0]  # 输出大小（或输出通道数）
+        field_size = 1  # 感受野大小
+        if dimensions > 2:
+            field_size = np.size(matrix[0][0])
+        # 计算扇入扇出值
+        fan_in = input_size * field_size
+        fan_out = output_size * field_size
+        return fan_in, fan_out
+```
+
+下面介绍各个权重初始化的函数，首先是Xavier初始化，其有两种形式：均匀分布和正态分布
+
+Xavier均匀分布初始化是从均匀分布$U(-x,x)$中抽取权重参数，其中$x=\sqrt{\frac{6}{n_{in}+n_{out}}}$
+
+```python
+    def xavier_uniform_(self, matrix: np.ndarray, gain=1.0, bias=True):
+        """Xavier均匀分布随机初始化(适用于Sigmoid和Tanh函数)"""
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
+        bound = gain * np.sqrt(6.0 / float(fan_in + fan_out))
+        return np.random.uniform(-bound, bound, matrix.shape)
+```
+
+Xavier正态分布初始化是从正态分布$N(0,\sigma)$中抽取权重参数，其中$\sigma=\sqrt{\frac{2}{n_{in}+n_{out}}}$
+
+```python
+    def xavier_normal_(self, matrix: np.ndarray, gain=1.0, bias=True):
+        """Xavier正态分布随机初始化(适用于Sigmoid和Tanh函数)"""
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
+        std = gain * np.sqrt(2.0 / float(fan_in + fan_out))
+        return np.random.normal(0., std, matrix.shape)
+```
+
+之后是何凯明大佬提出的Kaiming初始化，其也是有均匀分布和正态分布两种形式
+
+Kaiming均匀分布初始化是从均匀分布$U(-x,x)$中抽取权重参数，其中$x=gain\times\sqrt{\frac{3}{(1+a)^2}\times n_{fan}}$
+
+其中$a$是激活函数负半轴的斜率，对于ReLU激活函数，$a=0$，$n_{fan}$是根据条件来指定使用扇入还是扇出大小，$gain$是一种增益值，每种激活函数的$gain$值不一样，具体值为：
+$$
+gain =
+\begin{cases}
+\sqrt{2}, \quad ReLU\\
+\frac{5}{3}, \quad Tanh\\
+1, \quad Sigmoid,Convolution\\
+\end{cases}
+$$
+Kaiming正态分布初始化是从正态分布$N(0,\sigma)$中抽取权重参数，其中$\sigma=gain\times\sqrt{\frac{1}{(1+a)^2}\times n_{fan}}$，下面是具体实现：
+
+```python
+    def get_gain(self):
+        """获取gain值"""
+        if self.activation is None:
+            return 1.0
+        elif self.activation.__name__ == 'ReLU':
+            return np.sqrt(2)
+        elif self.activation.__name__ == 'Tanh':
+            return 5 / 3
+        else:
+            return 1.0
+
+    def kaiming_uniform_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0, bias=True):
+        """何凯明均匀分布随机初始化
+        linear/sigmoid/conv/identity: gain = :math:`1`
+        relu: gain = :math:`\\sqrt{2}`
+        tanh: gain = :math:`\\frac{5}{3}`
+        leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
+        """
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
+        fan = fan_in if mode == 'fan_in' else fan_out
+        bound = gain * np.sqrt(3.0) / np.sqrt((1 + a * a) * fan)
+        return np.random.uniform(-bound, bound, matrix.shape)
+
+    def kaiming_normal_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0, bias=True):
+        """何凯明正态分布随机初始化
+        linear/sigmoid/conv/identity: gain = :math:`1`
+        relu: gain = :math:`\\sqrt{2}`
+        tanh: gain = :math:`\\frac{5}{3}`
+        leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
+        """
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
+        fan = fan_in if mode == 'fan_in' else fan_out
+        std = gain / np.sqrt((1 + a * a) * fan)
+        return np.random.normal(0., std, matrix.shape)
+```
+
+之后的函数定义便是卷积池化等层所使用的通用静态函数，将在具体的层中详细说明。
+
+
+
+
+
 
 
 ## Conv2d——二维卷积层
@@ -451,7 +581,7 @@ else:
 
 二维卷积的过程可见下面的示例：
 
-
+<img src="Conv.gif" style="zoom:80%;" />
 
 为简单起见，下面使用单通道矩阵、步长为1、填充为0的条件下对卷积及其梯度进行推导：
 
@@ -480,7 +610,7 @@ $$
 其中$\circledast$为卷积符号，代表卷积操作，$iw,ih,ow,oh$分别代表输入和输出特征图的宽度和高度，$kw,kh$分别是卷积核的宽与高，将公式具体展开得：
 $$
 \begin{align}
-y_{i,j} &= \sum_{w=1}^{kw}\sum_{h=1}^{kh}v_{w,h}v_{i+w,j+h}\\
+y_{i,j} &= \sum_{w=1}^{kw}\sum_{h=1}^{kh}v_{w,h}x_{i+w,j+h}\\
 &= 
 \begin{bmatrix}
 v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
@@ -539,7 +669,44 @@ x_{1+w^*,oh+h^*} & x_{2+w^*,oh+h^*} &\cdots &x_{ow+w^*,oh+h^*}\\
 \end{bmatrix}
 \end{align}
 $$
-可以观察到，卷积核的损失可以通过下一层传递来的梯度(损失)与输入进行卷积得到，为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，同样的，我们先得到单个输出对任意一个输入$x$的偏导为：
+可以观察到，卷积核的损失可以通过下一层传递来的梯度(损失)与输入进行卷积得到，为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，这部分比较复杂且不好理解，这里给出一个稍微简单的思路：我们知道对于任意两个元素的乘积，在对其中一个求偏导时的结果就是另一个元素，即假设有$y=v \cdot x$，那么应该有$\frac{\partial y}{\partial v}=x$；$\frac{\partial y}{\partial x}=v$，所以在计算损失对输入的偏导时，只要知道哪些元素与输入的元素相乘过即可，如何得到这些相乘过的元素呢？只需要再重新卷积一次就可以知道，我们可以将要传播到上一层的梯度初始化为一个全0的矩阵$\hat{X}$，那么它的一部分就是通过梯度的累加得到，具体表示为：
+$$
+\hat{X}[i:i+kw,j:j+kh] = \hat{X}[i:i+kw,j:j+kh] + \frac{\partial L}{\partial y_{i,j}}
+\begin{bmatrix}
+v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
+v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
+\vdots & \vdots & \ddots & \vdots \\
+v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
+\end{bmatrix}
+$$
+展开为矩阵为：
+$$
+\begin{bmatrix}
+\hat{x}_{i+1,j+1} & \hat{x}_{i+2,j+1} &\cdots &\hat{x}_{i+kw,j+1}\\
+\hat{x}_{i+1,j+2} & \hat{x}_{i+2,j+2} &\cdots &\hat{x}_{i+kw,j+2}\\
+\vdots & \vdots & \ddots & \vdots \\
+\hat{x}_{i+1,j+kh} & \hat{x}_{i+2,j+kh} &\cdots &\hat{x}_{i+kw,j+kh}\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+\hat{x}_{i+1,j+1} & \hat{x}_{i+2,j+1} &\cdots &\hat{x}_{i+kw,j+1}\\
+\hat{x}_{i+1,j+2} & \hat{x}_{i+2,j+2} &\cdots &\hat{x}_{i+kw,j+2}\\
+\vdots & \vdots & \ddots & \vdots \\
+\hat{x}_{i+1,j+kh} & \hat{x}_{i+2,j+kh} &\cdots &\hat{x}_{i+kw,j+kh}\\
+\end{bmatrix}
++\frac{\partial L}{\partial y_{i,j}}
+\begin{bmatrix}
+v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
+v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
+\vdots & \vdots & \ddots & \vdots \\
+v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
+\end{bmatrix}
+$$
+实际上，该操作可以通过修改卷积的流程为梯度反向传播的流程从而很直观的得到：
+
+
+
+
 
 
 

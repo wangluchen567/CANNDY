@@ -22,7 +22,7 @@ x, \quad x>0 \\
 $$
 该公式也是ReLU函数的前向传播公式，而对于反向传播公式，也就是求导结果为：
 $$
-\frac{\partial ReLU(x)}{\partial x} =
+ReLU'(x) =
 \begin{cases}
 1, \quad x>0 \\
 0, \quad x\leq 0
@@ -43,3 +43,34 @@ $$
 后续分成大于0和小于0两部分求结果的原因是为防止求指数时发生数值溢出现象。
 
 该公式也是Sigmoid函数的前向传播公式，而对于反向传播公式，对Sigmoid函数求导有：
+$$
+\begin{align}
+Sigmoid'(x) &= 
+\frac{e^{-x}}{(1+e^{-x})^2}\\
+&=\frac{1}{1+e^{-x}}\frac{e^{-x}}{1+e^{-x}}\\
+&=\frac{1}{1+e^{-x}}(1-\frac{1}{1+e^{-x}})\\
+&=Sigmoid(x)(1-Sigmoid(x))
+\end{align}
+$$
+
+## Tanh
+
+Tanh，全称为双曲正切函数，经典激活函数之一，是循环神经网络中常用的激活函数，其公式为：
+$$
+Tanh(x) = \frac{e^x-e^{-x}}{e^x+e^{-x}}=
+\begin{cases}
+\frac{1-e^{-2x}}{1+e^{-2x}}, \quad x\geq0 \\
+\frac{e^{2x}-1}{1+e^{2x}}, \quad x< 0
+\end{cases}
+$$
+后续分成大于0和小于0两部分求结果的原因是为防止求指数时发生数值溢出现象。
+
+该公式也是Tanh函数的前向传播公式，而对于反向传播公式，对Tanh函数求导有：
+$$
+\begin{align}
+Tanh'(x) &= 
+\frac{(e^x+e^{-x})^2-(e^x-e^{-x})^2}{(e^x+e^{-x})^2}\\
+&=1-(\frac{e^x-e^{-x}}{e^x+e^{-x}})^2\\
+&=1-Tanh^2(x)\\
+\end{align}
+$$
