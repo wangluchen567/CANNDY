@@ -16,25 +16,23 @@ y &= f_n(x_n)
 $$
 在各个函数均连续可导的前提下，我们可以得到$y$对$x_1$的导数为：
 $$
-\frac{\mathrm{d} y}{\mathrm{d} x_1} = \frac{\mathrm{d} y}{\mathrm{d} x_n} \cdot \frac{\mathrm{d} x_n}{\mathrm{d} x_{n-1}} \cdots \frac{\mathrm{d} x_3}{\mathrm{d} x_2}\cdot \frac{\mathrm{d} x_2}{\mathrm{d} x_1}
+\frac{\mathrm{d} y}{\mathrm{d} x_1} = \frac{\mathrm{d} y}{\mathrm{d} x_n} \cdot \frac{\mathrm{d} x_n}{\mathrm{d} x_{n-1}} \cdot \cdots \frac{\mathrm{d} x_3}{\mathrm{d} x_2}\cdot \frac{\mathrm{d} x_2}{\mathrm{d} x_1}
 $$
 这里我们进一步假设这$n$层复合函数每个都是线性函数，定义为：
 $$
 \begin{cases}
-\begin{align}
-x_2 &= f_1(x_1) = x_1 \cdot w_1 + b_1\\
-x_3 &= f_2(x_2) = x_2 \cdot w_2 + b_2\\
+x_2 = f_1(x_1) = x_1 \cdot w_1 + b_1\\
+x_3 = f_2(x_2) = x_2 \cdot w_2 + b_2\\
 \cdots \\
-x_n &= f_{n-1}(x_{n-1}) = x_{n-1} \cdot w_{n-1} + b_{n-1}\\
-y &= f_n(x_n) = x_n \cdot w_n + b_n
-\end{align}
+x_n = f_{n-1}(x_{n-1}) = x_{n-1} \cdot w_{n-1} + b_{n-1}\\
+y = f_n(x_n) = x_n \cdot w_n + b_n
 \end{cases}
 $$
 那么我们可以得到$y$对任意第$k$层的$x_k$、$w_k$和$b_k$的导数，表示为：
 $$
-\frac{\mathrm{d} y}{\mathrm{d} x_k} = \frac{\mathrm{d} y}{\mathrm{d} x_n} \cdot \frac{\mathrm{d} x_n}{\mathrm{d} x_{n-1}} \cdots \frac{\mathrm{d} x_{k+2}}{\mathrm{d} x_{k+1}} \cdot \frac{\mathrm{d} x_{k+1}}{\mathrm{d} x_k} = w_n \cdot w_{n-1} \cdots w_{k+1} \cdot w_k\\
-\frac{\mathrm{d} y}{\mathrm{d} w_k} = \frac{\mathrm{d} y}{\mathrm{d} x_n} \cdot \frac{\mathrm{d} x_n}{\mathrm{d} x_{n-1}} \cdots \frac{\mathrm{d} x_{k+2}}{\mathrm{d} x_{k+1}} \cdot \frac{\mathrm{d} x_{k+1}}{\mathrm{d} w_k} = w_n \cdot w_{n-1} \cdots w_{k+1} \cdot x_k\\
-\frac{\mathrm{d} y}{\mathrm{d} b_k} = \frac{\mathrm{d} y}{\mathrm{d} x_n} \cdot \frac{\mathrm{d} x_n}{\mathrm{d} x_{n-1}} \cdots \frac{\mathrm{d} x_{k+2}}{\mathrm{d} x_{k+1}} \cdot \frac{\mathrm{d} x_{k+1}}{\mathrm{d} b_k} = w_n \cdot w_{n-1} \cdots w_{k+1} \cdot 1
+\frac{\mathrm{d} y}{\mathrm{d} x_k} = \frac{\mathrm{d} y}{\mathrm{d} x_n} \cdot \frac{\mathrm{d} x_n}{\mathrm{d} x_{n-1}} \cdot \cdots \frac{\mathrm{d} x_{k+2}}{\mathrm{d} x_{k+1}} \cdot \frac{\mathrm{d} x_{k+1}}{\mathrm{d} x_k} = w_n \cdot w_{n-1} \cdot \cdots w_{k+1} \cdot w_k\\
+\frac{\mathrm{d} y}{\mathrm{d} w_k} = \frac{\mathrm{d} y}{\mathrm{d} x_n} \cdot \frac{\mathrm{d} x_n}{\mathrm{d} x_{n-1}} \cdot \cdots \frac{\mathrm{d} x_{k+2}}{\mathrm{d} x_{k+1}} \cdot \frac{\mathrm{d} x_{k+1}}{\mathrm{d} w_k} = w_n \cdot w_{n-1} \cdot \cdots w_{k+1} \cdot x_k\\
+\frac{\mathrm{d} y}{\mathrm{d} b_k} = \frac{\mathrm{d} y}{\mathrm{d} x_n} \cdot \frac{\mathrm{d} x_n}{\mathrm{d} x_{n-1}} \cdot \cdots \frac{\mathrm{d} x_{k+2}}{\mathrm{d} x_{k+1}} \cdot \frac{\mathrm{d} x_{k+1}}{\mathrm{d} b_k} = w_n \cdot w_{n-1} \cdot \cdots w_{k+1} \cdot 1
 $$
 其实这个形式已经与线性全连接层的梯度链式反向传播非常接近了，但这个形式是对于单个数值的求导，而神经网络的前向与反向传播均是矩阵的点乘等相关操作，所以需要对矩阵的反向传播过程进行推导，简单起见，这里先分析单层的神经网络的导数：
 
@@ -44,7 +42,7 @@ Y = X \cdot W + b = \begin{bmatrix}X&1\end{bmatrix}\begin{bmatrix}W\\b\end{bmatr
 $$
 为方便表示，这里将偏置整合到权重参数中，然后在输入后面追加一个全1向量。
 
-然后需要考虑损失值，输出与真实值的差异被称为损失$Loss$，表示为:
+接下来需要考虑损失值的计算，输出与真实值的差异被称为损失$Loss$，表示为:
 $$
 L = F_{criterion}(Y, \hat{Y})
 $$
@@ -181,13 +179,11 @@ $$
 这里得到了反向传播过程中的单层神经网络的导数推导，接下来就可以得到多层神经网络的反向传播过程了，对于任意的n层线性全连接层神经网络，在先不考虑激活函数的前提下，有：
 $$
 \begin{cases}
-\begin{align}
-X_2 &= F_1(X_1) = X_1 \cdot W_1 + b_1\\
-X_3 &= F_2(X_2) = X_2 \cdot W_2 + b_2\\
+X_2 = F_1(X_1) = X_1 \cdot W_1 + b_1\\
+X_3 = F_2(X_2) = X_2 \cdot W_2 + b_2\\
 \cdots \\
-X_n &= F_{n-1}(X_{n-1}) = X_{n-1} \cdot W_{n-1} + b_{n-1}\\
-Y &= F_n(X_n) = X_n \cdot W_n + b_n
-\end{align}
+X_n = F_{n-1}(X_{n-1}) = X_{n-1} \cdot W_{n-1} + b_{n-1}\\
+Y = F_n(X_n) = X_n \cdot W_n + b_n
 \end{cases}
 $$
 假设该神经网络输入是$X_1$，输出是$Y$，而数据的真实值是$\hat{Y}$，那么输出与真实值的差异被称为损失$Loss$，表示为:
@@ -196,48 +192,48 @@ L = F_{criterion}(Y, \hat{Y})
 $$
 若我们想将得到的这个损失传播给网络的第$k$层，则需要使用链式反向传播实现，即：
 $$
-\frac{\partial L}{\partial X_k} = \frac{\partial Y}{\partial X_n} \cdot \frac{\partial X_n}{\partial X_{n-1}} \cdots \frac{\partial X_{k+2}}{\partial X_{k+1}} \cdot \frac{\partial X_{k+1}}{\partial X_k} = W_n^T \cdot W_{n-1}^T \cdots W_{k+1}^T \cdot W_k^T\\
-\frac{\partial L}{\partial W_k} = \frac{\partial Y}{\partial X_n} \cdot \frac{\partial X_n}{\partial X_{n-1}} \cdots \frac{\partial X_{k+2}}{\partial X_{k+1}} \cdot \frac{\partial X_{k+1}}{\partial W_k} = X_k^T \cdot (W_n^T \cdot W_{n-1}^T \cdots W_{k+1}^T)\\
+\frac{\partial L}{\partial X_k} = \frac{\partial L}{\partial Y} \cdot \frac{\partial Y}{\partial X_n} \cdot \frac{\partial X_n}{\partial X_{n-1}} \cdot \cdots \frac{\partial X_{k+2}}{\partial X_{k+1}} \cdot \frac{\partial X_{k+1}}{\partial X_k} = \nabla L \cdot W_n^T \cdot W_{n-1}^T \cdot \cdots W_{k+1}^T \cdot W_k^T\\
+\frac{\partial L}{\partial W_k} = \frac{\partial L}{\partial Y} \cdot \frac{\partial Y}{\partial X_n} \cdot \frac{\partial X_n}{\partial X_{n-1}} \cdot \cdots \frac{\partial X_{k+2}}{\partial X_{k+1}} \cdot \frac{\partial X_{k+1}}{\partial W_k} = X_k^T \cdot (\nabla L \cdot W_n^T \cdot W_{n-1}^T \cdot \cdots W_{k+1}^T)\\
 $$
-这是暂时没有考虑每个隐藏层包含激活函数的前提下得到的，下面我们将激活函数加入，对于任意的n层线性全连接层神经网络，有：
+其中$\nabla L = \frac{\partial L}{\partial Y}$，也就是损失函数的梯度。这是暂时没有考虑每个隐藏层包含激活函数的前提下得到的，下面我们将激活函数加入，假设最后一层没有激活函数，那么对于任意的n层线性全连接层神经网络，有：
 $$
 \begin{cases}
-\begin{align}
-X_2' = \sigma_1 (X_2) &= \sigma_1 (F_1(X_1)) = \sigma_1 (X_1 \cdot W_1 + b_1)\\
-X_3' = \sigma_2 (X_3) &= \sigma_2 (F_2(X_2)) = \sigma_2 (X_2' \cdot W_2 + b_2)\\
+X_2 = \sigma_1 (X_2') = \sigma_1 (F_1(X_1)) = \sigma_1 (X_1 \cdot W_1 + b_1)\\
+X_3 = \sigma_2 (X_3') = \sigma_2 (F_2(X_2)) = \sigma_2 (X_2 \cdot W_2 + b_2)\\
 \cdots \\
-X_{n}' = \sigma_{n-1} (X_n) &= \sigma_{n-1} (F_{n-1}(X_{n-1})) = \sigma_{n-1} (X_{n-1}' \cdot W_{n-1} + b_{n-1})\\
-Y' = \sigma_{n}(Y) &= \sigma_n (F_n(X_n)) =\sigma_n ( X_n' \cdot W_n + b_n)
-\end{align}
+X_{n} = \sigma_{n-1} (X_n') = \sigma_{n-1} (F_{n-1}(X_{n-1})) = \sigma_{n-1} (X_{n-1} \cdot W_{n-1} + b_{n-1})\\
+Y = X_n \cdot W_n + b_n
 \end{cases}
 $$
 那么该神经网络的链式反向传播表示为：
 $$
-\frac{\partial L}{\partial X_k} = \frac{\partial Y}{\partial X_n'} \cdot \frac{\partial X_n'}{\partial X_n} \cdot \frac{\partial X_n}{\partial X_{n-1}'} \cdot \frac{\partial X_{n-1}'}{\partial X_{n-1}} \cdots \cdot \frac{\partial X_{k+1}'}{\partial X_{k+1}} \cdot \frac{\partial X_{k+1}}{\partial X_k} \\
-\frac{\partial L}{\partial W_k} = \frac{\partial Y}{\partial X_n'} \cdot \frac{\partial X_n'}{\partial X_n} \cdot \frac{\partial X_n}{\partial X_{n-1}'} \cdot \frac{\partial X_{n-1}'}{\partial X_{n-1}} \cdots \cdot \frac{\partial X_{k+1}'}{\partial X_{k+1}} \cdot \frac{\partial X_{k+1}}{\partial W_k}\\
+\frac{\partial L}{\partial X_k} = \frac{\partial L}{\partial Y} \cdot \frac{\partial Y}{\partial X_n} \odot \frac{\partial X_n}{\partial X_n'} \cdot \frac{\partial X_n'}{\partial X_{n-1}} \odot \frac{\partial X_{n-1}}{\partial X_{n-1}'} \cdot \cdots \frac{\partial X_{k+2}'}{\partial X_{k+1}} \odot \frac{\partial X_{k+1}}{\partial X_{k+1}'} \cdot \frac{\partial X_{k+1}'}{\partial X_k} \\
+\frac{\partial L}{\partial W_k} = \frac{\partial L}{\partial Y} \cdot \frac{\partial Y}{\partial X_n} \odot \frac{\partial X_n}{\partial X_n'} \cdot \frac{\partial X_n'}{\partial X_{n-1}} \odot \frac{\partial X_{n-1}}{\partial X_{n-1}'} \cdot \cdots \frac{\partial X_{k+2}'}{\partial X_{k+1}} \odot \frac{\partial X_{k+1}}{\partial X_{k+1}'} \cdot \frac{\partial X_{k+1}}{\partial W_k}\\
 $$
-可以观察到，实际就是在原有的基础上，每层需要添加一个激活函数的导数，这个导数是可以根据激活函数表达式求得，令这个导数为：
+其中$\odot$代表哈达玛积，表示两个矩阵对应元素相乘。从上式可以观察到，实际在原有的基础上，每层再添加一个激活函数的导数求哈达玛积即可，这个导数是可以根据激活函数表达式求得，令这个导数为：
 $$
-\frac{\partial X_k'}{\partial X_k} = A_k
+\frac{\partial X_k}{\partial X_k'} = A_k
 $$
 那么有：
 $$
-\frac{\partial L}{\partial X_k} = \frac{\partial Y}{\partial X_n'} \cdot \frac{\partial X_n'}{\partial X_n} \cdot \frac{\partial X_n}{\partial X_{n-1}'} \cdot \frac{\partial X_{n-1}'}{\partial X_{n-1}} \cdots \cdot \frac{\partial X_{k+1}'}{\partial X_{k+1}} \cdot \frac{\partial X_{k+1}}{\partial X_k} \\
-= W_n^T \cdot A_n \cdot W_{n-1}^T \cdot A_{n-1} \cdots A_{n+1} \cdot W_{k+1}^T \cdot A_k \cdot W_k^T
+\frac{\partial L}{\partial X_k} = \frac{\partial L}{\partial Y} \cdot \frac{\partial Y}{\partial X_n} \odot \frac{\partial X_n}{\partial X_n'} \cdot \frac{\partial X_n'}{\partial X_{n-1}} \odot \frac{\partial X_{n-1}}{\partial X_{n-1}'} \cdot \cdots \frac{\partial X_{k+2}'}{\partial X_{k+1}} \odot \frac{\partial X_{k+1}}{\partial X_{k+1}'} \cdot \frac{\partial X_{k+1}'}{\partial X_k} \\
+= \nabla L \cdot W_n^T \odot A_n \cdot W_{n-1}^T \odot A_{n-1} \cdot \cdots W_{k+1}^T \odot A_{k+1} \cdot W_k^T
 \\
 \\
-\frac{\partial L}{\partial W_k} = \frac{\partial Y}{\partial X_n'} \cdot \frac{\partial X_n'}{\partial X_n} \cdot \frac{\partial X_n}{\partial X_{n-1}'} \cdot \frac{\partial X_{n-1}'}{\partial X_{n-1}} \cdots \cdot \frac{\partial X_{k+1}'}{\partial X_{k+1}} \cdot \frac{\partial X_{k+1}}{\partial W_k} \\
-=  X_k^T \cdot (W_n^T \cdot A_n \cdot W_{n-1}^T \cdot A_{n-1} \cdots A_{n+1} \cdot W_{k+1}^T \cdot A_k)
+\frac{\partial L}{\partial W_k} = \frac{\partial L}{\partial Y} \cdot \frac{\partial Y}{\partial X_n} \odot \frac{\partial X_n}{\partial X_n'} \cdot \frac{\partial X_n'}{\partial X_{n-1}} \odot \frac{\partial X_{n-1}}{\partial X_{n-1}'} \cdot \cdots \frac{\partial X_{k+2}'}{\partial X_{k+1}} \odot \frac{\partial X_{k+1}}{\partial X_{k+1}'} \cdot \frac{\partial X_{k+1}}{\partial W_k}\\
+=  X_k^T \cdot (\nabla L \cdot W_n^T \odot A_n \cdot W_{n-1}^T \odot A_{n-1} \cdot \cdots W_{k+1}^T \odot A_{k+1})
 $$
 然后令：
 $$
-\Delta_k = W_n^T \cdot A_n \cdot W_{n-1}^T \cdot A_{n-1} \cdots A_{n+1} \cdot W_{k+1}^T
+\Delta_n = \nabla L \cdot W_n^T \\
+\Delta_{n-1} = \nabla L \cdot W_n^T \odot A_n \cdot W_{n-1}^T\\
+\Delta_k = \nabla L \cdot W_n^T \odot A_n \cdot W_{n-1}^T \odot A_{n-1} \cdot \cdots W_{k}^T
 $$
 那么有：
 $$
-\frac{\partial L}{\partial X_k} = \Delta_k \cdot A_k \cdot W_k^T \\ 
-\frac{\partial L}{\partial W_k} = X_k^T \cdot (\Delta_k \cdot A_k) \\
-\Delta_{k-1} = \Delta_k \cdot A_k \cdot W_k^T
+\frac{\partial L}{\partial X_k} = \Delta_{k+1} \odot A_{k+1} \cdot W_k^T \\ 
+\frac{\partial L}{\partial W_k} = X_k^T \cdot (\Delta_{k+1} \odot A_{k+1}) \\
+\Delta_{k} = \Delta_{k+1} \odot A_{k+1} \cdot W_k^T
 $$
 如此一来，就可以将“差异”，也就是“梯度”，反向传播到每层网络，然后就可以利用梯度下降算法对模型每层的权重参数进行更新了，具体公式为：
 $$
@@ -567,7 +563,7 @@ Kaiming正态分布初始化是从正态分布$N(0,\sigma)$中抽取权重参数
         return np.random.normal(0., std, matrix.shape)
 ```
 
-之后的函数定义便是卷积池化等层所使用的通用静态函数，将在具体的层中详细说明。
+之后的定义的一些函数是卷积池化等层所使用的通用静态函数，将在具体的层中详细说明。
 
 
 
@@ -702,7 +698,9 @@ v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
 v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
 \end{bmatrix}
 $$
-实际上，该操作可以通过修改卷积的流程为梯度反向传播的流程从而很直观的得到：
+实际上，该操作可以理解为一种“反向卷积”，具体的操作流程看下面的示意图就很清晰直观了：
+
+<img src="ConvGrad.gif" style="zoom:80%;" />
 
 
 
