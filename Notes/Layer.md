@@ -165,7 +165,7 @@ w_{12} & w_{22} &\cdots &w_{D2}\\
 w_{1C} & w_{2C} &\cdots &w_{DC}\\
 \end{bmatrix} \\ & =
 \frac{\partial L}{\partial Y} W^T
-\end{align}
+\end{align}\\
 $$
 所以综上，有：
 $$
@@ -235,9 +235,13 @@ $$
 \frac{\partial L}{\partial W_k} = X_k^T \cdot (\Delta_{k+1} \odot A_{k+1}) \\
 \Delta_{k} = \Delta_{k+1} \odot A_{k+1} \cdot W_k^T
 $$
-如此一来，就可以将“差异”，也就是“梯度”，反向传播到每层网络，然后就可以利用梯度下降算法对模型每层的权重参数进行更新了，具体公式为：
+所以第$k$层的梯度为：
 $$
-W^{new}_k = W^{old}_k - \eta\frac{\partial L}{\partial W_k}
+\nabla W_k = \frac{1}{N} \cdot \frac{\partial L}{\partial W_k} = \frac{1}{N}\cdot X_k^T \cdot (\Delta_{k+1} \odot A_{k+1})
+$$
+其中$N$为当前进行优化的数据集批次大小，也就是$X$的第一个维度大小。如此一来，就可以将“差异”，也就是“梯度”，反向传播到每层网络，然后就可以利用梯度下降算法对模型每层的权重参数进行更新了，具体公式为：
+$$
+W^{new}_k = W^{old}_k - \eta\nabla W_k = W^{old}_k - \eta\frac{1}{N}\frac{\partial L}{\partial W_k}
 $$
 其中$\eta$为学习率，具体关于梯度下降算法在《Optimizer——优化器》中有详细介绍。
 
@@ -376,13 +380,16 @@ if self.activation is not None:
 
 然后再根据公式得到该层的梯度，根据前面的推导，该层梯度的公式为：
 $$
-\frac{\partial L}{\partial W_k} = X_k^T \cdot \Delta_k \cdot A_k= \hat{X_k} \cdot \hat{\Delta_k}
+\frac{\partial L}{\partial W_k} = X_k^T \cdot (\Delta_{k+1} \odot A_{k+1}) = \hat{X_k} \cdot \hat{\Delta_{k+1}}
 $$
-注意这里的$\hat{\Delta_k}$为$\Delta_k\cdot A_k$，因为前面已经更新；而这里使用的权重矩阵实际是权重矩阵的转置，所以有：
+注意这里的$\hat{\Delta_{k+1}}$为$\Delta_{k+1} \odot A_{k+1}$，因为前面已经更新；而这里使用的权重矩阵实际是权重矩阵的转置，所以有：
 $$
-\frac{\partial L}{\partial \hat{W_k}} = \frac{\partial L}{\partial W_k^T} = (X_k^T \cdot \hat{\Delta_k})^T = (\hat{X_k} \cdot \hat{\Delta_k})^T
+\frac{\partial L}{\partial \hat{W_k}} = \frac{\partial L}{\partial W_k^T} = (\hat{X_k} \cdot \hat{\Delta_{k+1}})^T
 $$
-之后就可以实现对梯度的累积，要注意若输入是有多个数据组成的batch，则需取整个batch的平均梯度：
+之后就可以实现对梯度的累积，要注意若输入是有多个数据组成的一个批次，则需取整个批次的平均梯度：
+$$
+\nabla \hat{W_k} = \frac{1}{N} \cdot \frac{\partial L}{\partial \hat{W_k}} = \frac{1}{N} \cdot \frac{\partial L}{\partial W_k^T} = \frac{1}{N} \cdot (\hat{X_k} \cdot \hat{\Delta_{k+1}})^T
+$$
 
 ```python
 # 计算梯度(累积梯度) 取平均
@@ -392,14 +399,14 @@ self.grad += (self.input_1 @ delta).T / self.batch_size
 
 之后需要将梯度传递到上一层网络，根据前面的推导得到的公式为：
 $$
-\Delta_{k-1} = \Delta_k \cdot A_k \cdot W_k^T
+\Delta_{k} = \Delta_{k+1} \odot A_{k+1} \cdot W_k^T
 $$
-而$\hat{\Delta_k} = \Delta_k\cdot A_k$，所以有：
+而$\hat{\Delta_{k+1}} = \Delta_{k+1} \odot A_{k+1}$，所以有：
 $$
-\Delta_{k-1} = 
+\Delta_{k} = 
 \begin{cases}
-\hat{\Delta_k} \cdot \hat{W_k}[:, 1:n-1], \quad \text{if have bias}\\
-\hat{\Delta_k} \cdot \hat{W_k}, \quad \text{if not have bias}\\
+\hat{\Delta_{k+1}} \cdot \hat{W_k}[:, 1:n-1], \quad \text{if have bias}\\
+\hat{\Delta_{k+1}} \cdot \hat{W_k}, \quad \text{if not have bias}\\
 \end{cases}
 $$
 这里要注意，偏置参数得到的梯度是无需参与反向传播的，因为本层偏置与上层参数无关，所以传播梯度时要去掉该参数：
