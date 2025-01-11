@@ -91,10 +91,11 @@ if __name__ == '__main__':
     # print(f'mean: {mean}, std: {std}')
 
     # 得到训练集与测试集的准确率
+    # (训练集较大，计算准确率较慢)
     # train_acc = valid_model(model, x_train, y_train)
-    # print("train acc: {:.3f}".format(train_acc * 100))
-    # valid_acc = valid_model(model, x_valid, y_valid)
-    # print("Test Accuracy: {:.3f} %".format(valid_acc * 100))
+    # print("train acc: {:.3f} %".format(train_acc * 100))
+    valid_acc = valid_model(model, x_valid, y_valid)
+    print("Test Accuracy: {:.3f} %".format(valid_acc * 100))
 
     # 使用数据集中的数据
     # index = 0
