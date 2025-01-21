@@ -10,12 +10,12 @@ def learning_all(model, X, Y, num_epochs=1000):
     """一口气学习所有数据"""
     optimizer = Adam(model=model, learning_rate=0.01)
     for epoch in range(num_epochs):
-        optimizer.zero_grad()
         input, truth = X, Y
         output = model.forward(input)
         Loss = MSELoss(model, truth, output)
         mse_loss = Loss.forward()
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {mse_loss.item()}')
+        optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
     return model
