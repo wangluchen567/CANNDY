@@ -245,6 +245,18 @@ class Linear(Layer):
         return delta_next
 
 
+class Indentity(Layer):
+    """恒等变换层（用作占位符）"""
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, input_):
+        return input_
+
+    def backward(self, delta):
+        return delta
+
+
 class Dropout(Layer):
     """随机失活层"""
 
