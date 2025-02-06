@@ -23,6 +23,10 @@ class Module:
     def forward(self, *args, **kwargs):
         raise NotImplementedError
 
+    def backward(self, delta):
+        for i in range(-1, -len(self.Layers) - 1, -1):
+            delta = self.Layers[i].backward(delta)
+
     def train(self):
         """设置为训练模式"""
         for layer in self.Layers:

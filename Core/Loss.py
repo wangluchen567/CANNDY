@@ -19,7 +19,7 @@ class Loss:
 
     @staticmethod
     def to_one_hot(x, num_class):
-        """转为OneHot编码"""
+        """类别转为OneHot编码"""
         x = np.array(x, dtype=int)
         batch_size = x.shape[0]
         one_hot = np.zeros((batch_size, num_class))
@@ -41,8 +41,7 @@ class MSELoss(Loss):
     def backward(self):
         """反向传播"""
         delta = self.output - self.truth
-        for i in range(-1, -len(self.model.Layers) - 1, -1):
-            delta = self.model.Layers[i].backward(delta)
+        self.model.backward(delta)
 
 
 class CrossEntropyWithSoftmax(Loss):
@@ -59,8 +58,7 @@ class CrossEntropyWithSoftmax(Loss):
     def backward(self):
         """反向传播"""
         delta = self.output - self.truth_one_hot
-        for i in range(-1, -len(self.model.Layers) - 1, -1):
-            delta = self.model.Layers[i].backward(delta)
+        self.model.backward(delta)
 
 
 class CrossEntropyWithSoftmaxMask(Loss):
@@ -81,5 +79,4 @@ class CrossEntropyWithSoftmaxMask(Loss):
     def backward(self):
         """反向传播"""
         delta = self.output - self.truth_one_hot
-        for i in range(-1, -len(self.model.Layers) - 1, -1):
-            delta = self.model.Layers[i].backward(delta)
+        self.model.backward(delta)
