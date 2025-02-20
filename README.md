@@ -12,7 +12,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 此外，本项目采用的不是基于计算图的构建方式，而是通过公式推导构建的层级架构，以便更直观地剖析神经网络的工作机制。
 希望本项目能够帮助感兴趣的伙伴们建立起对神经网络的深刻理解，从而在人工智能领域的进一步学习和研究打下坚实的基础。
 
-## 模型说明
+## 框架说明
 ### Core: 人工神经网络框架核心
 
 - Activation: 实现各种激活函数，包括`ReLU`、`Sigmoid`、`Tanh`、`Softmax`
