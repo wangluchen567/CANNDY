@@ -16,7 +16,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 
 ## 安装教程
 **1.建议使用 `Anaconda` 创建 `Python` 环境** <br>
-使用 Anaconda 创建环境可以方便地管理依赖包，避免版本冲突，下载地址：[Anaconda所有版本](https://repo.anaconda.com/archive/)。
+使用 Anaconda 创建环境可以方便地管理依赖包，避免版本冲突，下载地址：[Anaconda所有版本](https://repo.anaconda.com/archive/)。<br>
 **2.安装必要包**<br>
 本项目依赖以下包:`python>=3.7`、`numpy`、`matplotlib`、`pillow`。请确保已安装 Python 3.7 或更高版本，运行以下命令一键安装必要包：<br>
 ```bash
