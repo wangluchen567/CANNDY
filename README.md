@@ -11,64 +11,88 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 本项目提供了详尽的实现步骤，以帮助学习者深入理解神经网络的构建过程与内部工作的机制。
 此外，本项目采用的不是基于计算图的构建方式，而是通过公式推导构建的层级架构，以便更直观地剖析神经网络的工作机制。
 希望本项目能够帮助感兴趣的伙伴们建立起对神经网络的深刻理解，从而在人工智能领域的进一步学习和研究打下坚实的基础。
-
-## 框架说明
-### Core: 人工神经网络框架核心
-
-- Activation: 实现各种激活函数，包括`ReLU`、`Sigmoid`、`Tanh`、`Softmax`
-- Layer: 实现各种神经网络层，包括`Linear`、`Dropout`、`GCNConv`、`RNN`、`Conv2d`、`MaxPool2d`、`BatchNorm`等
-- Loss: 实现各种损失函数，包括`均方差损失`，`交叉熵损失`
-- Module: 实现各种神经网络模型，包括`MLP`、`GCN`、`RNNModel`、`LeNet5`
-- Optimizer：实现各种优化器，包括`GradientDescent`、`Momentum`、`AdaGrad`、`RMSProp`、`Adam`
-
-### Dataset: 数据集
-
-- Iris: 鸢尾花数据集
-- cora: 文献引用网络数据集
-- titantic: 泰坦尼克幸存者数据集
-- mnist: 手写数字识别数据集
-
-### Models: 使用该框架实现的几种经典的模型
-#### MLP: 使用该框架实现的多层感知机模型实例
-
-- MLP_Batch: 测试batch的回归训练
-- MLP_Classifier: 使用同心圆数据集做分类训练
-- MLP_Iris: 使用鸢尾花数据集做分类训练
-- MLP_Mnist: 使用手写识别数据集做分类训练
-- MLP_Regress: 使用sin函数作为数据集做回归训练
-
-#### RNN: 使用该框架实现的循环神经网络模型实例
-
-- RNN_Predict: 使用RNN进行预测未来步的训练
-
-#### CNN: 使用该框架实现的卷积神经网络模型实例
-
-- CNN_Mnist: 使用CNN对手写数字训练集的训练
-- CNN_Visualize: 对CNN各层特征图的可视化
-
-#### GCN: 使用该框架实现的图卷积模型实例
-- GCN_Cora: 使用GCN对Cora图数据集的训练
-
-### Examples: 使用该框架实现的各种具体实例
-
-- AutoEncoder: 使用该框架实现的自编码器模型
-- DQN: 使用该框架实现的强化学习中DQN(深度Q学习网络)模型
-- PolicyGradient: 使用该框架实现的强化学习中的策略梯度模型
-- GCN: 使用该框架实现的图卷积模型
+#### 特别说明：`本代码仅供参考学习、竞赛和科学研究等非商业用途，在复制核心代码时请注明出处`
 
 ## 安装教程
+#### 1.建议使用 `Anaconda` 创建 `Python` 环境<br>
+使用 Anaconda 创建环境可以方便地管理依赖包，避免版本冲突，下载地址：[Anaconda所有版本](https://repo.anaconda.com/archive/)。
+#### 2.安装必要包<br>
+本项目依赖以下包:`python>=3.7`、`numpy`、`matplotlib`、`pillow`。请确保已安装 Python 3.7 或更高版本，运行以下命令一键安装必要包：<br>
+```bash
+pip install numpy matplotlib pillow
+```
+#### 3.安装可选包<br>
+在使用本项目中强化学习模型训练CartPole环境时需要安装游戏环境相关包。运行以下命令一键安装：
+```bash
+pip install gym==0.22.0 pygame==2.2.0 pyglet==1.5.27
+```
+在使用`gym`时可能会遇到如下报错:
+```
+ImportError: cannot import name 'rendering' from 'gym.envs.classic_control'
+```
+若遇到该问题请将rendering.py放到..\Anaconda\Lib\site-packages\gym\envs\classic_control\目录下<br>
+参考网址：https://blog.csdn.net/qq_34666857/article/details/123551558
 
-1.  建议使用Anaconda `python>=3.7`
-2. 必要的库包：`python>=3.7`、`numpy`、`matplotlib`、`gzip`、`pickle`、`pillow`
-3. 强化学习相关项目，gym 需要 gym==0.22.0; pygame==2.2.0
-（贪吃蛇环境不需要，因为是单独实现的）
-4. 其他相关的包，可自行调试判断
-
-
-## 使用说明
-
-- `本代码仅供参考学习和学术研究下载`
-- `Copy核心代码时请注明出处`
+## 框架结构
+```
+CANNDY/
+├── Core/                               # 人工神经网络框架核心
+│   ├── Activation.py                   # 实现各种激活函数
+│   ├── Layers.py                       # 实现各种神经网络层
+│   ├── Loss.py                         # 实现各种损失函数
+│   ├── Module.py                       # 实现各种神经网络模型
+│   └── Optimizer.py                    # 实现各种优化器
+├── Datasets/                           # 数据集
+│   ├── Mnist_Test/                     # 手写数字识别数据集(单独生成)
+│   ├── cora.tar.gz                     # 图神经网络数据集Cora
+│   ├── iris.csv                        # 鸢尾花数据集
+│   ├── mnist.pkl.gz                    # 手写数字识别数据集
+│   └── titanic.csv                     # 泰坦尼克幸存者数据集
+├── Examples/                           # 使用该框架实现的各种具体实例模型
+│   ├── AutoEncoder/                    # 自编码器模型
+│   │   ├── AutoEncoder.py              # 自编码器模型
+│   │   └── train_AutoEncoder.py        # 运行自编码器模型实例
+│   ├── DQN/                            # 深度Q-学习网络模型
+│   │   ├── agent.py                    # DQN智能体
+│   │   ├── algorithm.py                # DQN算法
+│   │   ├── DQNLoss.py                  # DQN损失函数
+│   │   ├── replay_memory.py            # 经验回放池
+│   │   ├── train_DQN.py                # 训练DQN玩CartPole
+│   │   └── train_DQN_Snake.py          # 训练DQN玩贪吃蛇
+│   ├── PolicyGradient/                 # 策略梯度网络模型
+│   │   ├── agent.py                    # PG智能体
+│   │   ├── algorithm.py                # PG算法
+│   │   ├── PGLoss.py                   # PG损失函数
+│   │   ├── replay_memory.py            # 经验回放池
+│   │   ├── train_PG.py                 # 训练PG玩CartPole
+│   │   └── train_PG_Snake.py           # 训练PG玩贪吃蛇
+│   ├── RL_Envs/                        # 强化学习环境(单独实现)
+│   │   └── Snake.py                    # 贪吃蛇游戏环境
+├── Models/                             # 使用该框架实现的几种经典的模型
+│   ├── CNN/                            # 卷积神经网络
+│   │   ├── CNN_Mnist.py                # 卷积神经网络学习手写数字识别分类
+│   │   ├── CNN_Series.py               # 卷积神经网络学习周期数据回归
+│   │   ├── CNN_Visualize.py            # 卷积神经网络学习手写数字识别结果可视化
+│   │   ├── LeNet-5_Params.json         # 卷积神经网络学习手写数字识别所得参数
+│   │   └── Plot_Contrast.py            # 卷积神经网络不同参数效果对比绘图
+│   ├── GCN/                            # 图卷积神经网络
+│   │   └── GCN_Cora.py                 # 图卷积神经网络学习Cora数据
+│   └── MLP/                            # 全连接神经网络(多层感知机)
+│   │   ├── MLP_Batch.py                # 全连接神经网络学习批数据测试
+│   │   ├── MLP_Classifier.py           # 全连接神经网络简单分类测试
+│   │   ├── MLP_Iris.py                 # 全连接神经网络对鸢尾花数据集分类测试
+│   │   ├── MLP_Mnist.py                # 全连接神经网络学习手写数字识别分类
+│   │   ├── MLP_Regress.py              # 全连接神经网络学习简单数据回归
+│   │   └── Plot_Classifier.py          # 对分类结果绘图函数
+│   ├── RNN/                            # 循环神经网络
+│   │   └── RNN_Predict.py              # 循环神经网络学习周期数据回归
+├── Notes/                              # 框架实现的细节笔记
+├── Pics/                               # 框架实现的模型运行效果图
+└── README.md                           # 项目文档
+```
+## 更新计划
+- [x] 更新项目文档
+- [ ] 更新笔记
 
 ## 效果展示
 - MLP模型对同心圆数据集分类效果/对sin函数回归拟合效果<br>
