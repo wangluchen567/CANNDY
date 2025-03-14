@@ -42,7 +42,7 @@ Y = X \cdot W + b = \begin{bmatrix}X&1\end{bmatrix}\begin{bmatrix}W\\b\end{bmatr
 $$
 为方便表示，这里将偏置整合到权重参数中，然后在输入后面追加一个全1向量。可以根据下图的示意理解此公式：
 
-<img src="Forward.png" style="zoom:80%;" />
+<img src="./Pictures/Forward.png" style="zoom:80%;" />
 
 
 接下来需要考虑损失值的计算，输出与真实值的差异被称为损失$Loss$，表示为:
@@ -607,7 +607,7 @@ Dropout 的核心思想是在训练过程中随机地丢弃（即置为零）一
 
 二维卷积的过程可见下面的示例：
 
-<img src="Conv.gif" style="zoom:80%;" />
+<img src="./Pictures/Conv.gif" style="zoom:80%;" />
 
 为简单起见，下面使用单通道矩阵、步长为1、填充为0的条件下对卷积及其梯度进行推导：
 
@@ -731,7 +731,7 @@ v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
 $$
 实际上，该操作可以理解为一种“反向卷积”，具体的操作流程看下面的示意图就很清晰直观了：
 
-<img src="ConvGrad.gif" style="zoom:80%;" />
+<img src="./Pictures/ConvGrad.gif" style="zoom:80%;" />
 
 ## BatchNorm-批归一化层
 
