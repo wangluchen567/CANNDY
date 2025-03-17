@@ -15,12 +15,18 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 **特别说明：`本代码仅供参考学习、竞赛和科学研究等非商业用途，在复制核心代码时请注明出处`**
 
 ## 安装教程
-**1.建议使用 `Anaconda` 创建 `Python` 环境** <br>
-使用 Anaconda 创建环境可以方便地管理依赖包，避免版本冲突，下载地址：[Anaconda所有版本](https://repo.anaconda.com/archive/)。<br>
-**2.安装必要包**<br>
-本项目依赖以下包:`python>=3.7`、`numpy`、`matplotlib`、`pillow`。请确保已安装 Python 3.7 或更高版本，运行以下命令一键安装必要包：<br>
+**1. 建议使用 `Anaconda` 创建 `Python` 环境**<br>
+使用 Anaconda 创建环境可以方便地管理依赖包，避免版本冲突。建议从 [Anaconda 官网](https://www.anaconda.com/download/success) 下载并安装 Anaconda。如果需要特定版本，可以访问 [Anaconda所有版本下载地址](https://repo.anaconda.com/archive/)。<br>
+安装完成后，运行以下命令创建 Python 环境：
 ```bash
-pip install numpy matplotlib pillow
+conda create --name my_env python=3.9
+conda activate my_env
+```
+**注意**：本项目支持 Python 3.7 及以上版本，建议使用 Python 3.9 以获得最佳兼容性。请确保已安装 Python 3.7 或更高版本。<br>
+**2.安装必要包**<br>
+本项目依赖以下包:`numpy`、`matplotlib`、`tqdm`。请确保已安装 Python 3.7 或更高版本，运行以下命令一键安装必要包：<br>
+```bash
+pip install numpy matplotlib tqdm
 ```
 **3.安装可选包**<br>
 在使用本项目中强化学习模型训练CartPole环境时需要安装游戏环境相关包。运行以下命令一键安装：
