@@ -1,4 +1,3 @@
-import copy
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,9 +8,8 @@ from Core.Optimizer import Adam
 
 def plot_sin(model, pause=True):
     """绘制模型的回归预测表现"""
-    # x = np.arange(0, 20, 0.01).reshape(-1, 1)
-    # y = np.sin(x)
-    x, y = get_dataset()
+    x = np.arange(0, 10, 0.01).reshape(-1, 1)
+    y = np.sin(x)
     output = model.forward(x)
     Loss = MSELoss(model, y, output)
     mse_loss = Loss.forward()
@@ -25,7 +23,7 @@ def plot_sin(model, pause=True):
     plt.plot(x.flatten(), output.flatten(), c='blue', label='predict')
     plt.title('sin函数拟合结果', fontsize=18)
     info = '损失值:%.3f' % (mse_loss)
-    # plt.ylim([-1.2, 1.2])
+    plt.ylim([-1.2, 1.2])
     plt.xlabel(info)
     plt.grid(True)
     plt.legend()
@@ -34,22 +32,16 @@ def plot_sin(model, pause=True):
     else:
         plt.show()
 
-def get_dataset():
-    num_samples = 300
-    X = np.random.uniform(0, 20, size=num_samples)
-    X = np.sort(X).reshape(-1, 1)
-    Y = np.sin(X) + np.random.normal(0, 0.3, X.shape)
-    return X, Y
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # X = np.random.uniform(0, 20, size=(num_samples, 1))
-    # Y = np.sin(X) + np.random.normal(0, 0.3, X.shape)
-    X, Y = get_dataset()
-    model = MLP(1, 1, [16, 64, 16])
+    num_samples = 100
+    X = np.random.uniform(0, 10, size=(num_samples, 1))
+    Y = np.sin(X)
+    model = MLP(1, 1, [8, 16, 8])
 
-    optimizer = Adam(model=model, learning_rate=0.1)
-    num_epochs = 2000
+    optimizer = Adam(model=model, learning_rate=0.01)
+    num_epochs = 1000
     for epoch in range(num_epochs):
         output = model.forward(X)
         Loss = MSELoss(model, Y, output)
@@ -58,6 +50,6 @@ if __name__ == '__main__':
         optimizer.zero_grad()
         Loss.backward()
         optimizer.step()
-        # plot_sin(model)
+        plot_sin(model)
 
     plot_sin(model, pause=False)
