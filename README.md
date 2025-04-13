@@ -97,36 +97,57 @@ CANNDY/
 ├── Pics/                               # 框架实现的模型运行效果图
 └── README.md                           # 项目文档
 ```
+
 ## 更新计划
+
 - [x] 更新项目文档
 - [ ] 更新算法笔记
+- [ ] 尝试实现更复杂的模型
 
 ## 效果展示
-- MLP模型对同心圆数据集分类效果/对sin函数回归拟合效果<br>
-<img src="Pics/MLP_circle.gif" width="288" height="220" alt="分类训练"/>
-<img src="Pics/MLP_sin.gif" width="288" height="220" alt="回归拟合"/><br/>
-- 循环神经网络模型与一维卷积时间序列模型对sin函数未来趋势预测效果<br>
-<img src="Pics/RNN_predict.gif" width="288" height="220" alt="RNN预测"/>
-<img src="Pics/CNN_Series.gif" width="288" height="220" alt="CNNT预测"/>
-- 卷积神经网络LeNet-5模型手写数字的识别效果(测试集准确率高达99%)<br>
-0. 训练损失与测试准确率表现及不同trick下的模型表现<br>
-<img src="Pics/CNN_train.png" width="288" height="230"/>
-<img src="Pics/Trick_contrast.png" width="288" height="230"/>
-1. 输入图像与输出预测结果及概率<br>
-<img src="Pics/Input.png" width="288" height="250"/>
-<img src="Pics/Result.png" width="288" height="250"/>
-2. 第1层卷积层和第1层池化层得到的特征图<br>
-<img src="Pics/Conv1.png" width="288" height="196"/>
-<img src="Pics/MaxPool1.png" width="288" height="196"/>
-3. 第2层卷积层和第2层池化层得到的特征图<br>
-<img src="Pics/Conv2.png" width="288" height="288"/>
-<img src="Pics/MaxPool2.png" width="288" height="288"/>
-- 自编码器模型效果<br>
-<img src="Pics/Res_AE.gif" width="396" height="220" alt="自编码器"/><br/>
-- DQN(深度Q学习网络)模型训练玩贪吃蛇最终效果<br>
-<img src="Pics/Snake.gif" width="396" height="360" alt="后期效果"/><br/>
-- PG(策略梯度网络)模型训练玩CartPole最终效果<br>
-<img src="Pics/PG_end.gif" width="396" height="260" alt="后期效果"/><br/>
+
+- MLP模型对同心圆数据集分类效果/对sin函数回归拟合效果
+
+    <img src="Pics/MLP_circle.gif" width="288" height="220" alt="分类训练"/>
+    <img src="Pics/MLP_sin.gif" width="288" height="220" alt="回归拟合"/>
+  
+- 循环神经网络模型与一维卷积时间序列模型对sin函数未来趋势预测效果
+
+    <img src="Pics/RNN_predict.gif" width="288" height="220" alt="RNN预测"/>
+    <img src="Pics/CNN_Series.gif" width="288" height="220" alt="CNNT预测"/>
+  
+- 卷积神经网络LeNet-5模型手写数字的识别效果(测试集准确率超过99%)
+
+0. 训练损失与测试准确率表现及不同trick下的模型表现
+
+    <img src="Pics/CNN_train.png" width="288" height="230"/>
+    <img src="Pics/Trick_contrast.png" width="288" height="230"/>
+   
+1. 输入图像与输出预测结果及概率
+
+    <img src="Pics/Input.png" width="288" height="250"/>
+    <img src="Pics/Result.png" width="288" height="250"/>
+   
+2. 第1层卷积层和第1层池化层得到的特征图
+
+    <img src="Pics/Conv1.png" width="288" height="196"/>
+    <img src="Pics/MaxPool1.png" width="288" height="196"/>
+   
+3. 第2层卷积层和第2层池化层得到的特征图
+
+    <img src="Pics/Conv2.png" width="288" height="288"/>
+    <img src="Pics/MaxPool2.png" width="288" height="288"/>
+- 自编码器模型效果
+
+    <img src="Pics/Res_AE.gif" width="396" height="220" alt="自编码器"/>
+
+- DQN(深度Q学习网络)模型训练玩贪吃蛇最终效果
+
+    <img src="Pics/Snake.gif" width="396" height="360" alt="后期效果"/>
+
+- PG(策略梯度网络)模型训练玩CartPole最终效果
+
+    <img src="Pics/PG_end.gif" width="396" height="260" alt="后期效果"/>
 
 ## 参与贡献
 
