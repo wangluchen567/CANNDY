@@ -1,4 +1,5 @@
 # CANNDY
+Language：[English](README_EN.md) | [中文](README.md)
 
 ## 项目名称
 基于NumPy构建的人工神经网络框架<br>
@@ -10,35 +11,47 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 但力求通过实现一系列经典的神经网络模型，深入探讨神经网络的底层原理。
 本项目提供了详尽的实现步骤，以帮助学习者深入理解神经网络的构建过程与内部工作的机制。
 此外，本项目采用的不是基于计算图的构建方式，而是通过公式推导构建的层级架构，以便更直观地剖析神经网络的工作机制。
-希望本项目能够帮助感兴趣的伙伴们建立起对神经网络的深刻理解，从而在人工智能领域的进一步学习和研究打下坚实的基础。<br>
-<br>
+希望本项目能够帮助感兴趣的伙伴们建立起对神经网络的深刻理解，从而在人工智能领域的进一步学习和研究打下坚实的基础。
+
 **特别说明：`本代码仅供参考学习、竞赛和科学研究等非商业用途，在复制核心代码时请注明出处`**
 
 ## 安装教程
-**1. 建议使用 `Anaconda` 创建 `Python` 环境**<br>
-使用 Anaconda 创建环境可以方便地管理依赖包，避免版本冲突。建议从 [Anaconda 官网](https://www.anaconda.com/download/success) 下载并安装 Anaconda。如果需要特定版本，可以访问 [Anaconda所有版本下载地址](https://repo.anaconda.com/archive/)。<br>
-安装完成后，运行以下命令创建 Python 环境：
-```bash
-conda create --name my_env python=3.9
-conda activate my_env
-```
-**注意**：本项目支持 Python 3.7 及以上版本，建议使用 Python 3.9 以获得最佳兼容性。请确保已安装 Python 3.7 或更高版本。<br>
-**2.安装必要包**<br>
-本项目依赖以下包:`numpy`、`matplotlib`、`tqdm`。请确保已安装 Python 3.7 或更高版本，运行以下命令一键安装必要包：<br>
-```bash
-pip install numpy matplotlib tqdm
-```
-**3.安装可选包**<br>
-在使用本项目中强化学习模型训练CartPole环境时需要安装游戏环境相关包。运行以下命令一键安装：
-```bash
-pip install gym==0.22.0 pygame==2.2.0 pyglet==1.5.27
-```
-在使用`gym`时可能会遇到如下报错:
-```
-ImportError: cannot import name 'rendering' from 'gym.envs.classic_control'
-```
-若遇到该问题请将rendering.py放到..\Anaconda\Lib\site-packages\gym\envs\classic_control\目录下<br>
-参考网址：https://blog.csdn.net/qq_34666857/article/details/123551558
+**1. 建议使用 `Anaconda` 创建 `Python` 环境**
+
+  使用 Anaconda 创建环境可以方便地管理依赖包，避免版本冲突。建议从 [Anaconda 官网](https://www.anaconda.com/download/success) 下载并安装 Anaconda。如果需要特定版本，可以访问 [Anaconda所有版本下载地址](https://repo.anaconda.com/archive/)。
+
+  安装完成后，运行以下命令创建 Python 环境：
+  ```bash
+  conda create --name my_env python=3.9
+  conda activate my_env
+  ```
+  **注意**：本项目支持 Python 3.7 及以上版本，建议使用 Python 3.9 以获得最佳兼容性。请确保已安装 Python 3.7 或更高版本。
+
+**2. 安装必要包**
+
+  本项目依赖以下包:`numpy`、`matplotlib`、`tqdm`。请确保已安装 Python 3.7 或更高版本，运行以下命令一键安装必要包：
+  
+  ```bash
+  pip install numpy matplotlib tqdm
+  ```
+
+**3. 安装可选包**
+
+  在使用本项目中强化学习模型训练CartPole环境时需要安装游戏环境相关包。运行以下命令一键安装：
+  
+  ```bash
+  pip install gym==0.22.0 pygame==2.2.0 pyglet==1.5.27
+  ```
+  
+  在使用`gym`时可能会遇到如下报错:
+  
+  ```
+  ImportError: cannot import name 'rendering' from 'gym.envs.classic_control'
+  ```
+  
+  若遇到该问题请将rendering.py放到..\Anaconda\Lib\site-packages\gym\envs\classic_control\目录下
+
+  参考网址：https://blog.csdn.net/qq_34666857/article/details/123551558
 
 ## 核心实现
 
