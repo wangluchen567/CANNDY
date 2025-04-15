@@ -44,6 +44,7 @@ ImportError: cannot import name 'rendering' from 'gym.envs.classic_control'
 
 - **Activation: 激活函数**
   - ReLU/Sigmoid/Tanh/Softmax
+
 - **Layers: 神经网络层**
   - Linear: 线性层(全连接单层)
   - Indentity: 恒等变换层
@@ -64,16 +65,19 @@ ImportError: cannot import name 'rendering' from 'gym.envs.classic_control'
   - SigmoidLayer: Sigmoid激活层
   - TanhLayer: Tanh激活层
   - SoftmaxLayer: Softmax激活层
+
 - **Loss: 损失函数**
   - MSELoss: 均方误差损失
   - CrossEntropyWithSoftmax: 带Softmax的交叉熵损失
   - CrossEntropyWithSoftmaxMask: 带Softmax和Mask的交交叉熵损失
+
 - **Module: 神经网络模型**
   - MLP: 全连接神经网络模型(多层感知机)
   - GCN: 图卷积神经网络模型
   - RNNModel: 循环神经网络模型
   - CNNTimeSeries: 一维卷积神经网络模型
   - LeNet5: LeNet-5卷积神经网络模型
+
 - **Optimizer: 优化器(优化算法)**
   - GD/Momentum/AdaGrad/RMSProp/Adam
 
