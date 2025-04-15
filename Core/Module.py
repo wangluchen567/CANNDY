@@ -21,6 +21,14 @@ class Module:
 
     def __init__(self, input_size=None, output_size=None, hidden_sizes=None,
                  hidden_activation=None, out_activation=None):
+        """
+        模型模块父类
+        :param input_size: 输入层大小
+        :param output_size: 输出层大小
+        :param hidden_sizes: 隐藏层大小(多个)
+        :param hidden_activation: 隐藏层激活函数
+        :param out_activation: 输出层激活函数
+        """
         self.input_size = input_size
         self.output_size = output_size
         self.hidden_sizes = hidden_sizes
@@ -81,7 +89,7 @@ class MLP(Module):
 
     def __init__(self, input_size, output_size, hidden_sizes, hidden_activation=Sigmoid, out_activation=None):
         """
-        全连接模型
+        全连接神经网络模型
         :param input_size: 输入层大小
         :param output_size: 输出层大小
         :param hidden_sizes: 隐藏层大小(多个)
@@ -116,7 +124,7 @@ class GCN(Module):
     def __init__(self, adj_mat, input_size, output_size, hidden_sizes,
                  hidden_activation=ReLU, out_activation=None, dropout=False):
         """
-        图卷积模型
+        图卷积神经网络模型
         :param adj_mat: 图的邻接矩阵
         :param input_size: 输入层大小
         :param output_size: 输出层大小
@@ -204,7 +212,7 @@ class RNNModel(Module):
 
 
 class CNNTimeSeries(Module):
-    """卷积网络处理时间序列模型"""
+    """一维卷积神经网络模型(处理时间序列)"""
 
     def __init__(self, input_size):
         super().__init__()
@@ -225,7 +233,7 @@ class CNNTimeSeries(Module):
 
 
 class LeNet5(Module):
-    """LeNet-5卷积网络模型"""
+    """LeNet-5卷积神经网络模型"""
 
     def __init__(self):
         super().__init__()
