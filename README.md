@@ -40,6 +40,43 @@ ImportError: cannot import name 'rendering' from 'gym.envs.classic_control'
 若遇到该问题请将rendering.py放到..\Anaconda\Lib\site-packages\gym\envs\classic_control\目录下<br>
 参考网址：https://blog.csdn.net/qq_34666857/article/details/123551558
 
+## 核心实现
+
+- **Activation: 激活函数**
+  - ReLU/Sigmoid/Tanh/Softmax
+- **Layers: 神经网络层**
+  - Linear: 线性层(全连接单层)
+  - Indentity: 恒等变换层
+  - Dropout: 随机失活层
+  - GCNConv: 图卷积层
+  - RNNCell: 循环神经网络模块
+  - RNN: 循环神经网络层
+  - Flatten: 展平层
+  - Conv1d: 一维卷积层
+  - Conv2d: 二维卷积层
+  - MaxPool1d: 一维最大池化层
+  - MaxPool2d: 二维最大池化层
+  - MeanPool1d: 一维平均池化层
+  - MeanPool2d: 二维平均池化层
+  - BatchNorm: 批归一化层
+  - BatchNorm2d: 二维批归一化层
+  - ReLULayer: ReLU激活层
+  - SigmoidLayer: Sigmoid激活层
+  - TanhLayer: Tanh激活层
+  - SoftmaxLayer: Softmax激活层
+- **Loss: 损失函数**
+  - MSELoss: 均方误差损失
+  - CrossEntropyWithSoftmax: 带Softmax的交叉熵损失
+  - CrossEntropyWithSoftmaxMask: 带Softmax和Mask的交交叉熵损失
+- **Module: 神经网络模型**
+  - MLP: 全连接神经网络模型(多层感知机)
+  - GCN: 图卷积神经网络模型
+  - RNNModel: 循环神经网络模型
+  - CNNTimeSeries: 一维卷积神经网络模型
+  - LeNet5: LeNet-5卷积神经网络模型
+- **Optimizer: 优化器(优化算法)**
+  - GD/Momentum/AdaGrad/RMSProp/Adam
+
 ## 框架结构
 ```
 CANNDY/
