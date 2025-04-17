@@ -172,22 +172,22 @@ CANNDY/
   
 - 卷积神经网络LeNet-5模型手写数字的识别效果(测试集准确率超过99%)
 
-0. 训练损失与测试准确率表现及不同trick下的模型表现
+1. 训练损失与测试准确率表现及不同trick下的模型表现
 
     <img src="Pics/CNN_train.png" width="288" height="230"/>
     <img src="Pics/Trick_contrast.png" width="288" height="230"/>
    
-1. 输入图像与输出预测结果及概率
+2. 输入图像与输出预测结果及概率
 
     <img src="Pics/Input.png" width="288" height="250"/>
     <img src="Pics/Result.png" width="288" height="250"/>
    
-2. 第1层卷积层和第1层池化层得到的特征图
+3. 第1层卷积层和第1层池化层得到的特征图
 
     <img src="Pics/Conv1.png" width="288" height="196"/>
     <img src="Pics/MaxPool1.png" width="288" height="196"/>
    
-3. 第2层卷积层和第2层池化层得到的特征图
+4. 第2层卷积层和第2层池化层得到的特征图
 
     <img src="Pics/Conv2.png" width="288" height="288"/>
     <img src="Pics/MaxPool2.png" width="288" height="288"/>

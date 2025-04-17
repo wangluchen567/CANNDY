@@ -92,3 +92,59 @@ It is hoped that this project can help interested individuals build a profound u
 
 - **Optimizer: Optimizers (Optimization Algorithms)**
   - GD/Momentum/AdaGrad/RMSProp/Adam
+
+## Update Plan
+
+- [x] Update project documentation
+- [ ] Update algorithm notes
+- [ ] Attempt to implement more complex models
+
+## Effect Demonstration
+
+- Classification effect of the MLP model on concentric circle dataset / Regression fitting effect on the sin function
+
+    <img src="Pics/MLP_circle.gif" width="288" height="220" alt="Classification Training"/>
+    <img src="Pics/MLP_sin.gif" width="288" height="220" alt="Regression Fitting"/>
+  
+- Prediction effect of the RNN model and the 1D convolutional time series model on the future trend of the sin function
+
+    <img src="Pics/RNN_predict.gif" width="288" height="220" alt="RNN Prediction"/>
+    <img src="Pics/CNN_Series.gif" width="288" height="220" alt="CNN Prediction"/>
+  
+- Recognition effect of the Convolutional Neural Network LeNet-5 model on handwritten digits (Test set accuracy exceeds 99%)
+
+1. Training loss and test accuracy performance, as well as model performance under different tricks
+
+    <img src="Pics/CNN_train.png" width="288" height="230"/>
+    <img src="Pics/Trick_contrast.png" width="288" height="230"/>
+   
+2. Input images and output prediction results with probabilities
+
+    <img src="Pics/Input.png" width="288" height="250"/>
+    <img src="Pics/Result.png" width="288" height="250"/>
+   
+3. Feature maps obtained from the first convolutional layer and the first pooling layer
+
+    <img src="Pics/Conv1.png" width="288" height="196"/>
+    <img src="Pics/MaxPool1.png" width="288" height="196"/>
+   
+4. Feature maps obtained from the second convolutional layer and the second pooling layer
+
+    <img src="Pics/Conv2.png" width="288" height="288"/>
+    <img src="Pics/MaxPool2.png" width="288" height="288"/>
+- Effect of the Autoencoder model
+
+    <img src="Pics/Res_AE.gif" width="396" height="220" alt="Autoencoder"/>
+
+- Final effect of the DQN (Deep Q-Learning Network) model trained to play Snake
+
+    <img src="Pics/Snake.gif" width="396" height="360" alt="Final Effect"/>
+
+- Final effect of the PG (Policy Gradient Network) model trained to play CartPole
+
+    <img src="Pics/PG_end.gif" width="396" height="260" alt="Final Effect"/>
+
+## Participation and Contribution
+
+**Luchen Wang**<br>
+<small>(If you encounter any issues during use, feel free to contact via email: wangluchen567@qq.com)</small>
