@@ -203,9 +203,9 @@ CANNDY/
 
     <img src="Pics/PG_end.gif" width="396" height="260" alt="后期效果"/>
 
-## 参与贡献
+## 项目贡献与支持
 
-**Luchen Wang**<br>
+**Author: Luchen Wang**<br>
 <small>（如在使用过程中遇到任何问题，可随时联系邮箱：wangluchen567@qq.com）</small>
 
 

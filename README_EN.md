@@ -144,7 +144,7 @@ It is hoped that this project can help interested individuals build a profound u
 
     <img src="Pics/PG_end.gif" width="396" height="260" alt="Final Effect"/>
 
-## Participation and Contribution
+## Contributions & Support
 
-**Luchen Wang**<br>
+**Author: Luchen Wang**<br>
 <small>(If you encounter any issues during use, feel free to contact via email: wangluchen567@qq.com)</small>
