@@ -59,7 +59,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
   ```bash
   pip install numpy matplotlib tqdm -i https://pypi.tuna.tsinghua.edu.cn/simple
   ```
-  注意：如果无法访问上述镜像源，请检查链接的合法性，或稍后重试。您也可以选择其他可用的镜像源，例如中国科技大学、阿里云等。
+  注意：如果无法访问上述镜像源，也可以选择其他可用的镜像源，例如中国科技大学、阿里云等。
 
 
 ## 核心实现
