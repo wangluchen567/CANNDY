@@ -53,7 +53,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 
   参考网址：https://blog.csdn.net/qq_34666857/article/details/123551558
 
-**4.镜像源选择**
+**4. 镜像源选择**
 
   如果在运行安装命令时发现下载速度较慢，可以尝试使用清华大学的镜像源进行安装。安装命令如下：
   ```bash
