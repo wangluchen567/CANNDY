@@ -136,8 +136,8 @@ CANNDY/
 │   │   ├── replay_memory.py            # 经验回放池
 │   │   ├── train_PG.py                 # 训练PG玩CartPole
 │   │   └── train_PG_Snake.py           # 训练PG玩贪吃蛇
-│   ├── RL_Envs/                        # 强化学习环境(单独实现)
-│   │   └── Snake.py                    # 贪吃蛇游戏环境
+│   └── RL_Envs/                        # 强化学习环境(单独实现)
+│       └── Snake.py                    # 贪吃蛇游戏环境
 ├── Models/                             # 使用该框架实现的几种经典的模型
 │   ├── CNN/                            # 卷积神经网络
 │   │   ├── CNN_Mnist.py                # 卷积神经网络学习手写数字识别分类
@@ -147,15 +147,15 @@ CANNDY/
 │   │   └── Plot_Contrast.py            # 卷积神经网络不同参数效果对比绘图
 │   ├── GCN/                            # 图卷积神经网络
 │   │   └── GCN_Cora.py                 # 图卷积神经网络学习Cora数据
-│   └── MLP/                            # 全连接神经网络(多层感知机)
+│   ├── MLP/                            # 全连接神经网络(多层感知机)
 │   │   ├── MLP_Batch.py                # 全连接神经网络学习批数据测试
 │   │   ├── MLP_Classifier.py           # 全连接神经网络简单分类测试
 │   │   ├── MLP_Iris.py                 # 全连接神经网络对鸢尾花数据集分类测试
 │   │   ├── MLP_Mnist.py                # 全连接神经网络学习手写数字识别分类
 │   │   ├── MLP_Regress.py              # 全连接神经网络学习简单数据回归
 │   │   └── Plot_Classifier.py          # 对分类结果绘图函数
-│   ├── RNN/                            # 循环神经网络
-│   │   └── RNN_Predict.py              # 循环神经网络学习周期数据回归
+│   └── RNN/                            # 循环神经网络
+│       └── RNN_Predict.py              # 循环神经网络学习周期数据回归
 ├── Notes/                              # 框架实现的细节笔记
 ├── Pics/                               # 框架实现的模型运行效果图
 └── README.md                           # 项目文档
