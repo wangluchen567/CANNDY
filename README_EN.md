@@ -27,7 +27,7 @@ It is hoped that this project can help interested individuals build a profound u
   conda activate my_env
   ```
 
-  **Note**: This project supports Python 3.7 and above. It is recommended to use Python 3.9 for the best compatibility. Please ensure that Python 3.7 or a higher version is installed.<br>
+  **Note**: This project supports Python 3.7 and above. It is recommended to use Python 3.9 for the best compatibility. <br>
 
 **2. Install necessary packages**
 

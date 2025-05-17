@@ -25,7 +25,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
   conda create --name my_env python=3.9
   conda activate my_env
   ```
-  **注意**：本项目支持 Python 3.7 及以上版本，建议使用 Python 3.9 以获得最佳兼容性。请确保已安装 Python 3.7 或更高版本。
+  **注意**：本项目支持 Python 3.7 及以上版本，建议使用 Python 3.9 以获得最佳兼容性。
 
 **2. 安装必要包**
 
