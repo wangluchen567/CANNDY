@@ -1,10 +1,9 @@
-# CANNDY
-Language：[English](README_EN.md) | [中文](README.md)
+# 🍬 CANNDY
+💬 Language：[English](README_EN.md) | [中文](README.md)
 
-## Project Name
 Chen's Artificial Neural Network constructeD with numpY
 
-## Project Introduction
+## 🔖 Project Introduction
 This project is dedicated to providing a learning and practice platform for those interested in neural networks and artificial intelligence.
 It is not intended to build large-scale models or models directly used in production environments.
 Instead, it aims to delve into the underlying principles of neural networks by implementing a series of classic neural network models.
@@ -14,7 +13,7 @@ It is hoped that this project can help interested individuals build a profound u
 
 **Special Note: This code is for reference only in non-commercial purposes such as learning, competition, and scientific research. Please indicate the source when copying the core code.**
 
-## Installation Guide
+## 📚 Installation Guide
 
 **1. It is recommended to use `Anaconda` to create a `Python` environment**
 
@@ -52,7 +51,7 @@ It is hoped that this project can help interested individuals build a profound u
 
   Reference URL: https://blog.csdn.net/qq_34666857/article/details/123551558
 
-## Core Implementation
+## 🎯 Core Implementation
 
 - **Activation: Activation Functions**
   - ReLU/Sigmoid/Tanh/Softmax
@@ -93,13 +92,13 @@ It is hoped that this project can help interested individuals build a profound u
 - **Optimizer: Optimizers (Optimization Algorithms)**
   - GD/Momentum/AdaGrad/RMSProp/Adam
 
-## Update Plan
+## 📝 Update Plan
 
 - [x] Update project documentation
 - [ ] Update algorithm notes
 - [ ] Attempt to implement more complex models
 
-## Effect Demonstration
+## 🌈 Effect Demonstration
 
 - Classification effect of the MLP model on concentric circle dataset / Regression fitting effect on the sin function
 
@@ -144,7 +143,9 @@ It is hoped that this project can help interested individuals build a profound u
 
     <img src="Pics/PG_end.gif" width="396" height="260" alt="Final Effect"/>
 
-## Contributions & Support
+## 🤝 Contributions
 
 **Author: Luchen Wang**<br>
+
+## ✉️ Contact Us
 <small>(If you encounter any issues during use, feel free to contact via email: wangluchen567@qq.com)</small>
