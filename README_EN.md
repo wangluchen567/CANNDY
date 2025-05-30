@@ -51,7 +51,7 @@ It is hoped that this project can help interested individuals build a profound u
 
   Reference URL: https://blog.csdn.net/qq_34666857/article/details/123551558
 
-## 🎯 Core Implementation
+## 🎯 Core Components
 
 - **Activation: Activation Functions**
   - ReLU/Sigmoid/Tanh/Softmax
