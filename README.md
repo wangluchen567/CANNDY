@@ -213,7 +213,7 @@ CANNDY/
 
 ## 🤝 项目贡献
 
-**Author: Luchen Wang**<br>
+**Author: Luchen Wang**
 
 ## ✉️ 联系我们
 

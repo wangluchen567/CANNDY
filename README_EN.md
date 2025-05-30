@@ -145,7 +145,8 @@ It is hoped that this project can help interested individuals build a profound u
 
 ## 🤝 Contributions
 
-**Author: Luchen Wang**<br>
+**Author: Luchen Wang**
 
 ## ✉️ Contact Us
-<small>(If you encounter any issues during use, feel free to contact via email: wangluchen567@qq.com)</small>
+
+**E-mail: wangluchen567@qq.com**
