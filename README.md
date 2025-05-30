@@ -1,11 +1,10 @@
-# CANNDY
-Language：[English](README_EN.md) | [中文](README.md)
+# 🍬 CANNDY
+💬 Language：[English](README_EN.md) | [中文](README.md)
 
-## 项目名称
 基于NumPy构建的人工神经网络框架<br>
 Chen's Artificial Neural Network constructeD with numpY<br>
 
-## 项目简介
+## 🔖 项目简介
 本项目致力于为对神经网络和人工智能感兴趣的伙伴们提供一个学习和实践的平台。
 本项目不旨在构建大规模模型或直接用于生产环境的模型，
 但力求通过实现一系列经典的神经网络模型，深入探讨神经网络的底层原理。
@@ -15,7 +14,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 
 **特别说明：`本代码仅供参考学习、竞赛和科学研究等非商业用途，在复制核心代码时请注明出处`**
 
-## 安装教程
+## 📚 安装教程
 **1. 建议使用 `Anaconda` 创建 `Python` 环境**
 
   使用 Anaconda 创建环境可以方便地管理依赖包，避免版本冲突。建议从 [Anaconda 官网](https://www.anaconda.com/download/success) 下载并安装 Anaconda。如果需要特定版本，可以访问 [Anaconda所有版本下载地址](https://repo.anaconda.com/archive/)。
@@ -62,7 +61,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
   注意：如果无法访问上述镜像源，也可以选择其他可用的镜像源，例如中国科技大学、阿里云等。
 
 
-## 核心实现
+## 🎯 核心实现
 
 - **Activation: 激活函数**
   - ReLU/Sigmoid/Tanh/Softmax
@@ -103,7 +102,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 - **Optimizer: 优化器(优化算法)**
   - GD/Momentum/AdaGrad/RMSProp/Adam
 
-## 框架结构
+## 📦 框架结构
 ```
 CANNDY/
 ├── Core/                               # 人工神经网络框架核心
@@ -161,13 +160,13 @@ CANNDY/
 └── README.md                           # 项目文档
 ```
 
-## 更新计划
+## 📝 更新计划
 
 - [x] 更新项目文档
 - [ ] 更新算法笔记
 - [ ] 尝试实现更复杂的模型
 
-## 效果展示
+## 🌈 效果展示
 
 - MLP模型对同心圆数据集分类效果/对sin函数回归拟合效果
 
@@ -212,9 +211,12 @@ CANNDY/
 
     <img src="Pics/PG_end.gif" width="396" height="260" alt="后期效果"/>
 
-## 项目贡献与支持
+## 🤝 项目贡献
 
 **Author: Luchen Wang**<br>
-<small>（如在使用过程中遇到任何问题，可随时联系邮箱：wangluchen567@qq.com）</small>
+
+## ✉️ 联系我们
+
+**邮箱: wangluchen567@qq.com**
 
 
