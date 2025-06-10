@@ -102,7 +102,8 @@ def main():
             episode += 1
 
         # 测试部分
-        eval_reward = evaluate(env, agent, render=False, episode=episode)
+        render = True if eval_reward > 500 else False  # 上一次是高reward则进行展示
+        eval_reward = evaluate(env, agent, render=render, episode=episode)
         print('episode:{}, e_greed:{}, test reward:{}'.format(
             episode, agent.e_greed, eval_reward))
 

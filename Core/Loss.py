@@ -33,9 +33,10 @@ class Loss:
     def to_one_hot(x, num_class):
         """类别转为OneHot编码"""
         x = np.array(x, dtype=int)
-        batch_size = x.shape[0]
-        one_hot = np.zeros((batch_size, num_class))
-        one_hot[np.arange(batch_size), x.flatten()] = 1
+        # batch_size = x.shape[0]
+        # one_hot = np.zeros((batch_size, num_class))
+        # one_hot[np.arange(batch_size), x.flatten()] = 1
+        one_hot = np.eye(num_class)[x.flatten()]
         return one_hot
 
 
