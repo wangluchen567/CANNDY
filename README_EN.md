@@ -4,12 +4,11 @@
 Chen's Artificial Neural Network constructeD with numpY
 
 ## 🔖 Project Introduction
-This project is dedicated to providing a learning and practice platform for those interested in neural networks and artificial intelligence.
-It is not intended to build large-scale models or models directly used in production environments.
-Instead, it aims to delve into the underlying principles of neural networks by implementing a series of classic neural network models.
-The project offers detailed implementation steps to help learners gain a deep understanding of the construction process and internal workings of neural networks.
-Moreover, it does not adopt the construction method based on computational graphs, but rather builds a hierarchical architecture through formula derivation, so as to more intuitively analyze the working mechanism of neural networks.
-It is hoped that this project can help interested individuals build a profound understanding of neural networks, thereby laying a solid foundation for further learning and research in the field of artificial intelligence.
+This project is dedicated to providing a learning and practice platform for those interested in neural networks and artificial intelligence. Although it is not intended to build large-scale models or models directly for production environments, it strives to delve into the underlying principles of neural networks by implementing a series of classic neural network models. The project offers detailed implementation steps to help learners gain a deep understanding of the construction process and the internal workings of neural networks.
+
+To lower the barrier to entry, this project draws inspiration from the model-building and training style of PyTorch, but focuses on the implementation of core functionalities, resulting in a streamlined feature set. Unlike mature industrial-grade frameworks, this project prioritizes the transparency and readability of algorithm implementation, revealing the inner workings of machine learning models through handwritten code. It is important to note that this project is better suited for learning and experimental purposes. For production environments, we recommend using more fully-featured professional frameworks such as [PyTorch](https://github.com/pytorch/pytorch).
+
+Additionally, this project does not adopt a computational graph-based approach but instead constructs a hierarchical architecture through formula derivation, allowing for a more intuitive analysis of the neural network's working mechanism. We hope that this project will help interested individuals build a profound understanding of neural networks, thereby laying a solid foundation for further study and research in the field of artificial intelligence.
 
 **Special Note: This code is for reference only in non-commercial purposes such as learning, competition, and scientific research. Please indicate the source when copying the core code.**
 

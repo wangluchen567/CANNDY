@@ -6,9 +6,14 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 
 ## 🔖 项目简介
 本项目致力于为对神经网络和人工智能感兴趣的伙伴们提供一个学习和实践的平台。
-本项目不旨在构建大规模模型或直接用于生产环境的模型，
-但力求通过实现一系列经典的神经网络模型，通过手写底层代码来揭示神经网络的底层原理。
+虽然本项目不旨在构建大规模模型或直接用于生产环境的模型，
+但力求通过实现一系列经典的神经网络模型，深入探讨神经网络的底层原理。
 本项目提供了详尽的实现步骤，以帮助学习者深入理解神经网络的构建过程与内部工作的机制。
+
+为了降低使用门槛，本项目在设计上借鉴了 PyTorch 的模型构建与训练风格，但专注于核心功能的实现，因此功能相对精简。
+与成熟的工业级框架不同，本项目更注重算法实现的透明性和可读性，通过手写底层代码来揭示机器学习模型的工作原理。
+需要说明的是，本项目更适合学习和实验用途。如果需要用于生产环境，建议使用功能更完善的 [PyTorch](https://github.com/pytorch/pytorch) 等专业框架。
+
 此外，本项目采用的不是基于计算图的构建方式，而是通过公式推导构建的层级架构，以便更直观地剖析神经网络的工作机制。
 希望本项目能够帮助感兴趣的伙伴们建立起对神经网络的深刻理解，从而在人工智能领域的进一步学习和研究打下坚实的基础。
 
@@ -108,16 +113,17 @@ CANNDY/
 │   │   ├── algorithm.py                # DQN算法
 │   │   ├── DQNLoss.py                  # DQN损失函数
 │   │   ├── replay_memory.py            # 经验回放池
-│   │   ├── train_DQN.py                # 训练DQN玩CartPole
+│   │   ├── train_DQN_CartPole.py       # 训练DQN玩CartPole
 │   │   └── train_DQN_Snake.py          # 训练DQN玩贪吃蛇
 │   ├── PolicyGradient/                 # 策略梯度网络模型
 │   │   ├── agent.py                    # PG智能体
 │   │   ├── algorithm.py                # PG算法
 │   │   ├── PGLoss.py                   # PG损失函数
 │   │   ├── replay_memory.py            # 经验回放池
-│   │   ├── train_PG.py                 # 训练PG玩CartPole
+│   │   ├── train_PG_CartPole.py        # 训练PG玩CartPole
 │   │   └── train_PG_Snake.py           # 训练PG玩贪吃蛇
 │   └── RL_Envs/                        # 强化学习环境(单独实现)
+│       ├── CartPole.py                 # CartPole环境
 │       └── Snake.py                    # 贪吃蛇游戏环境
 ├── Models/                             # 使用该框架实现的几种经典的模型
 │   ├── CNN/                            # 卷积神经网络
