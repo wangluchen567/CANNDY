@@ -36,21 +36,6 @@ It is hoped that this project can help interested individuals build a profound u
   pip install numpy matplotlib tqdm
   ```
 
-**3. Install optional packages**
-
-  When training the reinforcement learning model on the CartPole environment in this project, you need to install game environment-related packages. Run the following command to install them:
-
-  ```bash
-  pip install gym==0.22.0 pygame==2.2.0 pyglet==1.5.27
-  ```
-  You may encounter the following error when using gym:
-  ```
-  ImportError: cannot import name 'rendering' from 'gym.envs.classic_control'
-  ```
-  If you encounter this issue, please place the rendering.py file in the ..\Anaconda\Lib\site-packages\gym\envs\classic_control\ directory.
-
-  Reference URL: https://blog.csdn.net/qq_34666857/article/details/123551558
-
 ## 🎯 Core Components
 
 - **Activation: Activation Functions**

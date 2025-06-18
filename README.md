@@ -34,25 +34,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
   pip install numpy matplotlib tqdm
   ```
 
-**3. 安装可选包**
-
-  在使用本项目中强化学习模型训练CartPole环境时需要安装游戏环境相关包。运行以下命令一键安装：
-  
-  ```bash
-  pip install gym==0.22.0 pygame==2.2.0 pyglet==1.5.27
-  ```
-  
-  在使用`gym`时可能会遇到如下报错:
-  
-  ```
-  ImportError: cannot import name 'rendering' from 'gym.envs.classic_control'
-  ```
-  
-  若遇到该问题请将rendering.py放到..\Anaconda\Lib\site-packages\gym\envs\classic_control\目录下
-
-  参考网址：https://blog.csdn.net/qq_34666857/article/details/123551558
-
-**4. 镜像源选择**
+**3. 镜像源选择**
 
   如果在运行安装命令时发现下载速度较慢，可以尝试使用清华大学的镜像源进行安装。安装命令如下：
   ```bash
