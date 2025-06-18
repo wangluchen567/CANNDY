@@ -11,26 +11,35 @@ class Agent(object):
         self.act_dim = act_dim
 
         self.global_step = 0
-        self.update_target_steps = 200  # 每隔200个training steps再把model的参数复制到target_model中
+        # 每隔200个training steps再把model的参数复制到target_model中
+        self.update_target_steps = 200
 
-        self.e_greed = e_greed  # 有一定概率随机选取动作，探索
-        self.e_greed_decrement = e_greed_decrement  # 随着训练逐步收敛，探索的程度慢慢降低
+        # 有一定概率随机选取动作，探索
+        self.e_greed = e_greed
+        # 随着训练逐步收敛，探索的程度慢慢降低
+        self.e_greed_decrement = e_greed_decrement
 
     def sample(self, obs):
-        sample = np.random.rand()  # 产生0~1之间的小数
+        """采样动作"""
+        # 产生0~1之间的小数
+        sample = np.random.rand()
         if sample < self.e_greed:
-            act = np.random.randint(self.act_dim)  # 探索：每个动作都有概率被选择
+            # 探索：每个动作都有概率被选择
+            act = np.random.randint(self.act_dim)
         else:
             act = self.predict(obs)  # 选择最优动作
-        self.e_greed = max(0.01, self.e_greed - self.e_greed_decrement)  # 随着训练逐步收敛，探索的程度慢慢降低
+        # 随着训练逐步收敛，探索的程度慢慢降低
+        self.e_greed = max(0.01, self.e_greed - self.e_greed_decrement)
         return act
 
-    def predict(self, obs):  # 选择最优动作
+    def predict(self, obs):
+        """预测选择最优动作"""
         pred_Q = self.alg.predict(obs)
         act = np.argmax(pred_Q)  # 选择Q最大的下标，即对应的动作
         return act
 
     def learn(self, obs, action, reward, next_obs, terminal):
+        """模型进行学习"""
         # 每隔200个training steps同步一次model和target_model的参数
         if self.global_step % self.update_target_steps == 0:
             self.alg.sync_target()

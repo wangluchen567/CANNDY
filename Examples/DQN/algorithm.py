@@ -26,6 +26,7 @@ class DQN(object):
         self.optimizer = Adam(self.model, learning_rate=self.lr)
 
     def predict(self, obs):
+        """预测Q值"""
         # 使用self.model的value网络(forward)来获取 [Q(s,a1),Q(s,a2),...]
         obs = obs.reshape(1, -1)
         Q_value = self.model.forward(obs)
@@ -33,6 +34,7 @@ class DQN(object):
         return Q_value
 
     def learn(self, obs, action, reward, next_obs, terminal):
+        """DQN进行学习"""
         # 使用DQN算法更新self.model的value网络
 
         # 从target_model中获取 max Q' 的值，用于计算target_Q
@@ -62,6 +64,7 @@ class DQN(object):
         return mse_loss
 
     def sync_target(self):
+        """同步模型参数"""
         # 把 self.model 的模型参数值同步到 self.target_model
         self.target_model.set_parameters(self.model.get_parameters())
 

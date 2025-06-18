@@ -1,15 +1,16 @@
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 
 class Snake:
+    """贪吃蛇游戏环境"""
+
     def __init__(self):
         # 观测维度
         self.observation_dim = None
         # 决策维度（动作维度）
-        self.action_dim = 4  # 上下左右不操作五种
+        self.action_dim = 4
         # 当前状态
         self.state = None
         # 蛇的状态
@@ -34,7 +35,7 @@ class Snake:
         self.reset()
 
     def reset(self):
-        """重置环境"""
+        """重置环境到初始状态"""
         self.score, self.no_act_step = 0, 0
         self.direction = np.array([0, 1], dtype=int)
         self.map_size = 16
@@ -118,6 +119,8 @@ class Snake:
 
     def cal_reward(self, obs):
         """计算奖励"""
+        # 计算蛇头到苹果位置的距离
+        dist = np.linalg.norm(self.snake[-1] - self.apples[0])
         # 当前运动方向上有食物则给正奖励，否则为负奖励
         if np.array((obs[0:4] == 1) + (obs[8:12] == 1) == 2).any():
             # 奖励计算为长度的倒数
@@ -135,8 +138,7 @@ class Snake:
         if apple_id == -1:
             self.snake = np.delete(self.snake, 0, 0)
             obs = self.get_obs()
-            # 没吃到苹果，根据方向和确定奖励
-            # reward = self.cal_reward(obs)
+            # 没吃到苹果，则给负奖励
             reward = -1 / len(self.snake)
             self.no_act_step += 1
         # 否则得分并重新生成一个苹果位置
@@ -165,7 +167,7 @@ class Snake:
             done = False
         return obs, reward, done, None
 
-    def render(self, pause_time, file_name='', pic_id=''):
+    def render(self, pause_time=0.1):
         """绘制当前状态"""
         # 定义颜色列表
         colors = [(0.0, 0.0, 0.0),  # 黑色
@@ -173,7 +175,7 @@ class Snake:
                   (1.0, 0.0, 0.0),  # 红色
                   (0.0, 1.0, 0.0)]  # 绿色
         # 创建 ListedColormap 对象
-        custom_cmap = ListedColormap(colors)
+        custom_cmap = ListedColormap(np.array(colors))
         plt.clf()
         fig = plt.gcf()  # 获取当前图形对象
         fig.patch.set_facecolor('black')  # 设置图形底色为黑色
@@ -182,23 +184,20 @@ class Snake:
         plt.tight_layout()
         plt.axis('off')
         plt.pause(pause_time)
-        # 保存文件
-        # folder_name = "D:/PlotSnake/" + file_name
-        # # 检查文件夹是否存在
-        # if not os.path.exists(folder_name):
-        #     # 文件夹不存在，则创建文件夹
-        #     os.makedirs(folder_name)
-        # plt.savefig(folder_name + '/' + str(pic_id) + '.png', dpi=160)
 
+    def close(self):
+        """关闭环境，清理资源"""
+        pass
 
-if __name__ == '__main__':
-    env = Snake()
-    obs = env.reset()
-    for i in range(100):
-        # action = np.random.randint(0, 5)
-        action = int(input())
-        obs, reward, done, info = env.step(action)
-        env.render(0.5)
-        print(reward)
-        if done:
-            break
+# if __name__ == '__main__':
+#     # 测试环境效果
+#     env = Snake()
+#     obs = env.reset()
+#     for i in range(100):
+#         # action = np.random.randint(0, 5)
+#         action = int(input())
+#         obs, reward, done, info = env.step(action)
+#         env.render(0.5)
+#         print(reward)
+#         if done:
+#             break
