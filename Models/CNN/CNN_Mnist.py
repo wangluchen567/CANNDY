@@ -9,7 +9,7 @@ from tqdm import tqdm
 from Core.Module import LeNet5
 from Core.Optimizer import Adam
 from Core.Loss import CrossEntropyWithSoftmax
-import cProfile
+
 
 def load_data(data_path):
     """加载数据集"""
@@ -112,7 +112,7 @@ if __name__ == '__main__':
     # 开始训练
     start = time.time()
     model = train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size],
-                        num_epochs=10, batch_size=64, save_checkpoint=False)
+                        num_epochs=30, batch_size=64, save_checkpoint=True)
     train_time = time.time() - start
     accuracy = valid_model(model, x_valid, y_valid)
     print("Test accuracy: {:.3f} %".format(accuracy * 100))
@@ -121,5 +121,3 @@ if __name__ == '__main__':
     params_dict = model.get_parameters()
     with open('LeNet-5_Params_.json', 'w') as f:
         json.dump(params_dict, f)
-
-    # cProfile.run("train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size],num_epochs=1, batch_size=64, save_checkpoint=False)", sort='cumulative')
