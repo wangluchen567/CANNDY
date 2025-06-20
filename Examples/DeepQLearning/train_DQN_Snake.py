@@ -14,7 +14,7 @@ class DQNSnake:
     def __init__(self,
                  batch_size=64,
                  learning_rate=1.e-3,
-                 max_episode=2000,
+                 max_episode=3000,
                  learn_frequency=5,
                  memory_size=2000,
                  warmup_size=200,

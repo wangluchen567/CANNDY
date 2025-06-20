@@ -10,8 +10,8 @@ def learning_all(model, X, Y, num_epochs=1000):
     """一口气学习所有数据"""
     optimizer = Adam(model=model, learning_rate=0.01)
     for epoch in range(num_epochs):
-        input, truth = X, Y
-        output = model.forward(input)
+        input_, truth = X, Y
+        output = model.forward(input_)
         Loss = MSELoss(model, truth, output)
         mse_loss = Loss.forward()
         print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {mse_loss.item()}')
@@ -27,9 +27,9 @@ def learning_batch(model, X, Y, num_epochs=1000):
     optimizer = Adam(model=model, learning_rate=0.01)
     for epoch in range(num_epochs):
         for i in np.arange(0, len(X), batch_size):
-            input = X[i:i + batch_size, :]
+            input_ = X[i:i + batch_size, :]
             truth = Y[i:i + batch_size, :]
-            output = model.forward(input)
+            output = model.forward(input_)
             Loss = MSELoss(model, truth, output)
             mse_loss = Loss.forward()
             print(f'Epoch [{epoch + 1}/{num_epochs}], '
@@ -51,9 +51,9 @@ def learning_single(model, X, Y, num_epochs=1000):
         # 累计loss置零
         sum_loss = 0
         for i in range(len(X)):
-            input = X[i].reshape(-1, 1)
+            input_ = X[i].reshape(-1, 1)
             truth = Y[i].reshape(-1, 1)
-            output = model.forward(input)
+            output = model.forward(input_)
             Loss = MSELoss(model, truth, output)
             mse_loss = Loss.forward()
             sum_loss += mse_loss

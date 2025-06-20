@@ -50,7 +50,7 @@ class PGCartPole:
 
             self.agent.learn(batch_obs, batch_action, batch_reward)
             if (i + 1) % 100 == 0:
-                eval_reward = self.evaluate(self.env, self.agent, render=False)
+                eval_reward = self.evaluate(self.env, self.agent, render=True)
                 print(f"test reward: {eval_reward}")
 
     @staticmethod

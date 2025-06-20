@@ -3,7 +3,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-def plot_classifier(model, X, Y, accuracy, pause=True):
+def plot_classifier(model, X, Y, accuracy, pause=True, pause_time=0.01):
     """绘制分类结果（边缘明显）"""
     plt.figure(0)
     # 画图中文显示会有问题，需要这两行设置默认字体
@@ -38,11 +38,11 @@ def plot_classifier(model, X, Y, accuracy, pause=True):
     # plt.text(5, 0.5, info, weight="bold")
     plt.grid(True)
     if pause:
-        plt.pause(0.1)
+        plt.pause(pause_time)
     else:
         plt.show()
 
-def plot_classifier_soft(model, X, Y, accuracy, pause=True):
+def plot_classifier_soft(model, X, Y, accuracy, pause=True, pause_time=0.01):
     """绘制分类结果（无边缘，绘制分类概率）"""
     # 画图并保存图像
     plt.figure(0)
@@ -75,6 +75,6 @@ def plot_classifier_soft(model, X, Y, accuracy, pause=True):
     # plt.text(5, 0.5, info, weight="bold")
     plt.grid(True)
     if pause:
-        plt.pause(0.1)
+        plt.pause(pause_time)
     else:
         plt.show()

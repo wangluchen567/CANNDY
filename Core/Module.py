@@ -156,7 +156,7 @@ class GCN(Module):
         self.num_layers = len(self.hidden_sizes) + 1
 
     def forward(self, input_):
-        hidden = input_
+        hidden = input_.copy()
         for gc in self.Layers:
             hidden = gc(hidden)
         output = hidden

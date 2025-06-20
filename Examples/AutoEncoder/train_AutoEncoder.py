@@ -26,9 +26,9 @@ def train_epoch(model, optimizer, X, Y, batch_size):
     """训练一个epoch"""
     train_loss = 0
     for i in tqdm(np.arange(0, len(X), batch_size)):
-        input = X[i:i + batch_size, :]
+        input_ = X[i:i + batch_size, :]
         truth = Y[i:i + batch_size, :]
-        output = model.forward(input)
+        output = model.forward(input_)
         Loss = MSELoss(model, truth, output)
         ces_loss = Loss.forward()
         train_loss += ces_loss
@@ -42,9 +42,9 @@ def val_epoch(model, X, Y, batch_size):
     """验证一个epoch"""
     val_loss = 0
     for i in np.arange(0, len(X), batch_size):
-        input = X[i:i + batch_size, :]
+        input_ = X[i:i + batch_size, :]
         truth = Y[i:i + batch_size, :]
-        output = model.forward(input)
+        output = model.forward(input_)
         Loss = MSELoss(model, truth, output)
         ces_loss = Loss.forward()
         val_loss += ces_loss

@@ -79,7 +79,7 @@ class DQNCartPole:
                 episode += 1
 
             # 测试部分
-            eval_reward = self.evaluate(self.env, self.agent, render=False)
+            eval_reward = self.evaluate(self.env, self.agent, render=True)
             # 记录最优模型
             if eval_reward > max_reward:
                 max_reward = eval_reward

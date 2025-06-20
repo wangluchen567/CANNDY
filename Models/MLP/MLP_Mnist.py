@@ -24,9 +24,9 @@ def train_epoch(model, optimizer, X, Y, batch_size):
     """训练一个epoch"""
     train_loss = 0
     for i in np.arange(0, len(X), batch_size):
-        input = X[i:i + batch_size, :]
+        input_ = X[i:i + batch_size, :]
         truth = Y[i:i + batch_size, :]
-        output = model.forward(input)
+        output = model.forward(input_)
         Loss = CrossEntropyWithSoftmax(model, truth, output)
         ces_loss = Loss.forward()
         train_loss += ces_loss
@@ -43,9 +43,9 @@ def train_one_by_one(model, optimizer, X, Y, batch_size):
     # 累计loss置零
     train_loss = 0
     for i in range(len(X)):
-        input = X[i, :].reshape(1, -1)
+        input_ = X[i, :].reshape(1, -1)
         truth = Y[i, :].reshape(1, -1)
-        output = model.forward(input)
+        output = model.forward(input_)
         Loss = CrossEntropyWithSoftmax(model, truth, output)
         ces_loss = Loss.forward()
         train_loss += ces_loss
@@ -73,8 +73,8 @@ def train_model(model, train_data, train_label, valid_data, valid_label, num_epo
     return model
 
 
-def valid_model(model, input, truth):
-    output = model.forward(input)
+def valid_model(model, input_, truth):
+    output = model.forward(input_)
     predict = np.argmax(output, axis=1)
     accuracy = np.array(predict == truth.flatten(), dtype=int).sum() / len(truth)
     return accuracy
