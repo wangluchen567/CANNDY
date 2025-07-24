@@ -120,7 +120,7 @@ class Snake:
     def cal_reward(self, obs):
         """计算奖励"""
         # 计算蛇头到苹果位置的距离
-        dist = np.linalg.norm(self.snake[-1] - self.apples[0])
+        # dist = np.linalg.norm(self.snake[-1] - self.apples[0])
         # 当前运动方向上有食物则给正奖励，否则为负奖励
         if np.array((obs[0:4] == 1) + (obs[8:12] == 1) == 2).any():
             # 奖励计算为长度的倒数
