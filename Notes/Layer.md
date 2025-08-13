@@ -4,6 +4,173 @@
 
 在学习神经网络的层级架构之前，必须先彻底了解梯度链式反向传播的原理，具体内容参见<[Basic——基础知识](Basic.md)>
 
+## Layer-层级父类
+
+本项目采用层级架构来实现各个神经网络模块。相较于计算图的实现方式，虽然这种架构在灵活性方面稍显不足，但更能清晰展现梯度反向传播的细节，也更易于理解。以下是本项目架构的示意图：
+
+<img src="./Pictures/Layer.png" style="zoom:60%;" />
+
+从示意图中可以看出，任意类型的神经网络模块均由多个神经网络层堆叠而成。每种神经网络层可以是不同类型的层，但只有当输入与输出大小匹配时，才能实现堆叠。接下来，将详细阐述层级 Layer 父类的实现细节。
+
+为规范之后所有实现的层级结构，并且方便各个层级调用通用的函数，所以实现了一个层级父类 Layer，首先是对父类进行初始化：
+
+```python
+class Layer:
+    """层级父类"""
+
+    def __init__(self, input_size=None, output_size=None, activation=None, bias=False):
+        """
+        层级父类
+        :param input_size: 输入(维度)大小
+        :param output_size: 输出(维度)大小
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
+        self.input_size = input_size
+        self.output_size = output_size
+        self.activation = activation
+        self.bias = bias
+        # 当前是否是训练模式
+        self.training = True
+        self.num_params = 0
+```
+
+在初始化时，默认初始化输入输出大小，激活函数类型以及是否使用偏置等参数，考虑到有些层可能并不需要这些参数，所以默认设置为空。而“当前是否是训练模式”的设置，主要用于 Dropout 层和 Batch Norm 层，因为这两个层在训练模式和评估模式下表现不同。最后初始化该层的参数量，方便计算构建得到的模型参数量。
+
+之后，为了模型调用方便，定义了层的调用函数，与 PyTorch 类似，可以直接使用对象名调用 forward(前向传播) 函数，也就是说调用 forward 函数时`model.forward(input_)`和`model(input_)`等价：
+
+```python
+    def __call__(self, *args, **kwargs):
+        """方便直接使用对象名调用forward函数"""
+        return self.forward(*args, **kwargs)
+```
+
+然后定义了子类可以重写的函数，包括梯度置0、获取权重参数、设置权重参数和获取权重参数数量。还定义了子类必须重新的函数，即前向传播与反向传播函数：
+
+```python
+    def zero_grad(self):
+        """梯度置为0矩阵"""
+        pass
+
+    def get_parameters(self):
+        """获取该层的权重参数"""
+        pass
+
+    def set_parameters(self, *args, **kwargs):
+        """设置该层的权重参数"""
+        pass
+
+    def get_num_params(self):
+        """获取该层的参数数量"""
+        pass
+
+    def forward(self, *args, **kwargs):
+        """该层前向传播"""
+        raise NotImplementedError
+
+    def backward(self, *args, **kwargs):
+        """该层反向传播"""
+        raise NotImplementedError
+```
+
+之后就是创建权重参数初始化的函数，首先需要先计算"扇入"（fan_in）和"扇出"（fan_out）大小。在神经网络中，"扇入"（fan_in）和"扇出"（fan_out）是描述神经元连接数量的术语。这些术语来源于电路设计，其中"扇入"指的是一个门（或神经元）的输入数量，而"扇出"指的是一个门（或神经元）的输出数量，请注意这里的输入和输出数量指的是输入和输出的数据的维度大小。
+
+在全连接网络中，扇入和扇出的大小就是权重参数的形状，但在卷积网络中，扇入和扇出的大小还需要在原形状的基础上再乘以感受野的大小。另外由于参数矩阵可能包含偏置，但输入大小是不包含偏置的，所以存在偏置时需要去掉偏置：
+
+```python
+    @staticmethod
+    def cal_fan_in_and_fan_out(matrix: np.ndarray, bias=True):
+        """计算扇入扇出值"""
+        dimensions = matrix.ndim  # 矩阵维度
+        if dimensions < 2:
+            raise ValueError("Fan in and fan out can not be computed for matrix with fewer than 2 dimensions")
+        input_size = matrix.shape[1] - bias  # 输入大小（或输入通道数）
+        output_size = matrix.shape[0]  # 输出大小（或输出通道数）
+        field_size = 1  # 感受野大小
+        if dimensions > 2:
+            field_size = np.size(matrix[0][0])
+        # 计算扇入扇出值
+        fan_in = input_size * field_size
+        fan_out = output_size * field_size
+        return fan_in, fan_out
+```
+
+下面介绍各个权重初始化的函数，首先是Xavier初始化，其有两种形式：均匀分布和正态分布
+
+Xavier均匀分布初始化是从均匀分布$U(-x,x)$中抽取权重参数，其中$x=\sqrt{\frac{6}{n_{in}+n_{out}}}$
+
+```python
+    def xavier_uniform_(self, matrix: np.ndarray, gain=1.0, bias=True):
+        """Xavier均匀分布随机初始化(适用于Sigmoid和Tanh函数)"""
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
+        bound = gain * np.sqrt(6.0 / float(fan_in + fan_out))
+        return np.random.uniform(-bound, bound, matrix.shape)
+```
+
+Xavier正态分布初始化是从正态分布$N(0,\sigma)$中抽取权重参数，其中$\sigma=\sqrt{\frac{2}{n_{in}+n_{out}}}$
+
+```python
+    def xavier_normal_(self, matrix: np.ndarray, gain=1.0, bias=True):
+        """Xavier正态分布随机初始化(适用于Sigmoid和Tanh函数)"""
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
+        std = gain * np.sqrt(2.0 / float(fan_in + fan_out))
+        return np.random.normal(0., std, matrix.shape)
+```
+
+之后是何凯明大佬提出的Kaiming初始化，其也是有均匀分布和正态分布两种形式
+
+Kaiming均匀分布初始化是从均匀分布$U(-x,x)$中抽取权重参数，其中$x=v_{gain}\times\sqrt{\frac{3}{(1+a)^2}\times n_{fan}}$
+
+其中$a$是激活函数负半轴的斜率，对于ReLU激活函数，$a=0$，$n_{fan}$是根据条件来指定使用扇入还是扇出大小，$v_{gain}$是一种增益值，每种激活函数的值不一样，具体为：
+$$
+v_{gain} =
+\begin{cases}
+\sqrt{2}, \quad ReLU\\
+\frac{5}{3}, \quad Tanh\\
+1, \quad Sigmoid,Convolution\\
+\end{cases}
+$$
+Kaiming正态分布初始化是从正态分布$N(0,\sigma)$中抽取权重参数，其中$\sigma=v_{gain}\times\sqrt{\frac{1}{(1+a)^2}\times n_{fan}}$，下面是具体实现：
+
+```python
+    def get_gain(self):
+        """获取gain值"""
+        if self.activation is None:
+            return 1.0
+        elif self.activation.__name__ == 'ReLU':
+            return np.sqrt(2)
+        elif self.activation.__name__ == 'Tanh':
+            return 5 / 3
+        else:
+            return 1.0
+
+    def kaiming_uniform_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0, bias=True):
+        """何凯明均匀分布随机初始化
+        linear/sigmoid/conv/identity: gain = :math:`1`
+        relu: gain = :math:`\\sqrt{2}`
+        tanh: gain = :math:`\\frac{5}{3}`
+        leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
+        """
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
+        fan = fan_in if mode == 'fan_in' else fan_out
+        bound = gain * np.sqrt(3.0) / np.sqrt((1 + a * a) * fan)
+        return np.random.uniform(-bound, bound, matrix.shape)
+
+    def kaiming_normal_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0, bias=True):
+        """何凯明正态分布随机初始化
+        linear/sigmoid/conv/identity: gain = :math:`1`
+        relu: gain = :math:`\\sqrt{2}`
+        tanh: gain = :math:`\\frac{5}{3}`
+        leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
+        """
+        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
+        fan = fan_in if mode == 'fan_in' else fan_out
+        std = gain / np.sqrt((1 + a * a) * fan)
+        return np.random.normal(0., std, matrix.shape)
+```
+
+之后的定义的一些函数是卷积池化等层所使用的通用静态函数，将在具体的层中详细说明。
+
 ## Linear-线性层
 
 线性层(Linear)，也称为全连接层，多层线性层的堆叠也被称为多层感知机(MLP)，下面将使用代码实现该层，首先是初始化阶段：
@@ -180,157 +347,6 @@ else:
 
 如此一来，只要保存一个$\Delta$值，然后连续调用每层的反向传播函数，并不断更新这个$\Delta$值，就可以使梯度在神经网络中实现反向传播了。
 
-## Layer-层级父类
-
-前面详细介绍了Linear线性层的实现，为规范之后所有实现的层级结构，并且方便各个层级调用通用的函数，所以先实现了Layer层级父类，首先是对父类进行初始化：
-
-```python
-    def __init__(self, input_size=None, output_size=None, activation=None, bias=False):
-        self.input_size = input_size
-        self.output_size = output_size
-        self.activation = activation
-        self.bias = bias
-        # 当前是否是训练模式
-        self.training = True
-        self.num_params = 0
-```
-
-在初始化时，默认初始化输入输出大小，激活函数类型以及是否使用偏置等参数，考虑到有些层可能并不需要这些参数，所以默认设置为空。而“当前是否是训练模式”的设置，主要用于Dropout层和Batch Norm层，因为这两个层在训练模式和评估模式下表现不同。最后初始化该层的参数量，方便计算构建得到的模型参数量。
-
-之后，为了模型调用方便，定义了层的调用函数，与PyTorch类似，可以直接使用对象名调用forward(前向传播)函数：
-
-```python
-    def __call__(self, *args, **kwargs):
-        """方便直接使用对象名调用forward函数"""
-        return self.forward(*args, **kwargs)
-```
-
-然后定义了子类可以重写的函数，包括梯度置0、获取权重参数、设置权重参数和获取权重参数数量。还定义了子类必须重新的函数，即前向传播与反向传播函数：
-
-```python
-    def zero_grad(self):
-        """梯度置为0矩阵"""
-        pass
-
-    def get_parameters(self):
-        """获取该层的权重参数"""
-        pass
-
-    def set_parameters(self, *args, **kwargs):
-        """设置该层的权重参数"""
-        pass
-
-    def get_num_params(self):
-        """获取该层的参数数量"""
-        pass
-
-    def forward(self, *args, **kwargs):
-        """该层前向传播"""
-        raise NotImplementedError
-
-    def backward(self, *args, **kwargs):
-        """该层反向传播"""
-        raise NotImplementedError
-```
-
-之后就是创建权重参数初始化的函数了，首先需要先计算"扇入"（fan_in）和"扇出"（fan_out）大小。在神经网络中，"扇入"（fan_in）和"扇出"（fan_out）是描述神经元连接数量的术语。这些术语来源于电路设计，其中"扇入"指的是一个门（或神经元）的输入数量，而"扇出"指的是一个门（或神经元）的输出数量。
-
-在全连接网络中，扇入和扇出的大小就是权重参数的形状，但在卷积网络中，扇入和扇出的大小还需要在原形状的基础上再乘以感受野的大小。另外由于参数矩阵可能包含偏置，但输入大小是不包含偏置的，所以存在偏置时需要去掉偏置：
-
-```python
-    @staticmethod
-    def cal_fan_in_and_fan_out(matrix: np.ndarray, bias=True):
-        """计算扇入扇出值"""
-        dimensions = matrix.ndim  # 矩阵维度
-        if dimensions < 2:
-            raise ValueError("Fan in and fan out can not be computed for matrix with fewer than 2 dimensions")
-        input_size = matrix.shape[1] - bias  # 输入大小（或输入通道数）
-        output_size = matrix.shape[0]  # 输出大小（或输出通道数）
-        field_size = 1  # 感受野大小
-        if dimensions > 2:
-            field_size = np.size(matrix[0][0])
-        # 计算扇入扇出值
-        fan_in = input_size * field_size
-        fan_out = output_size * field_size
-        return fan_in, fan_out
-```
-
-下面介绍各个权重初始化的函数，首先是Xavier初始化，其有两种形式：均匀分布和正态分布
-
-Xavier均匀分布初始化是从均匀分布$U(-x,x)$中抽取权重参数，其中$x=\sqrt{\frac{6}{n_{in}+n_{out}}}$
-
-```python
-    def xavier_uniform_(self, matrix: np.ndarray, gain=1.0, bias=True):
-        """Xavier均匀分布随机初始化(适用于Sigmoid和Tanh函数)"""
-        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
-        bound = gain * np.sqrt(6.0 / float(fan_in + fan_out))
-        return np.random.uniform(-bound, bound, matrix.shape)
-```
-
-Xavier正态分布初始化是从正态分布$N(0,\sigma)$中抽取权重参数，其中$\sigma=\sqrt{\frac{2}{n_{in}+n_{out}}}$
-
-```python
-    def xavier_normal_(self, matrix: np.ndarray, gain=1.0, bias=True):
-        """Xavier正态分布随机初始化(适用于Sigmoid和Tanh函数)"""
-        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
-        std = gain * np.sqrt(2.0 / float(fan_in + fan_out))
-        return np.random.normal(0., std, matrix.shape)
-```
-
-之后是何凯明大佬提出的Kaiming初始化，其也是有均匀分布和正态分布两种形式
-
-Kaiming均匀分布初始化是从均匀分布$U(-x,x)$中抽取权重参数，其中$x=gain\times\sqrt{\frac{3}{(1+a)^2}\times n_{fan}}$
-
-其中$a$是激活函数负半轴的斜率，对于ReLU激活函数，$a=0$，$n_{fan}$是根据条件来指定使用扇入还是扇出大小，$gain$是一种增益值，每种激活函数的$gain$值不一样，具体值为：
-$$
-gain =
-\begin{cases}
-\sqrt{2}, \quad ReLU\\
-\frac{5}{3}, \quad Tanh\\
-1, \quad Sigmoid,Convolution\\
-\end{cases}
-$$
-Kaiming正态分布初始化是从正态分布$N(0,\sigma)$中抽取权重参数，其中$\sigma=gain\times\sqrt{\frac{1}{(1+a)^2}\times n_{fan}}$，下面是具体实现：
-
-```python
-    def get_gain(self):
-        """获取gain值"""
-        if self.activation is None:
-            return 1.0
-        elif self.activation.__name__ == 'ReLU':
-            return np.sqrt(2)
-        elif self.activation.__name__ == 'Tanh':
-            return 5 / 3
-        else:
-            return 1.0
-
-    def kaiming_uniform_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0, bias=True):
-        """何凯明均匀分布随机初始化
-        linear/sigmoid/conv/identity: gain = :math:`1`
-        relu: gain = :math:`\\sqrt{2}`
-        tanh: gain = :math:`\\frac{5}{3}`
-        leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
-        """
-        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
-        fan = fan_in if mode == 'fan_in' else fan_out
-        bound = gain * np.sqrt(3.0) / np.sqrt((1 + a * a) * fan)
-        return np.random.uniform(-bound, bound, matrix.shape)
-
-    def kaiming_normal_(self, matrix: np.ndarray, a=0, mode='fan_in', gain=1.0, bias=True):
-        """何凯明正态分布随机初始化
-        linear/sigmoid/conv/identity: gain = :math:`1`
-        relu: gain = :math:`\\sqrt{2}`
-        tanh: gain = :math:`\\frac{5}{3}`
-        leaky_relu: gain = :math:`\\sqrt{\\frac{2}{1 + a^2}}`
-        """
-        fan_in, fan_out = self.cal_fan_in_and_fan_out(matrix, bias)
-        fan = fan_in if mode == 'fan_in' else fan_out
-        std = gain / np.sqrt((1 + a * a) * fan)
-        return np.random.normal(0., std, matrix.shape)
-```
-
-之后的定义的一些函数是卷积池化等层所使用的通用静态函数，将在具体的层中详细说明。
-
 ## Identity-恒等映射层
 
 恒等映射层是一种特殊的层，它的作用是将输入直接传递为输出，而不进行任何计算或变换。虽然它看起来像是一个“无操作”的层，但实际上在某些情况下非常有用，比如作为占位符预留位置、用于调试验证、或者在动态网络中根据条件启用/禁用层的作用。它还可以保持输入输出形状一致，方便网络设计和实现。
@@ -475,7 +491,7 @@ $$
 \hat{x}_{i+1,j+2} & \hat{x}_{i+2,j+2} &\cdots &\hat{x}_{i+kw,j+2}\\
 \vdots & \vdots & \ddots & \vdots \\
 \hat{x}_{i+1,j+kh} & \hat{x}_{i+2,j+kh} &\cdots &\hat{x}_{i+kw,j+kh}\\
-\end{bmatrix} +\frac{\partial L}{\partial y_{i,j}} \cdot
+\end{bmatrix} + \frac{\partial L}{\partial y_{i,j}} \cdot
 \begin{bmatrix}
 v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
 v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
