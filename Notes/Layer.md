@@ -408,6 +408,7 @@ x_{i+1,j+kh} & x_{i+2,j+kh} &\cdots &x_{i+kw,j+kh}\\
 \end{bmatrix}
 \end{align}
 $$
+
 其中$\odot$表示哈马达积，即两个矩阵对应元素相乘后求和。所以说图像二维卷积的本质就是将给定的卷积核作为一个“窗口”，每次卷积都是窗口上的元素与输入对应元素相乘后求和，进行下次卷积时就是在原图像上进行“滑动”操作再卷积。而对于多通道输入矩阵，多个卷积核求卷积的情况，无非就是多个矩阵之间的操作了，而对于步长大于1的情况，其实就是求和时按照倍数步长求和，对于有填充的情况则是将输入进行一定调整即可。
 
 接下来对卷积的梯度进行推导，假定从下一层反向传播到该层的梯度(损失)为：
@@ -420,7 +421,9 @@ $$
 \frac{\partial L}{\partial y_{1,oh}} & \frac{\partial L}{\partial y_{2,oh}} &\cdots &\frac{\partial L}{\partial y_{ow,oh}}\\
 \end{bmatrix}
 $$
+
 根据之前推导的卷积公式，我们可以得到单个输出对任意一个参数$v_{w^*,h^*}$的偏导：
+
 $$
 \begin{align}
 \frac{\partial y_{i,j}}{\partial v_{w^*,h^*}}&=
@@ -429,7 +432,9 @@ $$
 &= x_{i+w^*,j+h^*}
 \end{align}
 $$
+
 那么将梯度(损失)传递到该参数上，得到该参数的损失为：
+
 $$
 \begin{align}
 \frac{\partial L}{\partial v_{w^*,h^*}}&=
@@ -450,9 +455,11 @@ x_{1+w^*,oh+h^*} & x_{2+w^*,oh+h^*} &\cdots &x_{ow+w^*,oh+h^*}\\
 \end{bmatrix}
 \end{align}
 $$
+
 可以观察到，卷积核的损失可以通过下一层传递来的梯度(损失)与输入进行卷积得到，为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，这部分比较复杂且不好理解，这里给出一个稍微简单的思路：我们知道对于任意两个元素的乘积，在对其中一个求偏导时的结果就是另一个元素，即假设有$y=v \cdot x$，那么应该有$\frac{\partial y}{\partial v}=x$; $\frac{\partial y}{\partial x}=v$，所以在计算损失对输入的偏导时，只要知道哪些元素与输入的元素相乘过即可，如何得到这些相乘过的元素呢？只需要再重新卷积一次就可以知道，我们可以将要传播到上一层的梯度初始化为一个全0的矩阵$\hat{X}$，那么它的一部分就是通过梯度的累加得到，具体表示为：
+
 $$
-\hat{X}[i:i+kw,j:j+kh] = \hat{X}[i:i+kw,j:j+kh] + \frac{\partial L}{\partial y_{i,j}}
+\hat{X}^{new}[i:i+kw,j:j+kh] = \hat{X}[i:i+kw,j:j+kh] + \frac{\partial L}{\partial y_{i,j}}
 \begin{bmatrix}
 v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
 v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
@@ -460,14 +467,16 @@ v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
 v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
 \end{bmatrix}
 $$
+
 展开为矩阵为：
+
 $$
 \begin{bmatrix}
 \hat{x}_{i+1,j+1} & \hat{x}_{i+2,j+1} &\cdots &\hat{x}_{i+kw,j+1}\\
 \hat{x}_{i+1,j+2} & \hat{x}_{i+2,j+2} &\cdots &\hat{x}_{i+kw,j+2}\\
 \vdots & \vdots & \ddots & \vdots \\
 \hat{x}_{i+1,j+kh} & \hat{x}_{i+2,j+kh} &\cdots &\hat{x}_{i+kw,j+kh}\\
-\end{bmatrix}
+\end{bmatrix}^{new}
 =
 \begin{bmatrix}
 \hat{x}_{i+1,j+1} & \hat{x}_{i+2,j+1} &\cdots &\hat{x}_{i+kw,j+1}\\
@@ -482,6 +491,7 @@ v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
 v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
 \end{bmatrix}
 $$
+
 实际上，该操作可以理解为一种“反向卷积”，具体的操作流程看下面的示意图就很清晰直观了：
 
 <img src="./Pictures/ConvGrad.gif" style="zoom:80%;" />
