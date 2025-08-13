@@ -17,6 +17,13 @@ class Layer:
     """层级父类"""
 
     def __init__(self, input_size=None, output_size=None, activation=None, bias=False):
+        """
+        层级父类
+        :param input_size: 输入(维度)大小
+        :param output_size: 输出(维度)大小
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
         self.input_size = input_size
         self.output_size = output_size
         self.activation = activation
@@ -194,6 +201,13 @@ class Linear(Layer):
     """线性层"""
 
     def __init__(self, input_size, output_size, activation=None, bias=True):
+        """
+        线性层
+        :param input_size: 输入(维度)大小
+        :param output_size: 输出(维度)大小
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
         super(Linear, self).__init__(input_size, output_size, activation, bias)
         # 保存输入与输出以及batch大小
         self.input_1, self.output, self.batch_size = None, None, 1
@@ -273,6 +287,10 @@ class Dropout(Layer):
     """随机失活层"""
 
     def __init__(self, p=0.5):
+        """
+        随机失活层
+        :param p: 随机失活概率(丢弃神经元比例)
+        """
         super().__init__()
         assert 0.0 <= p <= 1.0
         self.p = p  # 随机失活概率(丢弃神经元比例)
@@ -301,6 +319,14 @@ class GCNConv(Linear):
     """图卷积层"""
 
     def __init__(self, input_size, output_size, adj_norm, activation, bias=True):
+        """
+        图卷积层
+        :param input_size: 输入(维度)大小
+        :param output_size: 输出(维度)大小
+        :param adj_norm: 归一化后的邻接矩阵
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
         super(GCNConv, self).__init__(input_size, output_size, activation, bias)
         self.adj_norm = adj_norm
         self.weight = self.xavier_uniform_(self.weight, bias=self.bias)
@@ -314,6 +340,13 @@ class RNNCell(Layer):
     """循环神经网络模块"""
 
     def __init__(self, input_size, output_size, activation=None, bias=True):
+        """
+        循环神经网络模块
+        :param input_size: 输入(维度)大小
+        :param output_size: 输出(维度)大小
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
         super(RNNCell, self).__init__(input_size, output_size, activation, bias)
         # 保存整个过程中的输入与输出
         self.input_1_list, self.hidden_1_list, self.output_list = [], [], []
@@ -407,6 +440,14 @@ class RNN(Layer):
     """循环神经网络层"""
 
     def __init__(self, input_size, hidden_size, num_layers, activation=None, bias=True, batch_first=False):
+        """
+        循环神经网络层
+        :param input_size: 输入(维度)大小
+        :param hidden_size: 隐层(维度)大小
+        :param num_layers: 隐层个数
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
         super(RNN, self).__init__(input_size, hidden_size, activation, bias)
         self.hidden_size = hidden_size
         self.num_layers = num_layers if num_layers > 1 else 1
@@ -514,6 +555,16 @@ class Conv1d(Layer):
     """一维卷积层"""
 
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, activation=None, bias=True):
+        """
+        一维卷积层
+        :param in_channels: 输入通道数
+        :param out_channels: 输出通道数
+        :param kernel_size: 卷积核大小
+        :param stride: 步长大小
+        :param padding: 填充大小
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
         super().__init__(activation=activation, bias=bias)
         assert isinstance(in_channels, int)
         assert isinstance(out_channels, int)
@@ -613,6 +664,16 @@ class Conv2d(Layer):
     """二维卷积层"""
 
     def __init__(self, in_channels, out_channels, kernel_size, stride, padding, activation=None, bias=True):
+        """
+        二维卷积层
+        :param in_channels: 输入通道数
+        :param out_channels: 输出通道数
+        :param kernel_size: 卷积核大小
+        :param stride: 步长大小
+        :param padding: 填充大小
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
         super().__init__(activation=activation, bias=bias)
         assert isinstance(in_channels, int)
         assert isinstance(out_channels, int)
@@ -720,6 +781,12 @@ class MaxPool1d(Layer):
     """一维最大池化层"""
 
     def __init__(self, kernel_size, stride, padding):
+        """
+        一维最大池化层
+        :param kernel_size: 池化核大小
+        :param stride: 步长大小
+        :param padding: 填充大小
+        """
         super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
@@ -796,6 +863,12 @@ class MaxPool2d(Layer):
     """二维最大池化层"""
 
     def __init__(self, kernel_size, stride, padding):
+        """
+        二维最大池化层
+        :param kernel_size: 池化核大小
+        :param stride: 步长大小
+        :param padding: 填充大小
+        """
         super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
@@ -881,6 +954,12 @@ class MeanPool1d(Layer):
     """一维平均池化层"""
 
     def __init__(self, kernel_size, stride, padding):
+        """
+        一维平均池化层
+        :param kernel_size: 池化核大小
+        :param stride: 步长大小
+        :param padding: 填充大小
+        """
         super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
@@ -940,6 +1019,12 @@ class MeanPool2d(Layer):
     """二维平均池化层"""
 
     def __init__(self, kernel_size, stride, padding):
+        """
+        二维平均池化层
+        :param kernel_size: 池化核大小
+        :param stride: 步长大小
+        :param padding: 填充大小
+        """
         super().__init__()
         self.kernel_size = kernel_size
         self.stride = stride
@@ -1007,6 +1092,12 @@ class BatchNorm(Layer):
     """批归一化层"""
 
     def __init__(self, num_features, eps=1.e-5, momentum=0.1):
+        """
+        批归一化层
+        :param num_features: 特征数量(通道数)
+        :param eps: 数值稳定系数
+        :param momentum: 动量系数
+        """
         super().__init__()
         self.num_features = num_features
         self.momentum = momentum
@@ -1098,6 +1189,12 @@ class BatchNorm2d(BatchNorm):
     """批归一化层(用于卷积网络中)"""
 
     def __init__(self, num_features, eps=1.e-5, momentum=0.1):
+        """
+        批归一化层(用于卷积网络中)
+        :param num_features: 特征数量(通道数)
+        :param eps: 数值稳定系数
+        :param momentum: 动量系数
+        """
         super().__init__(num_features, eps, momentum)
 
     def forward(self, input_):
