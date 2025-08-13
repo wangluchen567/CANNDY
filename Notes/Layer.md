@@ -349,7 +349,7 @@ Dropout 的核心思想是在训练过程中随机地丢弃（即置为零）一
 
 待更新...
 
-## RNNCell-循环神经网络模块层
+## RNNCell-循环神经网络模块
 
 待更新...
 
@@ -394,6 +394,7 @@ $$
 \begin{align}
 y_{i,j} &= \sum_{w=1}^{kw}\sum_{h=1}^{kh}v_{w,h}x_{i+w,j+h}\\
 &= 
+\sum(
 \begin{bmatrix}
 v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
 v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
@@ -405,11 +406,11 @@ x_{i+1,j+1} & x_{i+2,j+1} &\cdots &x_{i+kw,j+1}\\
 x_{i+1,j+2} & x_{i+2,j+2} &\cdots &x_{i+kw,j+2}\\
 \vdots & \vdots & \ddots & \vdots \\
 x_{i+1,j+kh} & x_{i+2,j+kh} &\cdots &x_{i+kw,j+kh}\\
-\end{bmatrix}
+\end{bmatrix})
 \end{align}
 $$
 
-其中$\odot$表示哈马达积，即两个矩阵对应元素相乘后求和。所以说图像二维卷积的本质就是将给定的卷积核作为一个“窗口”，每次卷积都是窗口上的元素与输入对应元素相乘后求和，进行下次卷积时就是在原图像上进行“滑动”操作再卷积。而对于多通道输入矩阵，多个卷积核求卷积的情况，无非就是多个矩阵之间的操作了，而对于步长大于1的情况，其实就是求和时按照倍数步长求和，对于有填充的情况则是将输入进行一定调整即可。
+其中$\odot$表示哈马达积，即两个矩阵对应元素相乘。所以说图像二维卷积的本质就是将给定的卷积核作为一个“窗口”，每次卷积都是窗口上的元素与输入对应元素相乘后求和，进行下次卷积时就是在原图像上进行“滑动”操作再卷积。而对于多通道输入矩阵，多个卷积核求卷积的情况，无非就是多个矩阵之间的操作了，而对于步长大于1的情况，其实就是求和时按照倍数步长求和，对于有填充的情况则是将输入进行一定调整即可。
 
 接下来对卷积的梯度进行推导，假定从下一层反向传播到该层的梯度(损失)为：
 $$
@@ -441,6 +442,7 @@ $$
 \sum_{i=1}^{iw}\sum_{j=1}^{ih}\frac{\partial L}{\partial y_{i,j}}\frac{\partial y_{i,j}}{\partial v_{w^*,h^*}}\\
 &= \sum_{i=1}^{iw}\sum_{j=1}^{ih}\frac{\partial L}{\partial y_{i,j}} x_{i+w^*,j+h^*}\\
 &= 
+\sum(
 \begin{bmatrix}
 \frac{\partial L}{\partial y_{1,1}} & \frac{\partial L}{\partial y_{2,1}} &\cdots & \frac{\partial L}{\partial y_{ow,1}}\\
 \frac{\partial L}{\partial y_{1,2}} & \frac{\partial L}{\partial y_{2,2}} &\cdots & \frac{\partial L}{\partial y_{ow,2}}\\
@@ -453,31 +455,18 @@ x_{1+w^*,2+h^*} & x_{2+w^*,2+h^*} &\cdots &x_{ow+w^*,2+h^*}\\
 \vdots & \vdots & \ddots & \vdots \\
 x_{1+w^*,oh+h^*} & x_{2+w^*,oh+h^*} &\cdots &x_{ow+w^*,oh+h^*}\\
 \end{bmatrix}
+)
 \end{align}
 $$
 
-可以观察到，卷积核的损失可以通过下一层传递来的梯度(损失)与输入进行卷积得到，为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，这部分比较复杂且不好理解，这里给出一个稍微简单的思路：我们知道对于任意两个元素的乘积，在对其中一个求偏导时的结果就是另一个元素，即假设有$y=v \cdot x$，那么应该有$\frac{\partial y}{\partial v}=x$; $\frac{\partial y}{\partial x}=v$，所以在计算损失对输入的偏导时，只要知道哪些元素与输入的元素相乘过即可，如何得到这些相乘过的元素呢？只需要再重新卷积一次就可以知道，我们可以将要传播到上一层的梯度初始化为一个全0的矩阵$\hat{X}$，那么它的一部分就是通过梯度的累加得到，具体表示为：
-
+也就是说，卷积核的损失可以通过下一层传递来的梯度(损失)与输入进行卷积得到，即：
 $$
-\hat{X}^{new}[i:i+kw,j:j+kh] = \hat{X}[i:i+kw,j:j+kh] + \frac{\partial L}{\partial y_{i,j}}
-\begin{bmatrix}
-v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
-v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
-\vdots & \vdots & \ddots & \vdots \\
-v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
-\end{bmatrix}
+\frac{\partial L}{\partial V} = \frac{\partial L}{\partial Y} \circledast X
 $$
-
-展开为矩阵为：
-
+为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，这部分比较复杂且不好理解，这里给出一个稍微简单的思路：我们知道对于任意两个元素的乘积，在对其中一个求偏导时的结果就是另一个元素，即假设有$y=v \cdot x$，那么应该有$\frac{\partial y}{\partial v}=x$; $\frac{\partial y}{\partial x}=v$，所以在计算损失对输入的偏导时，只要知道哪些元素与输入的元素相乘过即可，如何得到这些相乘过的元素呢？只需要再重新卷积一次就可以知道，我们可以将要传播到上一层的梯度初始化为一个全0的矩阵$\hat{X}$，那么它的一部分就是通过梯度的累加得到，具体表示为：
 $$
-\begin{bmatrix}
-\hat{x}_{i+1,j+1} & \hat{x}_{i+2,j+1} &\cdots &\hat{x}_{i+kw,j+1}\\
-\hat{x}_{i+1,j+2} & \hat{x}_{i+2,j+2} &\cdots &\hat{x}_{i+kw,j+2}\\
-\vdots & \vdots & \ddots & \vdots \\
-\hat{x}_{i+1,j+kh} & \hat{x}_{i+2,j+kh} &\cdots &\hat{x}_{i+kw,j+kh}\\
-\end{bmatrix}^{new}
-=
+\hat{X}^{new}[i:i+kw,j:j+kh] = \hat{X}[i:i+kw,j:j+kh] + \frac{\partial L}{\partial y_{i,j}} V \\
+= 
 \begin{bmatrix}
 \hat{x}_{i+1,j+1} & \hat{x}_{i+2,j+1} &\cdots &\hat{x}_{i+kw,j+1}\\
 \hat{x}_{i+1,j+2} & \hat{x}_{i+2,j+2} &\cdots &\hat{x}_{i+kw,j+2}\\
@@ -492,7 +481,7 @@ v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
 \end{bmatrix}
 $$
 
-实际上，该操作可以理解为一种“反向卷积”，具体的操作流程看下面的示意图就很清晰直观了：
+如此一来，通过不断的循环累加，就可以得到需要传播到上一层的梯度。实际上，该操作可以理解为一种“反向卷积”，具体的操作流程看下面的示意图就比较清晰直观了：
 
 <img src="./Pictures/ConvGrad.gif" style="zoom:80%;" />
 
