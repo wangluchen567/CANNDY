@@ -489,13 +489,11 @@ $$
 $$
 \frac{\partial L}{\partial V} = \frac{\partial L}{\partial Y} \circledast X
 $$
-为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，这部分比较复杂且不好理解，这里给出一个稍微简单的思路：
-我们知道对于任意两个元素的乘积，在对其中一个求偏导时的结果就是另一个元素，即假设有 $y=v \cdot x$，那么应该有 $\frac{\partial y}{\partial v}=x$; $\frac{\partial y}{\partial x}=v$，所以在计算损失对输入的偏导时，只要知道哪些元素与输入的元素相乘过即可。
-那如何得到这些相乘过的元素呢？只需要再重新卷积一次就可以知道，我们可以将要传播到上一层的梯度初始化为一个全 0 的矩阵 $G$，那么它的一部分就是通过梯度的累加得到，具体表示为：
+为了将梯度继续反向传播到上一层，我们需要计算损失函数对输入的偏导数。这部分内容相对复杂且不易理解，因此这里提供一个较为直观的思路。我们知道，对于任意两个元素的乘积，在对其中一个元素求偏导时，结果就是另一个元素。例如，假设 $y=v \cdot x$，那么有 $\frac{\partial y}{\partial v}=x$和$\frac{\partial y}{\partial x}=v$。因此，在计算损失对输入的偏导时，关键在于明确哪些元素与输入元素相乘过。
+
+那么，如何确定这些相乘过的元素呢？其实，我们可以通过重新进行一次卷积操作来获取这些信息。具体来说，我们可以将要传播到上一层的梯度初始化为一个全零矩阵 $G$。随后，通过梯度的累加操作，矩阵 $G$ 的一部分可以逐步更新，其具体表示为：
 $$
-G^{\text{old}}_{[i:i+kw,j:j+kh]} + \frac{\partial L}{\partial y_{i,j}} \cdot V\\
-= 
-\begin{bmatrix}
+G^{\text{old}}_{[i:i+kw,j:j+kh]} =G^{\text{new}}_{[i:i+kw,j:j+kh]} + \frac{\partial L}{\partial y_{i,j}} \cdot V \\ = \begin{bmatrix}
 g_{i+1,j+1} & g_{i+2,j+1} & \cdots & g_{i+kw,j+1}\\
 g_{i+1,j+2} & g_{i+2,j+2} & \cdots & g_{i+kw,j+2}\\
 \vdots & \vdots & \ddots & \vdots \\
