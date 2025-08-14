@@ -176,7 +176,17 @@ Kaiming正态分布初始化是从正态分布$N(0,\sigma)$中抽取权重参数
 线性层(Linear)，也称为全连接层，多层线性层的堆叠也被称为多层感知机(MLP)，下面将使用代码实现该层，首先是初始化阶段：
 
 ```python
+class Linear(Layer):
+    """线性层"""
+
     def __init__(self, input_size, output_size, activation=None, bias=True):
+        """
+        线性层
+        :param input_size: 输入(维度)大小
+        :param output_size: 输出(维度)大小
+        :param activation: 激活函数类型
+        :param bias: 是否使用偏置
+        """
         super(Linear, self).__init__(input_size, output_size, activation, bias)
         # 保存输入与输出以及batch大小
         self.input_1, self.output, self.batch_size = None, None, 1
@@ -479,18 +489,18 @@ $$
 $$
 \frac{\partial L}{\partial V} = \frac{\partial L}{\partial Y} \circledast X
 $$
-为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，这部分比较复杂且不好理解，这里给出一个稍微简单的思路：我们知道对于任意两个元素的乘积，在对其中一个求偏导时的结果就是另一个元素，即假设有$y=v \cdot x$，那么应该有$\frac{\partial y}{\partial v}=x$; $\frac{\partial y}{\partial x}=v$，所以在计算损失对输入的偏导时，只要知道哪些元素与输入的元素相乘过即可，如何得到这些相乘过的元素呢？只需要再重新卷积一次就可以知道，我们可以将要传播到上一层的梯度初始化为一个全0的矩阵$\hat{X}$，那么它的一部分就是通过梯度的累加得到，具体表示为：
+为了将梯度继续反向传播到上一层，还需要计算损失对输入的偏导，这部分比较复杂且不好理解，这里给出一个稍微简单的思路：我们知道对于任意两个元素的乘积，在对其中一个求偏导时的结果就是另一个元素，即假设有$y=v \cdot x$，那么应该有$\frac{\partial y}{\partial v}=x$; $\frac{\partial y}{\partial x}=v$，所以在计算损失对输入的偏导时，只要知道哪些元素与输入的元素相乘过即可，如何得到这些相乘过的元素呢？只需要再重新卷积一次就可以知道，我们可以将要传播到上一层的梯度初始化为一个全0的矩阵 $G$，那么它的一部分就是通过梯度的累加得到，具体表示为：
 
 $$
-\hat{X}^{\text{new}}_{(i~\sim~i+kw,j~\sim~j+kh)}
+G^{\text{new}}_{(i~\sim~i+kw,j~\sim~j+kh)}
 =
-\hat{X}^{\text{old}}_{(i~\sim~i+kw,j~\sim~j+kh)} + \frac{\partial L}{\partial y_{i,j}} \cdot V\\
+G^{\text{old}}_{(i~\sim~i+kw,j~\sim~j+kh)} + \frac{\partial L}{\partial y_{i,j}} \cdot V\\
 = 
 \begin{bmatrix}
-\hat{x}_{i+1,j+1} & \hat{x}_{i+2,j+1} &\cdots &\hat{x}_{i+kw,j+1}\\
-\hat{x}_{i+1,j+2} & \hat{x}_{i+2,j+2} &\cdots &\hat{x}_{i+kw,j+2}\\
+g_{i+1,j+1} & g_{i+2,j+1} &\cdots &g_{i+kw,j+1}\\
+g_{i+1,j+2} & g_{i+2,j+2} &\cdots &g_{i+kw,j+2}\\
 \vdots & \vdots & \ddots & \vdots \\
-\hat{x}_{i+1,j+kh} & \hat{x}_{i+2,j+kh} &\cdots &\hat{x}_{i+kw,j+kh}\\
+g_{i+1,j+kh} & g_{i+2,j+kh} &\cdots &g_{i+kw,j+kh}\\
 \end{bmatrix} + \frac{\partial L}{\partial y_{i,j}} \cdot
 \begin{bmatrix}
 v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
