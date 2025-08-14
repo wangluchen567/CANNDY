@@ -498,7 +498,11 @@ g_{i+1,j+1} & g_{i+2,j+1} & \cdots & g_{i+kw,j+1}\\
 g_{i+1,j+2} & g_{i+2,j+2} & \cdots & g_{i+kw,j+2}\\
 \vdots & \vdots & \ddots & \vdots \\
 g_{i+1,j+kh} & g_{i+2,j+kh} & \cdots & g_{i+kw,j+kh}\\
-\end{bmatrix}
+\end{bmatrix} + \frac{\partial L}{\partial y_{i,j}} \cdot \begin{bmatrix}
+v_{1,1} & v_{2,1} & \cdots & v_{kw,1}\\
+v_{1,2} & v_{2,2} & \cdots & v_{kw,1}\\
+\vdots & \vdots & \ddots & \vdots \\
+v_{1,kh} & v_{2,kh} & \cdots & v_{kw,kh}\\ \end{bmatrix}
 $$
 如此一来，在计算卷积核的损失的过程中，也就是计算下一层梯度与输入的卷积时，顺便对该矩阵进行不断的循环累加与更新，就可以得到需要传播到上一层的梯度。实际上，该操作可以理解为一种“反向卷积”，具体的操作流程看下面的示意图就比较清晰直观了：
 
