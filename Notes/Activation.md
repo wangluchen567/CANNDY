@@ -14,11 +14,11 @@
 
 ReLU（Rectified Linear Unit，线性整流函数）是当前最流行的激活函数之一，广泛应用于各种深度学习模型中。其数学表达式为：
 $$
-ReLU(x) = max(0, x)
+\text{ReLU}(x) = max(0, x)
 $$
 具体来说，ReLU 函数的输出取决于输入值 x 的正负：
 $$
-ReLU(x) =
+\text{ReLU}(x) =
 \begin{cases}
 x, \quad x>0 \\
 0, \quad x\leq 0
@@ -34,7 +34,7 @@ $$
 
 在反向传播过程中，我们需要计算 ReLU 函数的导数。其导数表达式为：
 $$
-\frac{\mathrm{d}}{\mathrm{d}x} ReLU(x) =
+\frac{\mathrm{d}}{\mathrm{d}x} \text{ReLU}(x) =
 \begin{cases}
 1, \quad x>0 \\
 0, \quad x\leq 0
@@ -46,11 +46,11 @@ $$
 
 Sigmoid，又称为 S 型函数，是一种经典的激活函数，广泛应用于神经网络中。其数学表达式为：
 $$
-Sigmoid(x) = \frac{1}{1+e^{-x}}
+\text{Sigmoid}(x) = \frac{1}{1+e^{-x}}
 $$
 为了防止在计算指数时出现数值溢出问题，Sigmoid 函数的实现通常会根据输入值 x 的正负进行分段处理：
 $$
-Sigmoid(x) =
+\text{Sigmoid}(x) =
 \begin{cases}
 \frac{1}{1+e^{-x}}, \quad x\geq0 \\
 \frac{e^{x}}{1+e^{x}}, \quad x< 0
@@ -68,11 +68,11 @@ $$
 在反向传播过程中，我们需要计算 Sigmoid 函数的导数。其导数表达式为：
 $$
 \begin{align}
-\frac{\mathrm{d}}{\mathrm{d}x} Sigmoid(x) &= 
+\frac{\mathrm{d}}{\mathrm{d}x} \text{Sigmoid}(x) &= 
 \frac{e^{-x}}{(1+e^{-x})^2}\\
 &=\frac{1}{1+e^{-x}}\frac{e^{-x}}{1+e^{-x}}\\
 &=\frac{1}{1+e^{-x}}(1-\frac{1}{1+e^{-x}})\\
-&=Sigmoid(x)(1-Sigmoid(x))
+&=\text{Sigmoid}(x)(1-\text{Sigmoid}(x))
 \end{align}
 $$
 
@@ -82,11 +82,11 @@ $$
 
 Tanh（双曲正切函数）是一种经典的激活函数，尤其在循环神经网络（RNN）中被广泛应用。其数学表达式为：
 $$
-Tanh(x) = \frac{e^x-e^{-x}}{e^x+e^{-x}}
+\text{Tanh}(x) = \frac{e^x-e^{-x}}{e^x+e^{-x}}
 $$
 为了防止在计算指数时出现数值溢出问题，Tanh 函数的实现通常会根据输入值 x 的正负进行分段处理：
 $$
-Tanh(x) = 
+\text{Tanh}(x) = 
 \begin{cases}
 \frac{1-e^{-2x}}{1+e^{-2x}}, \quad x\geq0 \\
 \frac{e^{2x}-1}{1+e^{2x}}, \quad x< 0
@@ -103,10 +103,10 @@ $$
 在反向传播过程中，我们需要计算 Tanh 函数的导数。其导数表达式为：
 $$
 \begin{align}
-\frac{\mathrm{d}}{\mathrm{d}x} Tanh(x) &= 
+\frac{\mathrm{d}}{\mathrm{d}x} \text{Tanh}(x) &= 
 \frac{(e^x+e^{-x})^2-(e^x-e^{-x})^2}{(e^x+e^{-x})^2}\\
 &=1-(\frac{e^x-e^{-x}}{e^x+e^{-x}})^2\\
-&=1-Tanh^2(x)\\
+&=1-\text{Tanh}^2(x)\\
 \end{align}
 $$
-这个导数公式表明，Tanh 函数的导数可以表示为 $1-Tanh^2(x)$。这种形式不仅简洁，而且在计算上非常高效，特别适合在神经网络的反向传播中使用。
+这个导数公式表明，Tanh 函数的导数可以表示为 $1-\text{Tanh}^2(x)$。这种形式不仅简洁，而且在计算上非常高效，特别适合在神经网络的反向传播中使用。

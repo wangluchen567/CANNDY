@@ -79,11 +79,12 @@ $$
 $$
 
 将两种情况代入有：
-$$
 
+$$
 \begin{align}
 \frac{\partial Loss_{\text{CE}}(p, t)}{\partial a_s} &=-\sum_{i=1}^K \frac{t_i}{p_i} \cdot \frac{\partial p_i}{\partial a_s} \\&= -\frac{t_s}{p_s} \cdot p_s \cdot (1 - p_s) + \sum_{i \neq s} \frac{t_i}{p_i} \cdot p_i \cdot p_s \\&= -t_s + (t_s \cdot p_s + \sum_{i \neq s} t_i \cdot p_s) \\&= p_s \cdot (\sum_{i=1}^K t_i) - t_s \\&= p_s - t_s
 \end{align}
 $$
+
 由此可以看出，交叉熵损失对模型原始输出的某个分量 $a_s$ 的偏导数是预测概率 $p_s$ 与标签 $t_s$ 的差。当 $t_s=1$ 时，说明样本属于该类别，$p_s - 1$ 为负值，更新会促使 $a_s$ 增大； 当 $t_s=0$时， 说明样本不属于该类别，$p_s - 0$ 为正值，则更新会促使 $a_s$ 减小。
 
