@@ -48,7 +48,7 @@ class MSELoss(Loss):
 
     def forward(self):
         """前向传播"""
-        loss = np.sum(np.square(self.truth - self.output)) / self.truth.size
+        loss = np.sum(np.square(self.output - self.truth)) / self.truth.size
         return loss
 
     def backward(self):
