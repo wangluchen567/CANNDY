@@ -93,7 +93,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 
 参见这里：[项目结构](./Notes/Structure.md) 
 
-## 📔 实现笔记
+## 📝 实现笔记
 
 在深入了解框架的使用之前，可以通过以下笔记链接深入了解框架的实现细节和设计思路：
 
@@ -119,7 +119,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 
 参见这里：[快速开始](./Notes/Start.md) 
 
-## 📝 更新计划
+## 📅 更新计划
 
 - [x] 更新项目文档
 - [ ] 更新算法笔记
