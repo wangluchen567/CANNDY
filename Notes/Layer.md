@@ -1,4 +1,4 @@
-# Layer——层级架构
+# Layer——神经网络层
 
 ## Basic-基础知识
 
@@ -273,6 +273,8 @@ self.num_params = self.weight.size
         self.weight = weight
 ```
 
+### 前向传播
+
 接下来就是核心部分，前向传播与反向传播了，首先对于前向传播，得到输出数据后，先保存这批数据的批大小，以便反向传播时使用：
 
 ```python
@@ -306,6 +308,8 @@ if self.activation is not None:
     output_ = self.activation.forward(output_)
 return output_
 ```
+
+### 反向传播
 
 接下来是反向传播过程，若该层使用了激活函数，则需要先将上层传播过来的梯度与激活函数的梯度相乘：
 
@@ -361,6 +365,10 @@ else:
 
 恒等映射层是一种特殊的层，它的作用是将输入直接传递为输出，而不进行任何计算或变换。虽然它看起来像是一个“无操作”的层，但实际上在某些情况下非常有用，比如作为占位符预留位置、用于调试验证、或者在动态网络中根据条件启用/禁用层的作用。它还可以保持输入输出形状一致，方便网络设计和实现。
 
+### 前向传播
+
+
+
 ## Dropout-丢弃层
 
 Dropout 的核心思想是在训练过程中随机地丢弃（即置为零）一部分神经元的输出，从而减少神经元之间的协同适应性，增强模型的泛化能力。其具体的实现过程可以分为两个部分：
@@ -387,99 +395,109 @@ Dropout 的核心思想是在训练过程中随机地丢弃（即置为零）一
 
 卷积，作为一种数学运算，最开始是在信号处理领域中提出的概念，卷积运算在信号处理中用于模拟线性时不变系统的输出，其中一个信号通过另一个信号（如滤波器）的影响。这个概念后来被引入到图像处理和深度学习中，诞生了卷积神经网络（Convolutional Neural Networks, CNNs）这一经典的神经网络，在卷积神经网络中，卷积被用来提取图像数据的局部特征，通过在输入图像上滑动卷积核（滤波器），并计算其与图像的局部区域的点积，生成特征图。这些特征图捕捉了图像的局部模式，如边缘、纹理等，并且由于权重共享和稀疏连接，使得网络能够高效地学习到具有平移不变性的特征。
 
-二维卷积的过程可见下面的示例：
+二维卷积的卷积过程可以通过以下示例动图直观理解：
 
 <img src="./Pictures/Conv.gif" style="zoom:80%;" />
 
-为简单起见，下面使用单通道矩阵、步长为1、填充为0的条件下对卷积及其梯度进行推导：
+为了简化说明，以下推导将在单通道矩阵、步长为1、填充为0的条件下进行。
+
+### 前向传播
+
+卷积的前向传播过程通过上述卷积过程的动图可以大致了解，下面详细给出公式推导。
 
 定义输入为$X$，卷积核为$V$，输出为$Y$，那么有：
 $$
-Y = V \circledast X \\
+Y = V \circledast X
+$$
+具体矩阵展开有（矩阵的索引范围均是从 0 开始）：
+$$
 \begin{bmatrix}
-y_{1,1} & y_{2,1} &\cdots &y_{ow,1}\\
-y_{1,2} & y_{2,2} &\cdots &y_{ow,2}\\
+y_{0,0} & y_{1,0} &\cdots &y_{ow-1,0}\\
+y_{0,1} & y_{1,1} &\cdots &y_{ow-1,1}\\
 \vdots & \vdots & \ddots & \vdots \\
-y_{1,oh} & y_{2,oh} &\cdots &y_{ow,oh}\\
+y_{0,oh-1} & y_{1,oh-1} &\cdots &y_{ow-1,oh-1}\\
 \end{bmatrix}=
 \begin{bmatrix}
-v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
-v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
+v_{0,0} & v_{1,0} &\cdots &v_{kw-1,0}\\
+v_{0,1} & v_{1,1} &\cdots &v_{kw-1,1}\\
 \vdots & \vdots & \ddots & \vdots \\
-v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
+v_{0,kh-1} & v_{1,kh-1} &\cdots &v_{kw-1,kh-1}\\
 \end{bmatrix}\circledast
 \begin{bmatrix}
-x_{1,1} & x_{2,1} &\cdots &x_{iw,1}\\
-x_{1,2} & x_{2,2} &\cdots &x_{iw,2}\\
+x_{0,0} & x_{1,0} &\cdots &x_{iw-1,0}\\
+x_{0,1} & x_{1,1} &\cdots &x_{iw-1,1}\\
 \vdots & \vdots & \ddots & \vdots \\
-x_{1,ih} & x_{2,ih} &\cdots &x_{iw,ih}\\
+x_{0,ih-1} & x_{1,ih-1} &\cdots &x_{iw-1,ih-1}\\
 \end{bmatrix}
 $$
-其中$\circledast$为卷积符号，代表卷积操作，$iw,ih,ow,oh$分别代表输入和输出特征图的宽度和高度，$kw,kh$分别是卷积核的宽与高，将公式具体展开得：
+其中 $\circledast$ 为卷积符号，代表卷积操作，$iw,ih$ 分别为输入特征图的宽度和高度，$ow,oh$ 分别为输出特征图的宽度和高度，$kw,kh$分别为卷积核的宽度和高度。将该公式具体展开，对于任意一个输出 $y_{i,j}$ ，其计算公式为：
 $$
 \begin{align}
-y_{i,j} &= \sum_{w=1}^{kw}\sum_{h=1}^{kh}v_{w,h}x_{i+w,j+h}\\
+y_{i,j} &= \sum_{w=0}^{kw-1}\sum_{h=0}^{kh-1}v_{w,h}x_{i+w,j+h}\\
 &= 
 \sum(
 \begin{bmatrix}
-v_{1,1} & v_{2,1} &\cdots &v_{kw,1}\\
-v_{1,2} & v_{2,2} &\cdots &v_{kw,2}\\
+v_{0,0} & v_{1,0} &\cdots &v_{kw-1,0}\\
+v_{0,1} & v_{1,1} &\cdots &v_{kw-1,1}\\
 \vdots & \vdots & \ddots & \vdots \\
-v_{1,kh} & v_{2,kh} &\cdots &v_{kw,kh}\\
+v_{0,kh-1} & v_{1,kh-1} &\cdots &v_{kw-1,kh-1}\\
 \end{bmatrix} \odot
 \begin{bmatrix}
-x_{i+1,j+1} & x_{i+2,j+1} &\cdots &x_{i+kw,j+1}\\
-x_{i+1,j+2} & x_{i+2,j+2} &\cdots &x_{i+kw,j+2}\\
+x_{i+0,j+0} & x_{i+1,j+0} &\cdots &x_{i+kw-1,j+0}\\
+x_{i+0,j+1} & x_{i+1,j+1} &\cdots &x_{i+kw-1,j+1}\\
 \vdots & \vdots & \ddots & \vdots \\
-x_{i+1,j+kh} & x_{i+2,j+kh} &\cdots &x_{i+kw,j+kh}\\
+x_{i+0,j+kh-1} & x_{i+1,j+kh-1} &\cdots &x_{i+kw-1,j+kh-1}\\
 \end{bmatrix})
 \end{align}
 $$
 
-其中$\odot$表示哈马达积，即两个矩阵对应元素相乘。所以说图像二维卷积的本质就是将给定的卷积核作为一个“窗口”，每次卷积都是窗口上的元素与输入对应元素相乘后求和，进行下次卷积时就是在原图像上进行“滑动”操作再卷积。而对于多通道输入矩阵，多个卷积核求卷积的情况，无非就是多个矩阵之间的操作了，而对于步长大于1的情况，其实就是求和时按照倍数步长求和，对于有填充的情况则是将输入进行一定调整即可。
+其中$\odot$表示哈马达积，即两个矩阵对应元素相乘。因此，二维卷积的本质是将卷积核作为一个“窗口”，每次卷积是窗口上的元素与输入对应元素相乘后求和，下一次卷积则在输入矩阵上滑动窗口再进行计算。对于多通道输入矩阵和多个卷积核的情况，本质上是多个矩阵之间的操作。对于步长大于1的情况，相当于在求和时按照步长间隔取值；对于有填充的情况，则是对输入矩阵进行一定的扩展。
 
-接下来对卷积的梯度进行推导，假定从下一层反向传播到该层的梯度(损失)为：
+### 反向传播
+
+接下来推导二维卷积反向传播的梯度计算。假定从下一层反向传播到该层的梯度（损失）为：
+
 $$
 \frac{\partial L}{\partial Y}=
 \begin{bmatrix}
-\frac{\partial L}{\partial y_{1,1}} & \frac{\partial L}{\partial y_{2,1}} &\cdots & \frac{\partial L}{\partial y_{ow,1}}\\
-\frac{\partial L}{\partial y_{1,2}} & \frac{\partial L}{\partial y_{2,2}} &\cdots & \frac{\partial L}{\partial y_{ow,2}}\\
+\frac{\partial L}{\partial y_{0,0}} & \frac{\partial L}{\partial y_{1,0}} &\cdots & \frac{\partial L}{\partial y_{ow-1,0}}\\
+\frac{\partial L}{\partial y_{0,1}} & \frac{\partial L}{\partial y_{1,1}} &\cdots & \frac{\partial L}{\partial y_{ow-1,1}}\\
 \vdots & \vdots & \ddots & \vdots \\
-\frac{\partial L}{\partial y_{1,oh}} & \frac{\partial L}{\partial y_{2,oh}} &\cdots &\frac{\partial L}{\partial y_{ow,oh}}\\
+\frac{\partial L}{\partial y_{0,oh-1}} & \frac{\partial L}{\partial y_{1,oh-1}} &\cdots &\frac{\partial L}{\partial y_{ow-1,oh-1}}\\
 \end{bmatrix}
 $$
 
-根据之前推导的卷积公式，我们可以得到单个输出对任意一个参数$v_{w^*,h^*}$的偏导：
+根据之前推导的卷积公式，可以得到单个输出对任意一个参数$v_{w^*,h^*}$的偏导：
 
 $$
 \begin{align}
 \frac{\partial y_{i,j}}{\partial v_{w^*,h^*}}&=
-\frac{\partial}{\partial v_{w^*,h^*}}\sum_{w=1}^{kw}\sum_{h=1}^{kh}v_{w,h}x_{i+w,j+h}\\
+\frac{\partial}{\partial v_{w^*,h^*}}\sum_{w=0}^{kw-1}\sum_{h=0}^{kh-1}v_{w,h}x_{i+w,j+h}\\
 &= \frac{\partial (v_{w^*,h^*}x_{i+w^*,j+h^*})}{v_{w^*,h^*}} \\
 &= x_{i+w^*,j+h^*}
 \end{align}
 $$
 
-那么将梯度(损失)传递到该参数上，得到该参数的损失为：
+将梯度(损失)传递到该参数上，得到该参数的损失为：
 
 $$
 \begin{align}
 \frac{\partial L}{\partial v_{w^*,h^*}}&=
-\sum_{i=1}^{iw}\sum_{j=1}^{ih}\frac{\partial L}{\partial y_{i,j}}\frac{\partial y_{i,j}}{\partial v_{w^*,h^*}}\\
-&= \sum_{i=1}^{iw}\sum_{j=1}^{ih}\frac{\partial L}{\partial y_{i,j}} x_{i+w^*,j+h^*}\\
+\sum_{i=0}^{ow-1}\sum_{j=0}^{oh-1}\frac{\partial L}{\partial y_{i,j}}\frac{\partial y_{i,j}}{\partial v_{w^*,h^*}}\\
+&= \sum_{i=0}^{ow-1}\sum_{j=0}^{oh-1}\frac{\partial L}{\partial y_{i,j}} x_{i+w^*,j+h^*}\\
 &= 
 \sum(
 \begin{bmatrix}
-\frac{\partial L}{\partial y_{1,1}} & \frac{\partial L}{\partial y_{2,1}} &\cdots & \frac{\partial L}{\partial y_{ow,1}}\\
-\frac{\partial L}{\partial y_{1,2}} & \frac{\partial L}{\partial y_{2,2}} &\cdots & \frac{\partial L}{\partial y_{ow,2}}\\
+\frac{\partial L}{\partial y_{0,0}} & \frac{\partial L}{\partial y_{1,0}} &\cdots & \frac{\partial L}{\partial y_{ow-1,0}}\\
+\frac{\partial L}{\partial y_{0,1}} & \frac{\partial L}{\partial y_{1,1}} &\cdots & \frac{\partial L}{\partial y_{ow-1,1}}\\
 \vdots & \vdots & \ddots & \vdots \\
-\frac{\partial L}{\partial y_{1,oh}} & \frac{\partial L}{\partial y_{2,oh}} &\cdots &\frac{\partial L}{\partial y_{ow,oh}}\\
+\frac{\partial L}{\partial y_{0,oh-1}} & \frac{\partial L}{\partial y_{1,oh-1}} &\cdots &\frac{\partial L}{\partial y_{ow-1,oh-1}}\\
 \end{bmatrix} \odot
 \begin{bmatrix}
-x_{1+w^*,1+h^*} & x_{2+w^*,1+h^*} &\cdots &x_{ow+w^*,1+h^*}\\
-x_{1+w^*,2+h^*} & x_{2+w^*,2+h^*} &\cdots &x_{ow+w^*,2+h^*}\\
+x_{0+w^*,0+h^*} & x_{1+w^*,0+h^*} &\cdots &x_{ow-1+w^*,0+h^*}\\
+x_{0+w^*,1+h^*} & x_{1+w^*,1+h^*} &\cdots &x_{ow-1+w^*,1+h^*}\\
 \vdots & \vdots & \ddots & \vdots \\
-x_{1+w^*,oh+h^*} & x_{2+w^*,oh+h^*} &\cdots &x_{ow+w^*,oh+h^*}\\
+x_{0+w^*,oh-1+h^*} & x_{1+w^*,oh-1+h^*} &\cdots &x_{ow-1+w^*,oh-1+h^*}\\
 \end{bmatrix}
 )
 \end{align}
@@ -493,16 +511,16 @@ $$
 
 那么，如何确定这些相乘过的元素呢？其实，我们可以通过重新进行一次卷积操作来获取这些信息。具体来说，我们可以将要传播到上一层的梯度初始化为一个全零矩阵 $G$。随后，通过梯度的累加操作，矩阵 $G$ 的一部分可以逐步更新，其具体表示为：
 $$
-G^{\text{old}}_{[i:i+kw,j:j+kh]} =G^{\text{new}}_{[i:i+kw,j:j+kh]} + \frac{\partial L}{\partial y_{i,j}} \cdot V \\ = \begin{bmatrix}
-g_{i+1,j+1} & g_{i+2,j+1} & \cdots & g_{i+kw,j+1}\\
-g_{i+1,j+2} & g_{i+2,j+2} & \cdots & g_{i+kw,j+2}\\
+G^{\text{old}}_{\{[i:i+kw),[j:j+kh)\}} =G^{\text{new}}_{\{[i:i+kw),[j:j+kh)\}} + \frac{\partial L}{\partial y_{i,j}} \cdot V \\ = \begin{bmatrix}
+g_{i+0,j+0} & g_{i+1,j+0} & \cdots & g_{i+kw-1,j+0}\\
+g_{i+0,j+1} & g_{i+1,j+1} & \cdots & g_{i+kw-1,j+1}\\
 \vdots & \vdots & \ddots & \vdots \\
-g_{i+1,j+kh} & g_{i+2,j+kh} & \cdots & g_{i+kw,j+kh}\\
+g_{i+0,j+kh-1} & g_{i+1,j+kh-1} & \cdots & g_{i+kw-1,j+kh-1}\\
 \end{bmatrix} + \frac{\partial L}{\partial y_{i,j}} \cdot \begin{bmatrix}
-v_{1,1} & v_{2,1} & \cdots & v_{kw,1}\\
-v_{1,2} & v_{2,2} & \cdots & v_{kw,1}\\
+v_{0,0} & v_{1,0} & \cdots & v_{kw-1,0}\\
+v_{0,1} & v_{1,1} & \cdots & v_{kw-1,1}\\
 \vdots & \vdots & \ddots & \vdots \\
-v_{1,kh} & v_{2,kh} & \cdots & v_{kw,kh}\\ \end{bmatrix}
+v_{0,kh-1} & v_{1,kh-1} & \cdots & v_{kw-1,kh-1}\\ \end{bmatrix}
 $$
 如此一来，在计算卷积核的损失的过程中，也就是计算下一层梯度与输入的卷积时，顺便对该矩阵进行不断的循环累加与更新，就可以得到需要传播到上一层的梯度。实际上，该操作可以理解为一种“反向卷积”，具体的操作流程看下面的示意图就比较清晰直观了：
 
