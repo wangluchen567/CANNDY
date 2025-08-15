@@ -367,7 +367,17 @@ else:
 
 ### 前向传播
 
+由于恒等映射层的输出即输入，所以其前向传播公式为：
+$$
+Y=X
+$$
 
+### 反向传播
+
+由于恒等映射层的输入即输出，所以其反向传播公式为：
+$$
+\Delta_k = \Delta_{k+1}
+$$
 
 ## Dropout-丢弃层
 
@@ -378,6 +388,26 @@ Dropout 的核心思想是在训练过程中随机地丢弃（即置为零）一
 二是测试阶段，在测试阶段，Dropout 层会被关闭，所有神经元都会被保留，并且输出不会进行缩放。这是因为测试阶段需要使用完整的网络来做出预测。
 
 作为一种常见的正则化技术，Dropout 层用于防止神经网络的过拟合，迫使网络学习到更加鲁棒的特征，减少对特定神经元的依赖。当然，该层也有一些缺陷，使用后会增加训练时间，且会影响模型的收敛速度，也可能在一定程度上削弱神经网络的表现，所以使用时需要根据具体任务和网络结构进行调整，以平衡其正则化效果和对训练效率的影响。
+
+### 前向传播
+
+训练阶段每次前向传播时，Dropout 层会随机选择一部分神经元并对输出按比例放大，具体公式为：
+$$
+Y=X \odot \frac{M}{1-p} 
+$$
+其中 $\odot$ 表示哈马达积，即两个矩阵对应元素相乘。$p$ 为随机失活的概率，$M$ 为是一个随机二值矩阵，其中每个元素为 1 的概率是 $1-p$.
+
+请注意，这里总结的前向传播是训练阶段的公式，因为测试阶段和恒等映射层等价。
+
+### 反向传播
+
+反向传播的梯度公式为：
+$$
+\Delta_k = \Delta_{k+1} \odot \frac{M}{1-p} 
+$$
+其中 $\odot$ 表示哈马达积，即两个矩阵对应元素相乘。$p$ 为随机失活的概率，$M$ 为是一个随机二值矩阵，其中每个元素为 1 的概率是 $1-p$，这两个部分需要使用前向传播时保存的值。
+
+请注意，这里总结的反向传播是训练阶段的公式，因为测试阶段和恒等映射层等价。
 
 ## GCNConv-图卷积层
 
@@ -391,13 +421,17 @@ Dropout 的核心思想是在训练过程中随机地丢弃（即置为零）一
 
 待更新...
 
+## Conv1d-一维卷积层
+
+待更新...
+
 ## Conv2d-二维卷积层
 
 卷积，作为一种数学运算，最开始是在信号处理领域中提出的概念，卷积运算在信号处理中用于模拟线性时不变系统的输出，其中一个信号通过另一个信号（如滤波器）的影响。这个概念后来被引入到图像处理和深度学习中，诞生了卷积神经网络（Convolutional Neural Networks, CNNs）这一经典的神经网络，在卷积神经网络中，卷积被用来提取图像数据的局部特征，通过在输入图像上滑动卷积核（滤波器），并计算其与图像的局部区域的点积，生成特征图。这些特征图捕捉了图像的局部模式，如边缘、纹理等，并且由于权重共享和稀疏连接，使得网络能够高效地学习到具有平移不变性的特征。
 
 二维卷积的卷积过程可以通过以下示例动图直观理解：
 
-<img src="./Pictures/Conv.gif" style="zoom:80%;" />
+<img src="./Pictures/Conv2dForward.gif" style="zoom:80%;" />
 
 为了简化说明，以下推导将在单通道矩阵、步长为1、填充为0的条件下进行。
 
@@ -409,7 +443,7 @@ Dropout 的核心思想是在训练过程中随机地丢弃（即置为零）一
 $$
 Y = V \circledast X
 $$
-具体矩阵展开有（矩阵的索引范围均是从 0 开始）：
+具体矩阵展开有（以下矩阵的索引范围均是从 0 开始）：
 $$
 \begin{bmatrix}
 y_{0,0} & y_{1,0} &\cdots &y_{ow-1,0}\\
@@ -430,7 +464,7 @@ x_{0,1} & x_{1,1} &\cdots &x_{iw-1,1}\\
 x_{0,ih-1} & x_{1,ih-1} &\cdots &x_{iw-1,ih-1}\\
 \end{bmatrix}
 $$
-其中 $\circledast$ 为卷积符号，代表卷积操作，$iw,ih$ 分别为输入特征图的宽度和高度，$ow,oh$ 分别为输出特征图的宽度和高度，$kw,kh$分别为卷积核的宽度和高度。将该公式具体展开，对于任意一个输出 $y_{i,j}$ ，其计算公式为：
+其中 $\circledast$ 为卷积符号，代表卷积操作，$iw,ih$ 分别为输入特征图的宽度和高度，$ow,oh$ 分别为输出特征图的宽度和高度，$kw,kh$ 分别为卷积核的宽度和高度。将该公式具体展开，对于任意一个输出 $y_{i,j}$ ，其计算公式为：
 $$
 \begin{align}
 y_{i,j} &= \sum_{w=0}^{kw-1}\sum_{h=0}^{kh-1}v_{w,h}x_{i+w,j+h}\\
@@ -451,7 +485,7 @@ x_{i+0,j+kh-1} & x_{i+1,j+kh-1} &\cdots &x_{i+kw-1,j+kh-1}\\
 \end{align}
 $$
 
-其中$\odot$表示哈马达积，即两个矩阵对应元素相乘。因此，二维卷积的本质是将卷积核作为一个“窗口”，每次卷积是窗口上的元素与输入对应元素相乘后求和，下一次卷积则在输入矩阵上滑动窗口再进行计算。对于多通道输入矩阵和多个卷积核的情况，本质上是多个矩阵之间的操作。对于步长大于1的情况，相当于在求和时按照步长间隔取值；对于有填充的情况，则是对输入矩阵进行一定的扩展。
+其中 $\odot$ 表示哈马达积，即两个矩阵对应元素相乘。因此，二维卷积的本质是将卷积核作为一个“窗口”，每次卷积是窗口上的元素与输入对应元素相乘后求和，下一次卷积则在输入矩阵上滑动窗口再进行计算。对于多通道输入矩阵和多个卷积核的情况，本质上是多个矩阵之间的操作。对于步长大于1的情况，相当于在求和时按照步长间隔取值；对于有填充的情况，则是对输入矩阵进行一定的扩展。
 
 ### 反向传播
 
@@ -467,7 +501,7 @@ $$
 \end{bmatrix}
 $$
 
-根据之前推导的卷积公式，可以得到单个输出对任意一个参数$v_{w^*,h^*}$的偏导：
+根据之前推导的卷积公式，可以得到单个输出对任意一个参数$v_{w^*,h^*}$的偏导为：
 
 $$
 \begin{align}
@@ -509,26 +543,143 @@ $$
 $$
 为了将梯度继续反向传播到上一层，我们需要计算损失函数对输入的偏导数。这部分内容相对复杂且不易理解，因此这里提供一个较为直观的思路。我们知道，对于任意两个元素的乘积，在对其中一个元素求偏导时，结果就是另一个元素。例如，假设 $y=v \cdot x$，那么有 $\frac{\partial y}{\partial v}=x$和$\frac{\partial y}{\partial x}=v$。因此，在计算损失对输入的偏导时，关键在于明确哪些元素与输入元素相乘过。
 
-那么，如何确定这些相乘过的元素呢？其实，我们可以通过重新进行一次卷积操作来获取这些信息。具体来说，我们可以将要传播到上一层的梯度初始化为一个全零矩阵 $G$。随后，通过梯度的累加操作，矩阵 $G$ 的一部分可以逐步更新，其具体表示为：
+那么，如何确定这些相乘过的元素呢？其实，我们可以通过重新进行一次卷积操作来获取这些信息。具体来说，我们可以将要传播到上一层的梯度初始化为一个全零矩阵 $\Delta$。随后，通过梯度的累加操作，矩阵 $\Delta$ 的一部分可以逐步更新，其具体表示为：
 $$
-G^{\text{old}}_{\{[i:i+kw),[j:j+kh)\}} =G^{\text{new}}_{\{[i:i+kw),[j:j+kh)\}} + \frac{\partial L}{\partial y_{i,j}} \cdot V \\ = \begin{bmatrix}
-g_{i+0,j+0} & g_{i+1,j+0} & \cdots & g_{i+kw-1,j+0}\\
-g_{i+0,j+1} & g_{i+1,j+1} & \cdots & g_{i+kw-1,j+1}\\
+\Delta^{\text{new}}_{\{[i:i+kw),[j:j+kh)\}} =\Delta^{\text{old}}_{\{[i:i+kw),[j:j+kh)\}} + \frac{\partial L}{\partial y_{i,j}} \cdot V \\ = \begin{bmatrix}
+\delta_{i+0,j+0} & \delta_{i+1,j+0} & \cdots & \delta_{i+kw-1,j+0}\\
+\delta_{i+0,j+1} & \delta_{i+1,j+1} & \cdots & \delta_{i+kw-1,j+1}\\
 \vdots & \vdots & \ddots & \vdots \\
-g_{i+0,j+kh-1} & g_{i+1,j+kh-1} & \cdots & g_{i+kw-1,j+kh-1}\\
+\delta_{i+0,j+kh-1} & \delta_{i+1,j+kh-1} & \cdots & \delta_{i+kw-1,j+kh-1}\\
 \end{bmatrix} + \frac{\partial L}{\partial y_{i,j}} \cdot \begin{bmatrix}
 v_{0,0} & v_{1,0} & \cdots & v_{kw-1,0}\\
 v_{0,1} & v_{1,1} & \cdots & v_{kw-1,1}\\
 \vdots & \vdots & \ddots & \vdots \\
 v_{0,kh-1} & v_{1,kh-1} & \cdots & v_{kw-1,kh-1}\\ \end{bmatrix}
 $$
-如此一来，在计算卷积核的损失的过程中，也就是计算下一层梯度与输入的卷积时，顺便对该矩阵进行不断的循环累加与更新，就可以得到需要传播到上一层的梯度。实际上，该操作可以理解为一种“反向卷积”，具体的操作流程看下面的示意图就比较清晰直观了：
+如此一来，在计算卷积核的损失的过程中，也就是计算下一层梯度与输入的卷积时，顺便对该矩阵进行不断的循环累加与更新，就可以得到需要传播到上一层的梯度。实际上，该操作可以理解为一种“反向的卷积”，具体的操作流程看下面的示意图就比较清晰直观了：
 
-<img src="./Pictures/ConvGrad.gif" style="zoom:80%;" />
+<img src="./Pictures/Conv2dBackward.gif" style="zoom:80%;" />
+
+## MaxPool1d-一维最大池化层
+
+待更新...
+
+## MaxPool2d-二维最大池化层
+
+待更新...
+
+## MeanPool1d-一维平均池化层
+
+待更新...
+
+## MeanPoo2d-二维平均池化层
+
+待更新...
 
 ## BatchNorm-批归一化层
 
-待更新
+在深度神经网络训练过程中，**内部协变量偏移（Internal Covariate Shift）** 是一个常见问题：每一层的输入分布会随着前一层参数更新而不断变化，导致训练过程需要更谨慎地调整学习率、初始化参数等，这样大大降低了训练效率。
+
+2015年由 Ioffe & Szegedy 提出的 **批归一化 (Batch-Norm)** 旨在解决这个问题，通过对每一层的输入进行归一化，以稳定网络的训练动态。
+
+### 前向传播
+
+在前向传播过程中，BatchNorm 对每个**小批量（mini-batch）** 的数据进行标准化，使其均值为 0、方差为 1，并通过可学习的参数恢复模型的表达能力。其具体步骤如下：
+
+1. 准备输入数据
+
+   假设当前层的输入为一个小批量数据 $X \in R^{m \times d}$，其中 $m$ 为 小批量数据的数量大小 (batch_size)，$d$ 为特征的维度（对于全连接层）或者通道数量（对于卷积层）
+
+2. 计算小批量的均值和方差
+
+   对于输入数据中的第 $i$ 个数据 $x_i$，计算当前小批量的均值和方差：
+   $$
+   \mu_B=\frac{1}{m} \sum_{i=1}^m x_i, \quad \sigma^2_B = \frac{1}{m} \sum_{i=1}^m (x_i - \mu_B)^2
+   $$
+
+3. 标准化操作
+
+   对输入 $x$ 进行归一化（标准化）：
+   $$
+   \hat{x}_i = \frac{x_i - \mu_B}{\sqrt{\sigma^2_B + \epsilon}}
+   $$
+   其中 $\epsilon$ 是一个极小值（如 $10^{-5}$），防止分母为零。
+
+4. 缩放与偏移
+
+   引入两个可学习的参数 $\gamma$（缩放）和 $\beta$（偏移），以恢复模型的非线性表达能力：
+   $$
+   y_i = \gamma \hat{x}_i + \beta
+   $$
+   其中 $\gamma$ 和 $\beta$ 通过梯度下降学习，分别初始化为 1 和 0。
+
+5. 训练与推理的区别
+
+   请注意，BatchNorm 在训练和推理时 存在一些差异和区别
+
+   - 训练阶段
+
+     由于在推理阶段需要全局的均值和方差，所以在训练阶段需要使用 指数移动平均 (Exponential Moving Average, EMA) 算法，额外保存全局的均值和方差：
+     $$
+     \mu_{\text{global}} \leftarrow \lambda \mu_{\text{global}} + (1 - \lambda) \mu_B\\
+     \sigma^2_{\text{global}} \leftarrow \lambda \sigma^2_{\text{global}} + (1 - \lambda) \sigma^2_B
+     $$
+
+   - 推理阶段
+
+     推理阶段需要使用训练阶段累计的全局的均值和方差进行归一化：
+     $$
+     y = \gamma \cdot \frac{x - \mu_{\text{global}}}{\sqrt{\sigma^2_{\text{global}}+\epsilon}} + \beta
+     $$
+
+### 反向传播
+
+假设从下一层传回的梯度为$\frac{\partial L}{\partial y_i}$，则可学习参数  $\gamma$（缩放）和 $\beta$（偏移）的梯度为：
+$$
+\begin{align}
+&\frac{\partial L}{\partial \gamma} = \sum_{i=1}^m \frac{\partial L}{\partial y_i} \cdot \hat{x}_i\\
+&\frac{\partial L}{\partial \beta} = \sum_{i=1}^m \frac{\partial L}{\partial y_i}
+\end{align}
+$$
+若计算需要传回上一层的梯度，需要先计算损失 $L$ 对标准化后的 $\hat{x}$ 的梯度，以及对均值 $\mu_B$ 和方差 $\sigma^2_B$ 的梯度：
+$$
+\begin{align}
+&\frac{\partial L}{\partial \hat{x}_i} = \frac{\partial L}{\partial y_i} \cdot \gamma\\
+&\frac{\partial L}{\partial \sigma^2_B} = \sum_{i=1}^m \frac{\partial L}{\partial \hat{x}_i} \cdot (x_i - \mu_B) \cdot -\frac{1}{2}(\sigma^2_B + \epsilon)^{-3/2}\\
+&\frac{\partial L}{\partial \mu_B} = \sum_{i=1}^m \frac{\partial L}{\partial \hat{x}_i} \cdot \frac{-1}{\sqrt{\sigma^2_B + \epsilon}}
+\end{align}
+$$
+最终传回上一层的梯度为：
+$$
+\frac{\partial L}{\partial x_i} = \frac{\partial L}{\partial \hat{x}_i} \cdot \frac{1}{\sqrt{\sigma^2_B + \epsilon}} + \frac{\partial L}{\partial \sigma^2_B} \cdot \frac{2(x_i - \mu_B)}{m} + \frac{\partial L}{\partial \mu_B} \cdot \frac{1}{m}
+$$
+其中对于$\frac{\partial L}{\partial \hat{x}_i}$、$\frac{\partial L}{\partial \sigma^2_B}$ 和 $\frac{\partial L}{\partial \mu_B}$，只需代入前面得到的公式即可。
+
+## BatchNorm2d-批归一化层(用于卷积)
+
+实际上，`BatchNorm2d` 是 `BatchNorm` 在卷积网络中的具体实现，其核心原理与全连接层的批归一化完全一致，唯一的区别在于：对卷积层的小批量输入数据（形状为 `[batch_size, channels, height, width]`）进行归一化时，均值和方差是沿 `(batch_size, height, width)` 维度独立计算的，即对每个通道（channel）单独归一化。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
