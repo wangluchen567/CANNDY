@@ -16,7 +16,7 @@ import numpy as np
 class Optimizer:
     """优化器父类"""
 
-    def __init__(self, model, learning_rate, weight_decay):
+    def __init__(self, model, learning_rate, weight_decay=0):
         self.model = model
         assert learning_rate >= 0
         assert weight_decay >= 0
@@ -59,9 +59,9 @@ class Optimizer:
         layer.grad = layer.grad + layer.weight * self.weight_decay
 
 
-class GradientDescent(Optimizer):
+class SGD(Optimizer):
     def __init__(self, model, learning_rate=0.01, weight_decay=0):
-        super(GradientDescent, self).__init__(model, learning_rate, weight_decay)
+        super(SGD, self).__init__(model, learning_rate, weight_decay)
         # 记录梯度更新速度
         self.v = dict()
         for i in range(self.num_layers):
@@ -263,4 +263,78 @@ class Adam(Optimizer):
             s_layer = self.s[layer] / (1 - self.beta_2 ** self.steps)
         # 得到更新后的权重
         next_weight = layer.weight - self.learning_rate * v_layer / np.sqrt(s_layer + self.eps)
+        layer.set_parameters(next_weight)
+
+class AdamW(Optimizer):
+    def __init__(self, model, learning_rate=0.01, beta_1=0.9, beta_2=0.999, weight_decay=0, ams_grad=False, eps=1e-8):
+        super(AdamW, self).__init__(model, learning_rate, weight_decay)
+        # 历史梯度衰减系数
+        assert 0.0 < beta_1 < 1.0
+        self.beta_1 = beta_1
+        # 历史梯度各分量平方衰减系数
+        assert 0.0 < beta_2 < 1.0
+        self.beta_2 = beta_2
+        assert 0.0 < eps < 1.0
+        self.eps = eps
+        # 是否使用ams_grad
+        self.ams_grad = ams_grad
+        # 初始化一阶矩估计
+        self.v = dict()
+        for i in range(self.num_layers):
+            self.zero_v(self.layer_list[i])
+        # 初始化二阶矩估计
+        self.s = dict()
+        for i in range(self.num_layers):
+            self.zero_s(self.layer_list[i])
+        # 初始化二阶矩估计历史最大值（AMS_Grad）
+        if self.ams_grad:
+            self.max_s = dict()
+            for i in range(self.num_layers):
+                self.zero_max_s(self.layer_list[i])
+
+    def step(self):
+        """每层网络更新一次权重"""
+        self.steps += 1  # 更新步数
+        for i in range(self.num_layers):
+            # 先更新一阶矩估计
+            self.update_v(self.layer_list[i])
+            # 再更新二阶矩估计
+            self.update_s(self.layer_list[i])
+            # 再更新权重
+            self.update(self.layer_list[i])
+
+    def zero_v(self, layer):
+        """一阶矩估计置零"""
+        self.v[layer] = np.zeros_like(layer.grad)
+
+    def zero_s(self, layer):
+        """二阶矩估计置零"""
+        self.s[layer] = np.zeros_like(layer.grad)
+
+    def zero_max_s(self, layer):
+        """最大二阶矩估计置零"""
+        self.max_s[layer] = np.zeros_like(layer.grad)
+
+    def update_v(self, layer):
+        """更新一阶矩估计"""
+        self.v[layer] = self.beta_1 * self.v[layer] + (1 - self.beta_1) * layer.grad
+
+    def update_s(self, layer):
+        """更新二阶矩估计"""
+        self.s[layer] = self.beta_2 * self.s[layer] + (1 - self.beta_2) * layer.grad * layer.grad
+        if self.ams_grad:
+            # 更新最大二阶矩估计
+            self.max_s[layer] = np.maximum(self.max_s[layer], self.s[layer])
+
+    def update(self, layer):
+        """更新权重"""
+        # 进行偏差校正
+        v_layer = self.v[layer] / (1 - self.beta_1 ** self.steps)
+        if self.ams_grad:
+            s_layer = self.max_s[layer] / (1 - self.beta_2 ** self.steps)
+        else:
+            s_layer = self.s[layer] / (1 - self.beta_2 ** self.steps)
+        # 得到更新后的权重
+        next_weight = (layer.weight - self.learning_rate * v_layer / np.sqrt(s_layer + self.eps) -
+                       self.learning_rate * self.weight_decay * layer.weight)  # 进行正则化
         layer.set_parameters(next_weight)
