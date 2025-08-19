@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from Core.Module import GCN
-from Core.Optimizer import Adam
+from Core.Optimizer import AdamW
 from Core.Activation import Softmax
 from Core.Loss import CrossEntropyWithSoftmaxMask
 
@@ -79,7 +79,7 @@ def plot_state(loss, acc):
 
 
 if __name__ == '__main__':
-    np.random.seed(6)
+    np.random.seed(1)
     data_path = "../../Dataset/cora.tar.gz"
     # 读取数据集
     features, indices, labels, masks = load_data(data_path)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
                 out_activation=Softmax,
                 dropout=0.5)
 
-    optimizer = Adam(model=model, learning_rate=1e-2, weight_decay=5e-4)
+    optimizer = AdamW(model=model, learning_rate=1e-2, weight_decay=5e-4)
 
     num_epochs = 200
     # 训练过程

@@ -318,7 +318,7 @@ class Dropout(Layer):
 class GCNConv(Linear):
     """图卷积层"""
 
-    def __init__(self, input_size, output_size, adj_norm, activation, bias=True):
+    def __init__(self, input_size, output_size, adj_norm, activation, bias=False):
         """
         图卷积层
         :param input_size: 输入(维度)大小
