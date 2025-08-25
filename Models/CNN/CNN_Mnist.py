@@ -97,7 +97,9 @@ if __name__ == '__main__':
     train_size = 50000
     valid_size = 10000
 
-    # 展示前几个数据
+    # 展示前k个数据
+    k = 3
+    print(f"Show the first {k} data image...")
     for i in range(3):
         show_image(x_train[i], y_train[i][0])
 
@@ -111,6 +113,7 @@ if __name__ == '__main__':
     model = LeNet5()
     # 开始训练
     start = time.time()
+    print("Start training...")
     model = train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size],
                         num_epochs=30, batch_size=64, save_checkpoint=True)
     train_time = time.time() - start
