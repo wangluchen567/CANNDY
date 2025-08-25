@@ -11,9 +11,9 @@ NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 """
 import numpy as np
-from Core.Activation import Sigmoid, ReLU, Tanh, Softmax
+from Core.Activation import ReLU, Sigmoid, Tanh, Softmax
 from Core.Layer import Linear, GCNConv, Dropout, RNN, Conv1d, MaxPool1d
-from Core.Layer import Conv2d, MaxPool2d, Flatten, ReLULayer, BatchNorm2d
+from Core.Layer import Conv2d, MaxPool2d, Flatten, BatchNorm2d, ReLULayer, SigmoidLayer, TanhLayer, SoftmaxLayer
 
 
 class Module:
@@ -36,6 +36,12 @@ class Module:
         self.out_activation = out_activation
         self.Layers = None
         self.num_params = None
+        self.act_layer_dict = {
+            'ReLU': ReLULayer,
+            'Sigmoid': SigmoidLayer,
+            'Tanh': TanhLayer,
+            'Softmax': SoftmaxLayer,
+        }
 
     def __call__(self, *args, **kwargs):
         return self.forward(*args, **kwargs)
@@ -44,8 +50,10 @@ class Module:
         raise NotImplementedError
 
     def backward(self, delta):
+        delta_next = delta.copy()
         for i in range(-1, -len(self.Layers) - 1, -1):
-            delta = self.Layers[i].backward(delta)
+            delta_next = self.Layers[i].backward(delta_next)
+        return delta_next
 
     def train(self):
         """设置为训练模式"""
@@ -260,3 +268,71 @@ class LeNet5(Module):
             hidden = layer(hidden)
         output = hidden
         return output
+
+
+class ResidualFC(Module):
+    """残差全连接网络模型"""
+
+    def __init__(self, input_size, output_size, hidden_sizes, hidden_activation=Sigmoid, out_activation=None):
+        """
+        残差全连接网络模型
+        :param input_size: 输入层大小
+        :param output_size: 输出层大小
+        :param hidden_sizes: 隐藏层大小(多个)
+        :param hidden_activation: 隐藏层激活函数
+        :param out_activation: 输出层激活函数
+        """
+        super().__init__(input_size, output_size, hidden_sizes, hidden_activation, out_activation)
+        self.num_hidden = len(self.hidden_sizes)
+
+        # 初始化第一层
+        self.Layers = [Linear(self.input_size, self.hidden_sizes[0], self.hidden_activation)]
+        # 加入中间隐层
+        if self.num_hidden > 1:
+            self.Layers.extend(
+                [Linear(self.hidden_sizes[i], self.hidden_sizes[i + 1], self.hidden_activation)
+                 for i in range(self.num_hidden - 1)])
+        # 加入最后一层
+        self.Layers.append(Linear(self.hidden_sizes[-1], self.output_size))
+        # 在标准的ResNet中，当输入和输出的维度（通常是通道数）不匹配时，需要通过一个1x1卷积（或一个线性层）
+        # 来对快捷连接（Shortcut）的路径进行维度投影（Projection），使其与主路径的输出维度一致
+        if input_size != output_size:
+            self.shortcut = Linear(input_size, output_size)
+            self.Layers.append(self.shortcut)
+            # 若使用的shortcut则提取核心全连接部分
+            self.FCLayers = self.Layers[:-1]
+        else:
+            self.shortcut = None
+            self.FCLayers = self.Layers
+        # 加入激活层
+        if self.out_activation:
+            self.activate = self.act_layer_dict[self.out_activation.__name__]()
+        else:
+            self.activate = None
+        # 计算参数数量
+        self.num_params = self.get_num_params()
+
+    def forward(self, input_):
+        hidden = input_.copy()
+        for fc in self.FCLayers:
+            hidden = fc(hidden)
+        output = hidden
+        # 计算残差部分
+        residual = self.shortcut(input_) if self.shortcut else input_
+        # 进行残差连接
+        output += residual
+        # 进行激活操作
+        output = self.activate(output) if self.activate else output
+        return output
+
+    def backward(self, delta):
+        next_delta = delta.copy()
+        # 计算激活函数层的梯度
+        next_delta = self.activate.backward(next_delta) if self.activate else next_delta
+        # 先计算残差部分梯度
+        res_delta = self.shortcut.backward(next_delta) if self.shortcut else next_delta.copy()
+        for i in range(-1, -len(self.FCLayers) - 1, -1):
+            next_delta = self.FCLayers[i].backward(next_delta)
+        # 传播到上一层的梯度是两者的和
+        next_delta += res_delta
+        return next_delta
