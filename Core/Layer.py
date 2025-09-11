@@ -273,6 +273,7 @@ class Linear(Layer):
 
 class Indentity(Layer):
     """恒等变换层（用作占位符）"""
+
     def __init__(self):
         super().__init__()
 
@@ -400,7 +401,7 @@ class RNNCell(Layer):
         if self.bias:
             input_1 = np.vstack((input_1, np.ones(shape=(1, input_1.shape[1]))))
             hidden_1 = np.vstack((hidden_1, np.ones(shape=(1, hidden_1.shape[1]))))
-        # 形状: (n,c) = ((c,d) @ (d,n) +  (c,c) @ (c,n)).T
+        # 形状: (n,c) = ((c,d) @ (d,n) + (c,c) @ (c,n)).T
         output = (self.weight_input @ input_1 + self.weight_hidden @ hidden_1).T
         # 保存所有的输入与输出
         self.input_1_list.append(input_1)
@@ -1252,13 +1253,11 @@ class SigmoidLayer(Layer):
     def forward(self, input_):
         self.input = input_.copy()
         # 防止指数溢出
-        indices_pos = np.nonzero(self.input >= 0)
-        indices_neg = np.nonzero(self.input < 0)
-        self.output = np.zeros_like(self.input)
         # y = 1 / (1 + exp(-x)), x >= 0
         # y = exp(x) / (1 + exp(x)), x < 0
-        self.output[indices_pos] = 1 / (1 + np.exp(-self.input[indices_pos]))
-        self.output[indices_neg] = np.exp(self.input[indices_neg]) / (1 + np.exp(self.input[indices_neg]))
+        self.output = np.where(self.input >= 0,
+                               1 / (1 + np.exp(-self.input)),
+                               np.exp(self.input) / (1 + np.exp(self.input)))
         return self.output
 
     def backward(self, delta):
@@ -1276,16 +1275,11 @@ class TanhLayer(Layer):
     def forward(self, input_):
         self.input = input_.copy()
         # 防止指数溢出
-        indices_pos = np.nonzero(self.input >= 0)
-        indices_neg = np.nonzero(self.input < 0)
-        self.output = np.zeros_like(self.input)
         # y = (1-exp(-2*x))/(1+exp(-2*x)), x >= 0
         # y = (exp(2*x)-1)/(1+exp(2*x)), x < 0
-        self.output[indices_pos] = ((1 - np.exp(-2 * self.input[indices_pos]))
-                                    / (1 + np.exp(-2 * self.input[indices_pos])))
-        self.output[indices_neg] = ((np.exp(2 * self.input[indices_neg]) - 1)
-                                    / (1 + np.exp(2 * self.input[indices_neg])))
-        return self.output
+        self.output = np.where(self.input >= 0,
+                               (1 - np.exp(-2 * self.input)) / (1 + np.exp(-2 * self.input)),
+                               (np.exp(2 * self.input) - 1) / (np.exp(2 * self.input) + 1))
 
     def backward(self, delta):
         return delta * (1 - self.output * self.output)

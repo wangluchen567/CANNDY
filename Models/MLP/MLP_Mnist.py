@@ -91,4 +91,4 @@ if __name__ == '__main__':
     model = MLP(784, 10, [100, 20], hidden_activation=ReLU, out_activation=Softmax)
     model = train_model(model, x_train[:train_size], y_train[:train_size], x_valid[:valid_size], y_valid[:valid_size])
     accuracy = valid_model(model, x_valid, y_valid)
-    print("full dataset accuracy: {:.3f} %".format(accuracy * 100))
+    print("Full dataset accuracy: {:.3f} %".format(accuracy * 100))

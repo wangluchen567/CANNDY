@@ -133,6 +133,7 @@ class GCN(Module):
                  hidden_activation=ReLU, out_activation=None, dropout=False):
         """
         图卷积神经网络模型
+        Graph Convolutional Networks
         :param adj_mat: 图的邻接矩阵
         :param input_size: 输入层大小
         :param output_size: 输出层大小
@@ -276,6 +277,7 @@ class ResidualFC(Module):
     def __init__(self, input_size, output_size, hidden_sizes, hidden_activation=Sigmoid, out_activation=None):
         """
         残差全连接网络模型
+        Residual Full Connection Networks
         :param input_size: 输入层大小
         :param output_size: 输出层大小
         :param hidden_sizes: 隐藏层大小(多个)

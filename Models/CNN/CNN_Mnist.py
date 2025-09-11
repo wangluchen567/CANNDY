@@ -119,7 +119,7 @@ if __name__ == '__main__':
     train_time = time.time() - start
     accuracy = valid_model(model, x_valid, y_valid)
     print("Test accuracy: {:.3f} %".format(accuracy * 100))
-    print("running time: {:.3f}".format(train_time))
+    print("Running time: {:.3f}".format(train_time))
     # 保存每个epoch的模型参数
     params_dict = model.get_parameters()
     with open('LeNet-5_Params_.json', 'w') as f:
