@@ -136,39 +136,43 @@ if __name__ == '__main__':
     # 创建深度MLP模型
     model = DeepMLP(784, 10)
     # 训练模型
-    print("training deep-mlp...")
+    print("Training DeepMLP...")
     model, mlp_loss, mlp_acc = train_model(model,
                                            x_train[:train_size], y_train[:train_size],
                                            x_valid[:valid_size], y_valid[:valid_size],
                                            num_epoch)
     accuracy = valid_model(model, x_valid, y_valid)
-    print("full dataset accuracy: {:.3f} %".format(accuracy * 100))
-
+    print("Full dataset accuracy: {:.3f} %".format(accuracy * 100))
+    print()
     # 创建ResNet模型
     model = ResNet(784, 10)
     # 训练模型
-    print("training res-net...")
+    print("Training ResNet...")
     model, resnet_loss, resnet_acc = train_model(model,
                                                  x_train[:train_size], y_train[:train_size],
                                                  x_valid[:valid_size], y_valid[:valid_size],
                                                  num_epoch)
     accuracy = valid_model(model, x_valid, y_valid)
-    print("full dataset accuracy: {:.3f} %".format(accuracy * 100))
+    print("Full dataset accuracy: {:.3f} %".format(accuracy * 100))
 
     # 将对比结果进行绘图展示
     plt.figure(0)
     num_loss = len(mlp_loss)
-    plt.plot(np.arange(num_loss)+1, mlp_loss, marker='o', label='deep-mlp loss')
-    plt.plot(np.arange(num_loss)+1, resnet_loss, marker='o', label='res-net loss')
+    plt.plot(np.arange(num_loss)+1, mlp_loss, marker='o', label='DeepMLP loss')
+    plt.plot(np.arange(num_loss)+1, resnet_loss, marker='o', label='ResNet loss')
     plt.title('Loss Comparison')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
     plt.legend()
     plt.grid()
 
     plt.figure(1)
     num_acc = len(mlp_acc)
-    plt.plot(np.arange(num_acc)+1, mlp_acc, marker='o', label='deep-mlp accuracy')
-    plt.plot(np.arange(num_acc)+1, resnet_acc, marker='o', label='res-net accuracy')
+    plt.plot(np.arange(num_acc)+1, mlp_acc, marker='o', label='DeepMLP accuracy')
+    plt.plot(np.arange(num_acc)+1, resnet_acc, marker='o', label='ResNet accuracy')
     plt.title('Accuracy Comparison')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
     plt.legend()
     plt.grid()
 
