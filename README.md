@@ -47,10 +47,15 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 
 ## 🎯 核心实现
 
-- **Activation: 激活函数**
+**说明**：超链接指向相关模块的实现笔记 📝
+
+- **Basic: [基础知识](./Notes/Basic.md)**
+  - 本部分为基础知识笔记，非具体模块
+
+- **Activation: [激活函数](./Notes/Activation.md)**
   - ReLU/Sigmoid/Tanh/Softmax
 
-- **Layers: 神经网络层**
+- **Layers: [神经网络层](./Notes/Layer.md)**
   - Linear: 线性层(全连接单层)
   - Indentity: 恒等变换层
   - Dropout: 随机失活层
@@ -71,24 +76,24 @@ Chen's Artificial Neural Network constructeD with numpY<br>
   - TanhLayer: Tanh激活层
   - SoftmaxLayer: Softmax激活层
 
-- **Loss: 损失函数**
+- **Loss: [损失函数](./Notes/Loss.md)**
   - MSELoss: 均方误差损失
   - CrossEntropyWithSoftmax: 带Softmax的交叉熵损失
   - CrossEntropyWithSoftmaxMask: 带Softmax和Mask的交交叉熵损失
 
-- **Module: 神经网络模型**
+- **Module: [神经网络模型](./Notes/Module.md)**
   - MLP: 全连接神经网络模型(多层感知机)
   - GCN: 图卷积神经网络模型
   - RNNModel: 循环神经网络模型
   - CNNTimeSeries: 一维卷积神经网络模型
   - LeNet5: LeNet-5卷积神经网络模型
 
-- **Optimizer: 优化器(优化算法)**
+- **Optimizer: [(梯度)优化器](./Notes/Optimizer.md)**
   - GD/Momentum/AdaGrad/RMSProp/Adam
 
 ## 📦 项目结构
 
-参见这里：[项目结构](./Notes/Structure.md) 
+参见此处：[项目结构](./Notes/Structure.md) 
 
 ## 📝 实现笔记
 
@@ -114,7 +119,7 @@ Chen's Artificial Neural Network constructeD with numpY<br>
 
 ## 🚀 快速开始
 
-参见这里：[快速开始](./Notes/Start.md) 
+参见此处：[快速开始](./Notes/Start.md) 
 
 ## 📅 更新计划
 

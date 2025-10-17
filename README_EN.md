@@ -37,10 +37,15 @@ Additionally, this project does not adopt a computational graph-based approach b
 
 ## 🎯 Core Components
 
-- **Activation: Activation Functions**
+**Note**: The hyperlinks point to the implementation notes of the respective modules.📝
+
+- **Basic: [Fundamentals](./Notes/Basic.md)**
+  - This section contains fundamental knowledge notes and is not a specific module.
+
+- **Activation: [Activation Functions](./Notes/Activation.md)**
   - ReLU/Sigmoid/Tanh/Softmax
 
-- **Layers: Neural Network Layers**
+- **Layers: [Neural Network Layers](./Notes/Layer.md)**
   - Linear: Linear layer (fully connected single layer)
   - Identity: Identity transformation layer
   - Dropout: Dropout layer (random deactivation)
@@ -61,19 +66,19 @@ Additionally, this project does not adopt a computational graph-based approach b
   - TanhLayer: Tanh activation layer
   - SoftmaxLayer: Softmax activation layer
 
-- **Loss: Loss Functions**
+- **Loss: [Loss Functions](./Notes/Loss.md)**
   - MSELoss: Mean squared error loss
   - CrossEntropyWithSoftmax: Cross-entropy loss with Softmax
   - CrossEntropyWithSoftmaxMask: Cross-entropy loss with Softmax and Mask
 
-- **Module: Neural Network Models**
+- **Module: [Neural Network Models](./Notes/Module.md)**
   - MLP: Multilayer perceptron (fully connected neural network model)
   - GCN: Graph convolutional neural network model
   - RNNModel: Recurrent neural network model
   - CNNTimeSeries: 1D convolutional neural network model
   - LeNet5: LeNet-5 convolutional neural network model
 
-- **Optimizer: Optimizers (Optimization Algorithms)**
+- **Optimizer: [(Gradient) Optimizers](./Notes/Optimizer.md)**
   - GD/Momentum/AdaGrad/RMSProp/Adam
 
 ## 📝 Update Plan
