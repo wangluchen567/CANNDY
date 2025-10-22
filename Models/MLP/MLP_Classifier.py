@@ -3,7 +3,7 @@ from Core.Module import MLP
 from Core.Optimizer import Adam
 from Core.Activation import Softmax
 from Core.Loss import CrossEntropyWithSoftmax
-from Plot_Classifier import plot_classifier, plot_classifier_soft
+from Plot_Classifier import plot_classifier
 
 
 def train_epoch(model, optimizer, X, Y, batch_size):
@@ -56,10 +56,9 @@ def train_model(model, X, Y, num_epochs=20):
         accuracy = valid_model(model, X, Y)
         print("epoch: [{:d}/{:d}], loss: {:.3f}, accuracy: {:.3f}".
               format(epoch + 1, num_epochs, train_loss, accuracy))
-        # 绘制分类结果(边缘明显)
-        plot_classifier(model, X, Y, accuracy)
-        # 绘制分类结果(无边缘，概率结果)
-        # plot_classifier_soft(model, X, Y, accuracy)
+        # 绘制分类结果（plot_mode = 0：硬边缘，1：软边缘，2: 3d效果）
+        plot_classifier(model, X, Y, accuracy, n_iter=epoch + 1,
+                        max_iter=num_epochs, plot_mode=0)
     return model
 
 
@@ -106,4 +105,3 @@ if __name__ == '__main__':
     model = train_model(model, X, Y)
     accuracy = valid_model(model, X, Y)
     print("full dataset accuracy: {:.3f} %".format(accuracy * 100))
-    plot_classifier(model, X, Y, accuracy, pause=False)

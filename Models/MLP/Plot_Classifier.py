@@ -3,9 +3,36 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-def plot_classifier(model, X, Y, accuracy, pause=True, pause_time=0.01):
+def plot_classifier(model, X, Y, accuracy, n_iter=None, max_iter=None, plot_mode=0, pause=True, pause_time=0.1):
+    """
+    绘制分类结果（0：硬边缘，1：软边缘，2: 3d效果）
+    :param model: 给定模型
+    :param X: 训练数据
+    :param Y: 训练标签
+    :param accuracy: 当前准确率
+    :param n_iter: 当前迭代次数
+    :param max_iter: 最大迭代次数
+    :param plot_mode: 绘图方式（0：硬边缘，1：软边缘，2: 3d效果）
+    :param pause: 是否暂停
+    :param pause_time: 暂停时间
+    """
+    if n_iter is not None and max_iter is not None and n_iter == max_iter:
+        # 最后一次迭代不再使用停顿展示
+        pause = False
+    if plot_mode == 0:
+        plot_classifier_edge(model, X, Y, accuracy, n_iter, pause, pause_time)
+    elif plot_mode == 1:
+        plot_classifier_soft(model, X, Y, accuracy, n_iter, pause, pause_time)
+    elif plot_mode == 2:
+        plot_classifier_3d(model, X, Y, accuracy, n_iter, pause, pause_time)
+    else:
+        raise ValueError(f"There is no such plotting mode: {plot_mode}")
+
+
+def plot_classifier_edge(model, X, Y, accuracy, n_iter=None, pause=True, pause_time=0.1):
     """绘制分类结果（边缘明显）"""
-    plt.figure(0)
+    # plt.figure(0)
+    plt.clf()
     # 画图中文显示会有问题，需要这两行设置默认字体
     plt.rcParams['font.sans-serif'] = ['SimHei']
     plt.rcParams['axes.unicode_minus'] = False
@@ -33,7 +60,9 @@ def plot_classifier(model, X, Y, accuracy, pause=True, pause_time=0.01):
     plt.ylim(x2_min, x2_max)
     plt.title('同心圆分类结果', fontsize=18)
     # 打印准确率
-    info = '准确率:%.2f%%' % (accuracy * 100)
+    info = ""
+    info += f"迭代次数: {n_iter}, " if n_iter is not None else ""
+    info += f"准确率: {(accuracy * 100) :.2f} %"
     plt.xlabel(info)
     # plt.text(5, 0.5, info, weight="bold")
     plt.grid(True)
@@ -42,10 +71,11 @@ def plot_classifier(model, X, Y, accuracy, pause=True, pause_time=0.01):
     else:
         plt.show()
 
-def plot_classifier_soft(model, X, Y, accuracy, pause=True, pause_time=0.01):
+
+def plot_classifier_soft(model, X, Y, accuracy, n_iter=None, pause=True, pause_time=0.1):
     """绘制分类结果（无边缘，绘制分类概率）"""
-    # 画图并保存图像
-    plt.figure(0)
+    # plt.figure(0)
+    plt.clf()
     # 画图中文显示会有问题，需要这两行设置默认字体
     plt.rcParams['font.sans-serif'] = ['SimHei']
     plt.rcParams['axes.unicode_minus'] = False
@@ -70,10 +100,53 @@ def plot_classifier_soft(model, X, Y, accuracy, pause=True, pause_time=0.01):
     plt.ylim(x2_min, x2_max)
     plt.title('同心圆分类结果', fontsize=18)
     # 打印准确率
-    info = '准确率:%.2f%%' % (accuracy * 100)
+    info = ""
+    info += f"迭代次数: {n_iter}, " if n_iter is not None else ""
+    info += f"准确率: {(accuracy * 100) :.2f} %"
     plt.xlabel(info)
     # plt.text(5, 0.5, info, weight="bold")
     plt.grid(True)
+    if pause:
+        plt.pause(pause_time)
+    else:
+        plt.show()
+
+
+def plot_classifier_3d(model, X, Y, accuracy, n_iter=None, pause=True, pause_time=0.1):
+    """绘制分类结果（绘制 3d 分类效果）"""
+    # plt.figure(0)
+    plt.clf()
+    # 画图中文显示会有问题，需要这两行设置默认字体
+    plt.rcParams['font.sans-serif'] = ['SimHei']
+    plt.rcParams['axes.unicode_minus'] = False
+    ax = plt.subplot(111, projection='3d')
+    ax.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+    ax.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+    ax.ticklabel_format(style='sci', axis='z', scilimits=(0, 0))
+    x_data = X
+    y_data = Y
+    # 绘制面
+    x1_grid, x2_grid = np.meshgrid(np.linspace(x_data[:, 0].min(), x_data[:, 0].max(), 100),
+                                   np.linspace(x_data[:, 1].min(), x_data[:, 1].max(), 100))
+    # 得到模型预测值
+    y_hat = model.forward(np.stack((x1_grid.flat, x2_grid.flat), axis=1))
+    # x_grid_b = np.stack((x1_grid, x2_grid, np.ones_like(x1_grid)), axis=-1)
+    ax.plot_surface(x1_grid, x2_grid, y_hat[:, 1].reshape(x1_grid.shape), alpha=0.5, cmap='viridis')
+    # 绘制点
+    positive, negative = np.array(y_data == 1).flatten(), np.array(y_data == 0).flatten()
+    ax.scatter(x_data[positive, 0], x_data[positive, 1], y_data[positive, 0], marker="o", c="red")
+    ax.scatter(x_data[negative, 0], x_data[negative, 1], y_data[negative, 0], marker="o", c="blue")
+    ax.view_init(elev=30)
+    # if n_iter is not None:
+    #     ax.view_init(azim=(n_iter * 2) % 360)
+    ax.set_xlabel('x')
+    ax.set_ylabel('y')
+    ax.set_zlabel('z')
+    # 打印准确率
+    info = ""
+    info += f"迭代次数: {n_iter}, " if n_iter is not None else ""
+    info += f"准确率: {(accuracy * 100) :.2f} %"
+    plt.xlabel(info)
     if pause:
         plt.pause(pause_time)
     else:
